@@ -1,0 +1,27 @@
+# Backend
+/target/
+*.log
+application-local.yml
+application-dev.local.yml
+application-dev.yml
+
+# Frontend
+/node_modules/
+/dist/
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Sensitive files
+*.pem
+*.key
+secrets/
+credentials/
