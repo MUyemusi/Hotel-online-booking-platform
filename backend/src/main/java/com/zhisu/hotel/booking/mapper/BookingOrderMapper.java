@@ -22,4 +22,11 @@ public interface BookingOrderMapper extends BaseMapper<BookingOrder> {
             "  AND payment_status = 'PAID'")
     int markCheckedInIfPending(@Param("orderId") Long orderId,
                                @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Update("UPDATE booking_order " +
+            "SET order_status = 'COMPLETED', updated_at = #{updatedAt} " +
+            "WHERE id = #{orderId} " +
+            "  AND order_status = 'CHECKED_IN'")
+    int markCompletedIfCheckedIn(@Param("orderId") Long orderId,
+                                 @Param("updatedAt") LocalDateTime updatedAt);
 }
