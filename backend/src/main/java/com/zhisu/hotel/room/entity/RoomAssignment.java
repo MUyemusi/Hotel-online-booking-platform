@@ -34,6 +34,14 @@ public class RoomAssignment {
 
     private LocalDateTime checkOutTime;
 
+    private String requestToken;
+
+    @Version
+    private Integer version;
+
+    @TableLogic
+    private Integer isDeleted;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
