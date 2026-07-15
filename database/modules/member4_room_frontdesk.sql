@@ -1,15 +1,7 @@
-﻿USE zhisu_hotel;
+USE zhisu_hotel;
+SET NAMES utf8mb4;
 
--- 成员4负责的表：房间、前台相关
--- 房间编号规则确认：
--- 1. 楼层范围：3楼到8楼
--- 2. 每层房间号范围：01到20
--- 3. 最终房间编号：
---    301-320
---    401-420
---    501-520
---    601-620
---    701-720
---    801-820
--- 4. 后续创建 room 表及初始化数据时，必须按以上规则生成房间编号
--- 预留表结构，后续补充
+-- Member 4: physical rooms, room status logs, room assignments, and check-in QR tokens.
+-- Canonical schema is maintained in 02_business_tables.sql.
+-- The 120-room seed data is maintained in 05_test_data.sql.
+SOURCE E:/Hotel-online-booking-platform/database/02_business_tables.sql;

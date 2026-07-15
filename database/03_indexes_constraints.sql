@@ -1,69 +1,118 @@
 USE zhisu_hotel;
+SET NAMES utf8mb4;
 
--- =========================================================
--- 成员1：用户、角色、信用和操作日志相关约束
--- 其他成员的约束在最终集成时继续追加到本文件
--- =========================================================
+SET @db_name = DATABASE();
 
--- 用户角色表关联用户
-ALTER TABLE sys_user_role
-    ADD CONSTRAINT fk_user_role_user
-        FOREIGN KEY (user_id)
-            REFERENCES sys_user (id)
-            ON UPDATE CASCADE
-            ON DELETE CASCADE;
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_user_role_user'),
+    'ALTER TABLE sys_user_role ADD CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES sys_user(id) ON UPDATE CASCADE ON DELETE CASCADE',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 用户角色表关联角色
-ALTER TABLE sys_user_role
-    ADD CONSTRAINT fk_user_role_role
-        FOREIGN KEY (role_id)
-            REFERENCES sys_role (id)
-            ON UPDATE CASCADE
-            ON DELETE RESTRICT;
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_user_role_role'),
+    'ALTER TABLE sys_user_role ADD CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES sys_role(id) ON UPDATE CASCADE ON DELETE RESTRICT',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 信用记录关联用户
-ALTER TABLE credit_record
-    ADD CONSTRAINT fk_credit_record_user
-        FOREIGN KEY (user_id)
-            REFERENCES sys_user (id)
-            ON UPDATE CASCADE
-            ON DELETE RESTRICT;
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_credit_record_user'),
+    'ALTER TABLE credit_record ADD CONSTRAINT fk_credit_record_user FOREIGN KEY (user_id) REFERENCES sys_user(id) ON UPDATE CASCADE ON DELETE RESTRICT',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 信用记录中的管理员操作人
-ALTER TABLE credit_record
-    ADD CONSTRAINT fk_credit_record_operator
-        FOREIGN KEY (operator_id)
-            REFERENCES sys_user (id)
-            ON UPDATE CASCADE
-            ON DELETE SET NULL;
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_credit_record_operator'),
+    'ALTER TABLE credit_record ADD CONSTRAINT fk_credit_record_operator FOREIGN KEY (operator_id) REFERENCES sys_user(id) ON UPDATE CASCADE ON DELETE SET NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 操作日志关联操作人员
-ALTER TABLE operation_log
-    ADD CONSTRAINT fk_operation_log_operator
-        FOREIGN KEY (operator_id)
-            REFERENCES sys_user (id)
-            ON UPDATE CASCADE
-            ON DELETE SET NULL;
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_operation_log_operator'),
+    'ALTER TABLE operation_log ADD CONSTRAINT fk_operation_log_operator FOREIGN KEY (operator_id) REFERENCES sys_user(id) ON UPDATE CASCADE ON DELETE SET NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 用户账户状态只能是正常或禁用
-ALTER TABLE sys_user
-    ADD CONSTRAINT chk_user_status
-        CHECK (status IN ('ENABLED', 'DISABLED'));
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_type_image_type'),
+    'ALTER TABLE room_type_image ADD CONSTRAINT fk_room_type_image_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 连续取消次数不能小于0
-ALTER TABLE sys_user
-    ADD CONSTRAINT chk_cancel_count
-        CHECK (consecutive_cancel_count >= 0);
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_type_facility_type'),
+    'ALTER TABLE room_type_facility ADD CONSTRAINT fk_room_type_facility_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 信用变动类型限制
-ALTER TABLE credit_record
-    ADD CONSTRAINT chk_credit_change_type
-        CHECK (change_type IN ('CANCEL', 'COMPLETE', 'BAN', 'UNBAN'));
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_daily_inventory_type'),
+    'ALTER TABLE daily_inventory ADD CONSTRAINT fk_daily_inventory_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 操作结果限制
-ALTER TABLE operation_log
-    ADD CONSTRAINT chk_operation_result
-        CHECK (result IN ('SUCCESS', 'FAIL'));
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_inventory_log_type'),
+    'ALTER TABLE inventory_log ADD CONSTRAINT fk_inventory_log_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- order_id暂时只建立普通索引。
--- 等成员3的订单表确定后，再决定是否添加物理外键。
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_type'),
+    'ALTER TABLE room ADD CONSTRAINT fk_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_user'),
+    'ALTER TABLE hotel_order ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES sys_user(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_room_type'),
+    'ALTER TABLE hotel_order ADD CONSTRAINT fk_order_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_credit_record_order'),
+    'ALTER TABLE credit_record ADD CONSTRAINT fk_credit_record_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_cancel_order'),
+    'ALTER TABLE order_cancel_record ADD CONSTRAINT fk_order_cancel_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_payment_order'),
+    'ALTER TABLE payment_record ADD CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_status_log_room'),
+    'ALTER TABLE room_status_log ADD CONSTRAINT fk_room_status_log_room FOREIGN KEY (room_id) REFERENCES room(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_assignment_order'),
+    'ALTER TABLE room_assignment ADD CONSTRAINT fk_room_assignment_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_assignment_room'),
+    'ALTER TABLE room_assignment ADD CONSTRAINT fk_room_assignment_room FOREIGN KEY (room_id) REFERENCES room(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_checkin_qr_order'),
+    'ALTER TABLE checkin_qr_token ADD CONSTRAINT fk_checkin_qr_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = @db_name AND table_name = 'daily_price')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_daily_price_room_type'),
+    'ALTER TABLE daily_price ADD CONSTRAINT fk_daily_price_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = @db_name AND table_name = 'daily_price')
+    AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = @db_name AND table_name = 'holiday_calendar')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_daily_price_holiday'),
+    'ALTER TABLE daily_price ADD CONSTRAINT fk_daily_price_holiday FOREIGN KEY (holiday_calendar_id) REFERENCES holiday_calendar(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = @db_name AND table_name = 'price_operation_log')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_price_log_room_type'),
+    'ALTER TABLE price_operation_log ADD CONSTRAINT fk_price_log_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
