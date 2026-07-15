@@ -1,0 +1,1463 @@
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/inventory/service/InventoryService.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/inventory/service/impl/InventoryServiceImpl.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/pricing/service/PriceService.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/pricing/service/impl/PriceServiceImpl.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/room/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/roomtype/service/impl/RoomTypeQueryServiceImpl.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/main/java/com/zhisu/hotel/systemconfig/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/modules/member4_room_frontdesk.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/modules/member5_pricing_content.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/layouts/AdminLayout.vue', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/modules/home/Home.vue', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/router/index.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex f64cf29..2515d29 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -1,16 +1,23 @@[m
+[31m-# Backend[m
+[32m+[m[32m﻿# Backend[m
+ /target/[m
+ *.log[m
+ application-local.yml[m
+ application-dev.local.yml[m
+ application-dev.yml[m
+ [m
+[32m+[m[32m# Backend build[m
+[32m+[m[32mbackend/target/[m
+[32m+[m
+ # Frontend[m
+ /node_modules/[m
+ /dist/[m
+ .env.local[m
+ .env.*.local[m
+ [m
+[32m+[m[32m# Frontend dependencies and build[m
+[32m+[m[32mfrontend/node_modules/[m
+[32m+[m[32mfrontend/dist/[m
+[32m+[m
+ # IDE[m
+ .idea/[m
+ *.iml[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/inventory/service/InventoryService.java b/backend/src/main/java/com/zhisu/hotel/inventory/service/InventoryService.java[m
+[1mindex 577044f..9b77f9d 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/inventory/service/InventoryService.java[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/inventory/service/InventoryService.java[m
+[36m@@ -7,46 +7,23 @@[m [mimport java.util.List;[m
+ [m
+ public interface InventoryService {[m
+ [m
+[31m-    /**[m
+[31m-     * 检查指定日期范围内房型是否有足够可售库存[m
+[31m-     */[m
+     boolean checkInventory(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count);[m
+ [m
+[31m-    /**[m
+[31m-     * 锁定库存（创建订单时调用）[m
+[31m-     * 将可售库存转为锁定库存[m
+[31m-     */[m
+     boolean lockInventory(Long orderId, Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count);[m
+ [m
+[31m-    /**[m
+[31m-     * 确认预订（支付成功后调用）[m
+[31m-     * 将锁定库存转为已预订库存[m
+[31m-     */[m
+     boolean confirmInventory(Long orderId);[m
+ [m
+[31m-    /**[m
+[31m-     * 释放库存（取消订单或超时关闭时调用）[m
+[31m-     * 将锁定或已预订库存释放回可售库存[m
+[31m-     */[m
+     boolean releaseInventory(Long orderId);[m
+ [m
+[31m-    /**[m
+[31m-     * 为指定房型生成未来N天的初始库存[m
+[31m-     */[m
+     void generateDailyInventory(Long roomTypeId, int totalRooms, int days);[m
+ [m
+[31m-    /**[m
+[31m-     * 批量生成所有房型未来N天库存[m
+[31m-     */[m
+     void generateAllDailyInventory(int days);[m
+ [m
+[31m-    /**[m
+[31m-     * 查询指定日期范围的可售库存[m
+[31m-     */[m
+[32m+[m[32m    void ensureInventoryExists(Long roomTypeId, LocalDate startDate, LocalDate endDate);[m
+[32m+[m
+[32m+[m[32m    int ensureRollingWindowInventory();[m
+[32m+[m
+     List<DailyInventory> getAvailableInventory(Long roomTypeId, LocalDate startDate, LocalDate endDate);[m
+ [m
+[31m-    /**[m
+[31m-     * 获取日期范围内最低可售数量[m
+[31m-     */[m
+     int getMinAvailableCount(Long roomTypeId, LocalDate startDate, LocalDate endDate);[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/inventory/service/impl/InventoryServiceImpl.java b/backend/src/main/java/com/zhisu/hotel/inventory/service/impl/InventoryServiceImpl.java[m
+[1mindex 57ac6c9..8bd5a60 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/inventory/service/impl/InventoryServiceImpl.java[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/inventory/service/impl/InventoryServiceImpl.java[m
+[36m@@ -1,6 +1,7 @@[m
+ package com.zhisu.hotel.inventory.service.impl;[m
+ [m
+ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;[m
+[32m+[m[32mimport com.zhisu.hotel.booking.service.BookingDatePolicyService;[m
+ import com.zhisu.hotel.inventory.entity.DailyInventory;[m
+ import com.zhisu.hotel.inventory.entity.InventoryLog;[m
+ import com.zhisu.hotel.inventory.mapper.DailyInventoryMapper;[m
+[36m@@ -8,23 +9,31 @@[m [mimport com.zhisu.hotel.inventory.mapper.InventoryLogMapper;[m
+ import com.zhisu.hotel.inventory.service.InventoryService;[m
+ import com.zhisu.hotel.roomtype.entity.RoomType;[m
+ import com.zhisu.hotel.roomtype.mapper.RoomTypeMapper;[m
+[32m+[m[32mimport com.zhisu.hotel.systemconfig.service.SystemConfigService;[m
+ import lombok.RequiredArgsConstructor;[m
+[32m+[m[32mimport org.springframework.dao.DuplicateKeyException;[m
+ import org.springframework.stereotype.Service;[m
+ import org.springframework.transaction.annotation.Transactional;[m
+ [m
+ import java.time.LocalDate;[m
+[32m+[m[32mimport java.time.temporal.ChronoUnit;[m
+ import java.util.List;[m
+ [m
+ @Service[m
+ @RequiredArgsConstructor[m
+ public class InventoryServiceImpl implements InventoryService {[m
+ [m
+[32m+[m[32m    private static final int DEFAULT_TOTAL_ROOMS = 10;[m
+[32m+[m
+     private final DailyInventoryMapper dailyInventoryMapper;[m
+     private final InventoryLogMapper inventoryLogMapper;[m
+     private final RoomTypeMapper roomTypeMapper;[m
+[32m+[m[32m    private final BookingDatePolicyService bookingDatePolicyService;[m
+[32m+[m[32m    private final SystemConfigService systemConfigService;[m
+ [m
+     @Override[m
+     public boolean checkInventory(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count) {[m
+[32m+[m[32m        ensureInventoryExists(roomTypeId, checkIn, checkOut.minusDays(1));[m
+         LocalDate date = checkIn;[m
+         while (date.isBefore(checkOut)) {[m
+             LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();[m
+[36m@@ -43,6 +52,7 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+     @Override[m
+     @Transactional[m
+     public boolean lockInventory(Long orderId, Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count) {[m
+[32m+[m[32m        ensureInventoryExists(roomTypeId, checkIn, checkOut.minusDays(1));[m
+         LocalDate date = checkIn;[m
+         while (date.isBefore(checkOut)) {[m
+             LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();[m
+[36m@@ -50,15 +60,13 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+                     .eq(DailyInventory::getInventoryDate, date);[m
+             DailyInventory inventory = dailyInventoryMapper.selectOne(wrapper);[m
+             if (inventory == null || inventory.getAvailableRooms() < count) {[m
+[31m-                throw new RuntimeException("库存不足");[m
+[32m+[m[32m                throw new RuntimeException("Inventory is insufficient");[m
+             }[m
+             int before = inventory.getAvailableRooms();[m
+             inventory.setLockedRooms(inventory.getLockedRooms() + count);[m
+             inventory.setAvailableRooms(inventory.getAvailableRooms() - count);[m
+             dailyInventoryMapper.updateById(inventory);[m
+[31m-[m
+[31m-            // 记录日志[m
+[31m-            saveLog(roomTypeId, date, "LOCK", before, inventory.getAvailableRooms(), -count, orderId, "订单锁定库存");[m
+[32m+[m[32m            saveLog(roomTypeId, date, "LOCK", before, inventory.getAvailableRooms(), -count, orderId, "Lock inventory for order");[m
+             date = date.plusDays(1);[m
+         }[m
+         return true;[m
+[36m@@ -67,7 +75,6 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+     @Override[m
+     @Transactional[m
+     public boolean confirmInventory(Long orderId) {[m
+[31m-        // 将锁定库存转为已预订 - 通过日志反查并更新[m
+         LambdaQueryWrapper<InventoryLog> logWrapper = new LambdaQueryWrapper<>();[m
+         logWrapper.eq(InventoryLog::getOrderId, orderId)[m
+                 .eq(InventoryLog::getChangeType, "LOCK");[m
+[36m@@ -82,7 +89,7 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+                 inventory.setLockedRooms(inventory.getLockedRooms() - Math.abs(log.getChangeAmount()));[m
+                 inventory.setBookedRooms(inventory.getBookedRooms() + Math.abs(log.getChangeAmount()));[m
+                 dailyInventoryMapper.updateById(inventory);[m
+[31m-                saveLog(log.getRoomTypeId(), log.getInventoryDate(), "CONFIRM", before, inventory.getAvailableRooms(), 0, orderId, "确认预订");[m
+[32m+[m[32m                saveLog(log.getRoomTypeId(), log.getInventoryDate(), "CONFIRM", before, inventory.getAvailableRooms(), 0, orderId, "Confirm booking inventory");[m
+             }[m
+         }[m
+         return true;[m
+[36m@@ -91,7 +98,6 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+     @Override[m
+     @Transactional[m
+     public boolean releaseInventory(Long orderId) {[m
+[31m-        // 释放锁定或已预订库存[m
+         LambdaQueryWrapper<InventoryLog> logWrapper = new LambdaQueryWrapper<>();[m
+         logWrapper.eq(InventoryLog::getOrderId, orderId)[m
+                 .in(InventoryLog::getChangeType, "LOCK", "CONFIRM");[m
+[36m@@ -108,7 +114,7 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+                 inventory.setBookedRooms(Math.max(0, inventory.getBookedRooms() - amount));[m
+                 inventory.setAvailableRooms(inventory.getAvailableRooms() + amount);[m
+                 dailyInventoryMapper.updateById(inventory);[m
+[31m-                saveLog(log.getRoomTypeId(), log.getInventoryDate(), "RELEASE", before, inventory.getAvailableRooms(), amount, orderId, "释放库存");[m
+[32m+[m[32m                saveLog(log.getRoomTypeId(), log.getInventoryDate(), "RELEASE", before, inventory.getAvailableRooms(), amount, orderId, "Release inventory");[m
+             }[m
+         }[m
+         return true;[m
+[36m@@ -119,23 +125,7 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+     public void generateDailyInventory(Long roomTypeId, int totalRooms, int days) {[m
+         for (int i = 0; i < days; i++) {[m
+             LocalDate date = LocalDate.now().plusDays(i);[m
+[31m-            LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();[m
+[31m-            wrapper.eq(DailyInventory::getRoomTypeId, roomTypeId)[m
+[31m-                    .eq(DailyInventory::getInventoryDate, date);[m
+[31m-            DailyInventory existing = dailyInventoryMapper.selectOne(wrapper);[m
+[31m-            if (existing == null) {[m
+[31m-                DailyInventory inventory = DailyInventory.builder()[m
+[31m-                        .roomTypeId(roomTypeId)[m
+[31m-                        .inventoryDate(date)[m
+[31m-                        .totalRooms(totalRooms)[m
+[31m-                        .lockedRooms(0)[m
+[31m-                        .bookedRooms(0)[m
+[31m-                        .availableRooms(totalRooms)[m
+[31m-                        .status("ACTIVE")[m
+[31m-                        .build();[m
+[31m-                dailyInventoryMapper.insert(inventory);[m
+[31m-                saveLog(roomTypeId, date, "MANUAL", 0, totalRooms, totalRooms, null, "初始化库存");[m
+[31m-            }[m
+[32m+[m[32m            ensureOneInventoryRecord(roomTypeId, date, totalRooms);[m
+         }[m
+     }[m
+ [m
+[36m@@ -144,8 +134,36 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+     public void generateAllDailyInventory(int days) {[m
+         List<RoomType> roomTypes = roomTypeMapper.selectList(null);[m
+         for (RoomType roomType : roomTypes) {[m
+[31m-            generateDailyInventory(roomType.getId(), 10, days);[m
+[32m+[m[32m            generateDailyInventory(roomType.getId(), DEFAULT_TOTAL_ROOMS, days);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    @Transactional[m
+[32m+[m[32m    public void ensureInventoryExists(Long roomTypeId, LocalDate startDate, LocalDate endDate) {[m
+[32m+[m[32m        if (roomTypeId == null || startDate == null || endDate == null || endDate.isBefore(startDate)) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m[32m        int totalRooms = resolveTotalRooms(roomTypeId);[m
+[32m+[m[32m        LocalDate current = startDate;[m
+[32m+[m[32m        while (!current.isAfter(endDate)) {[m
+[32m+[m[32m            ensureOneInventoryRecord(roomTypeId, current, totalRooms);[m
+[32m+[m[32m            current = current.plusDays(1);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    @Transactional[m
+[32m+[m[32m    public int ensureRollingWindowInventory() {[m
+[32m+[m[32m        LocalDate today = bookingDatePolicyService.getHotelToday();[m
+[32m+[m[32m        LocalDate latestCheckInDate = bookingDatePolicyService.getLatestCheckInDate();[m
+[32m+[m[32m        int maxStayNights = systemConfigService.getInteger("MAX_STAY_NIGHTS");[m
+[32m+[m[32m        LocalDate requiredEndDate = latestCheckInDate.plusDays(maxStayNights - 1L);[m
+[32m+[m[32m        List<RoomType> roomTypes = roomTypeMapper.selectList(null);[m
+[32m+[m[32m        for (RoomType roomType : roomTypes) {[m
+[32m+[m[32m            ensureInventoryExists(roomType.getId(), today, requiredEndDate);[m
+         }[m
+[32m+[m[32m        return roomTypes.size() * (int) (ChronoUnit.DAYS.between(today, requiredEndDate) + 1);[m
+     }[m
+ [m
+     @Override[m
+[36m@@ -166,6 +184,44 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+                 .orElse(0);[m
+     }[m
+ [m
+[32m+[m[32m    private void ensureOneInventoryRecord(Long roomTypeId, LocalDate date, int totalRooms) {[m
+[32m+[m[32m        LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();[m
+[32m+[m[32m        wrapper.eq(DailyInventory::getRoomTypeId, roomTypeId)[m
+[32m+[m[32m                .eq(DailyInventory::getInventoryDate, date);[m
+[32m+[m[32m        DailyInventory existing = dailyInventoryMapper.selectOne(wrapper);[m
+[32m+[m[32m        if (existing != null) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        DailyInventory inventory = DailyInventory.builder()[m
+[32m+[m[32m                .roomTypeId(roomTypeId)[m
+[32m+[m[32m                .inventoryDate(date)[m
+[32m+[m[32m                .totalRooms(totalRooms)[m
+[32m+[m[32m                .lockedRooms(0)[m
+[32m+[m[32m                .bookedRooms(0)[m
+[32m+[m[32m                .availableRooms(totalRooms)[m
+[32m+[m[32m                .status("ACTIVE")[m
+[32m+[m[32m                .build();[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            dailyInventoryMapper.insert(inventory);[m
+[32m+[m[32m            saveLog(roomTypeId, date, "SYSTEM_INIT", 0, totalRooms, totalRooms, null, "Initialize rolling inventory");[m
+[32m+[m[32m        } catch (DuplicateKeyException ignored) {[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private int resolveTotalRooms(Long roomTypeId) {[m
+[32m+[m[32m        DailyInventory latestInventory = dailyInventoryMapper.selectOne([m
+[32m+[m[32m                new LambdaQueryWrapper<DailyInventory>()[m
+[32m+[m[32m                        .eq(DailyInventory::getRoomTypeId, roomTypeId)[m
+[32m+[m[32m                        .orderByDesc(DailyInventory::getInventoryDate)[m
+[32m+[m[32m                        .last("LIMIT 1")[m
+[32m+[m[32m        );[m
+[32m+[m[32m        if (latestInventory != null && latestInventory.getTotalRooms() != null && latestInventory.getTotalRooms() > 0) {[m
+[32m+[m[32m            return latestInventory.getTotalRooms();[m
+[32m+[m[32m        }[m
+[32m+[m[32m        return DEFAULT_TOTAL_ROOMS;[m
+[32m+[m[32m    }[m
+[32m+[m
+     private void saveLog(Long roomTypeId, LocalDate date, String changeType, int before, int after, int amount, Long orderId, String reason) {[m
+         InventoryLog log = InventoryLog.builder()[m
+                 .roomTypeId(roomTypeId)[m
+[36m@@ -180,4 +236,4 @@[m [mpublic class InventoryServiceImpl implements InventoryService {[m
+                 .build();[m
+         inventoryLogMapper.insert(log);[m
+     }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/pricing/service/PriceService.java b/backend/src/main/java/com/zhisu/hotel/pricing/service/PriceService.java[m
+[1mindex e791170..6b89738 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/pricing/service/PriceService.java[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/pricing/service/PriceService.java[m
+[36m@@ -1,9 +1,15 @@[m
+ package com.zhisu.hotel.pricing.service;[m
+ [m
+[32m+[m[32mimport com.zhisu.hotel.pricing.vo.DatePriceRule;[m
+[32m+[m
+ import java.math.BigDecimal;[m
+ import java.time.LocalDate;[m
+ [m
+ public interface PriceService {[m
+[31m-    [m
+[32m+[m
+     BigDecimal calculatePrice(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count);[m
+[31m-}[m
+[32m+[m
+[32m+[m[32m    BigDecimal calculateDailyPrice(BigDecimal basePrice, LocalDate date);[m
+[32m+[m
+[32m+[m[32m    DatePriceRule resolveDateRule(LocalDate date);[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/pricing/service/impl/PriceServiceImpl.java b/backend/src/main/java/com/zhisu/hotel/pricing/service/impl/PriceServiceImpl.java[m
+[1mindex 52d74ab..6484f9d 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/pricing/service/impl/PriceServiceImpl.java[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/pricing/service/impl/PriceServiceImpl.java[m
+[36m@@ -1,16 +1,63 @@[m
+ package com.zhisu.hotel.pricing.service.impl;[m
+ [m
+[32m+[m[32mimport com.zhisu.hotel.booking.service.BookingDatePolicyService;[m
+[32m+[m[32mimport com.zhisu.hotel.common.exception.BusinessException;[m
+[32m+[m[32mimport com.zhisu.hotel.pricing.entity.DailyPrice;[m
+[32m+[m[32mimport com.zhisu.hotel.pricing.service.DailyPriceService;[m
+[32m+[m[32mimport com.zhisu.hotel.pricing.service.HolidayCalendarService;[m
+ import com.zhisu.hotel.pricing.service.PriceService;[m
+[32m+[m[32mimport com.zhisu.hotel.pricing.vo.DatePriceRule;[m
+[32m+[m[32mimport lombok.RequiredArgsConstructor;[m
+ import org.springframework.stereotype.Service;[m
+ [m
+ import java.math.BigDecimal;[m
+[32m+[m[32mimport java.math.RoundingMode;[m
+ import java.time.LocalDate;[m
+[32m+[m[32mimport java.time.temporal.ChronoUnit;[m
+[32m+[m[32mimport java.util.List;[m
+ [m
+ @Service[m
+[32m+[m[32m@RequiredArgsConstructor[m
+ public class PriceServiceImpl implements PriceService {[m
+ [m
+[32m+[m[32m    private final HolidayCalendarService holidayCalendarService;[m
+[32m+[m[32m    private final DailyPriceService dailyPriceService;[m
+[32m+[m[32m    private final BookingDatePolicyService bookingDatePolicyService;[m
+[32m+[m
+     @Override[m
+     public BigDecimal calculatePrice(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count) {[m
+[31m-        return BigDecimal.ZERO;[m
+[32m+[m[32m        if (roomTypeId == null) {[m
+[32m+[m[32m            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "Room type id cannot be null");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        if (count <= 0) {[m
+[32m+[m[32m            throw new BusinessException("ROOM_COUNT_INVALID", "Room count must be greater than 0");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        bookingDatePolicyService.validateBookingDates(checkIn, checkOut);[m
+[32m+[m
+[32m+[m[32m        LocalDate lastStayDate = checkOut.minusDays(1);[m
+[32m+[m[32m        dailyPriceService.ensurePricesExist(roomTypeId, checkIn, lastStayDate);[m
+[32m+[m
+[32m+[m[32m        List<DailyPrice> prices = dailyPriceService.listDailyPrices(roomTypeId, checkIn, lastStayDate);[m
+[32m+[m[32m        long expectedNights = ChronoUnit.DAYS.between(checkIn, checkOut);[m
+[32m+[m[32m        if (prices.size() != expectedNights) {[m
+[32m+[m[32m            throw new BusinessException("DAILY_PRICE_MISSING", "Daily prices are incomplete for the selected stay dates");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        BigDecimal oneRoomAmount = prices.stream()[m
+[32m+[m[32m                .map(DailyPrice::getFinalPrice)[m
+[32m+[m[32m                .reduce(BigDecimal.ZERO, BigDecimal::add);[m
+[32m+[m
+[32m+[m[32m        return oneRoomAmount.multiply(BigDecimal.valueOf(count)).setScale(2, RoundingMode.HALF_UP);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public BigDecimal calculateDailyPrice(BigDecimal basePrice, LocalDate date) {[m
+[32m+[m[32m        return basePrice.multiply(resolveDateRule(date).coefficient()).setScale(2, RoundingMode.HALF_UP);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public DatePriceRule resolveDateRule(LocalDate date) {[m
+[32m+[m[32m        return holidayCalendarService.resolveDateRule(date);[m
+     }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/room/README.md b/backend/src/main/java/com/zhisu/hotel/room/README.md[m
+[1mindex c299b9c..52f582b 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/room/README.md[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/room/README.md[m
+[36m@@ -1,10 +1,11 @@[m
+[31m-# Room Module - 房间模块[m
+[32m+[m[32m﻿# Room Module - 房间模块[m
+ ## 负责人：成员4[m
+ [m
+ ## 负责范围[m
+ - 实体房间CRUD[m
+ - 房间状态管理[m
+ - 房态地图[m
+[32m+[m[32m- 房间编号规则：3楼到8楼，每层20间，编号从301-320，依次到801-820[m
+ [m
+ ## 依赖的其他模块[m
+ - common, roomtype[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/roomtype/service/impl/RoomTypeQueryServiceImpl.java b/backend/src/main/java/com/zhisu/hotel/roomtype/service/impl/RoomTypeQueryServiceImpl.java[m
+[1mindex 7b83667..f781372 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/roomtype/service/impl/RoomTypeQueryServiceImpl.java[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/roomtype/service/impl/RoomTypeQueryServiceImpl.java[m
+[36m@@ -1,8 +1,6 @@[m
+ package com.zhisu.hotel.roomtype.service.impl;[m
+ [m
+[31m-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;[m
+[31m-import com.zhisu.hotel.inventory.entity.DailyInventory;[m
+[31m-import com.zhisu.hotel.inventory.mapper.DailyInventoryMapper;[m
+[32m+[m[32mimport com.zhisu.hotel.inventory.service.InventoryService;[m
+ import com.zhisu.hotel.roomtype.dto.RoomTypeSummary;[m
+ import com.zhisu.hotel.roomtype.entity.RoomType;[m
+ import com.zhisu.hotel.roomtype.mapper.RoomTypeMapper;[m
+[36m@@ -17,7 +15,7 @@[m [mimport java.time.LocalDate;[m
+ public class RoomTypeQueryServiceImpl implements RoomTypeQueryService {[m
+ [m
+     private final RoomTypeMapper roomTypeMapper;[m
+[31m-    private final DailyInventoryMapper dailyInventoryMapper;[m
+[32m+[m[32m    private final InventoryService inventoryService;[m
+ [m
+     @Override[m
+     public RoomTypeSummary getRoomTypeById(Long roomTypeId) {[m
+[36m@@ -54,18 +52,7 @@[m [mpublic class RoomTypeQueryServiceImpl implements RoomTypeQueryService {[m
+ [m
+     @Override[m
+     public boolean hasAvailableInventory(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count) {[m
+[31m-        LocalDate date = checkIn;[m
+[31m-        while (date.isBefore(checkOut)) {[m
+[31m-            LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();[m
+[31m-            wrapper.eq(DailyInventory::getRoomTypeId, roomTypeId)[m
+[31m-                    .eq(DailyInventory::getInventoryDate, date)[m
+[31m-                    .eq(DailyInventory::getStatus, "ACTIVE");[m
+[31m-            DailyInventory inventory = dailyInventoryMapper.selectOne(wrapper);[m
+[31m-            if (inventory == null || inventory.getAvailableRooms() < count) {[m
+[31m-                return false;[m
+[31m-            }[m
+[31m-            date = date.plusDays(1);[m
+[31m-        }[m
+[31m-        return true;[m
+[32m+[m[32m        inventoryService.ensureInventoryExists(roomTypeId, checkIn, checkOut.minusDays(1));[m
+[32m+[m[32m        return inventoryService.checkInventory(roomTypeId, checkIn, checkOut, count);[m
+     }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/src/main/java/com/zhisu/hotel/systemconfig/README.md b/backend/src/main/java/com/zhisu/hotel/systemconfig/README.md[m
+[1mindex 5ffd054..eb08a69 100644[m
+[1m--- a/backend/src/main/java/com/zhisu/hotel/systemconfig/README.md[m
+[1m+++ b/backend/src/main/java/com/zhisu/hotel/systemconfig/README.md[m
+[36m@@ -8,7 +8,7 @@[m
+ - common[m
+ [m
+ ## 对外提供的Service[m
+[31m-- 待补充[m
+[32m+[m[32m- `SystemConfigService`[m
+ [m
+ ## 禁止直接访问的其他模块Mapper[m
+ - 所有其他模块的Mapper[m
+[1mdiff --git a/backend/src/main/resources/application-dev.example.yml b/backend/src/main/resources/application-dev.example.yml[m
+[1mindex 157b584..290d044 100644[m
+[1m--- a/backend/src/main/resources/application-dev.example.yml[m
+[1m+++ b/backend/src/main/resources/application-dev.example.yml[m
+[36m@@ -4,11 +4,11 @@[m [mserver:[m
+ spring:[m
+   datasource:[m
+     driver-class-name: com.mysql.cj.jdbc.Driver[m
+[31m-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai[m
+[31m-    username: ${DB_USERNAME}[m
+[31m-    password: ${DB_PASSWORD}[m
+[32m+[m[32m    url: jdbc:mysql://localhost:3306/zhisu_hotel?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true[m
+[32m+[m[32m    username: root[m
+[32m+[m[32m    password: "你的MySQL密码"[m
+ [m
+ mybatis-plus:[m
+[31m-  mapper-locations: classpath:mapper/**/*.xml[m
+   configuration:[m
+     map-underscore-to-camel-case: true[m
+[32m+[m[32m  mapper-locations: classpath*:mapper/**/*.xml[m
+\ No newline at end of file[m
+[1mdiff --git a/database/modules/member4_room_frontdesk.sql b/database/modules/member4_room_frontdesk.sql[m
+[1mindex 929e615..d6a7ea8 100644[m
+[1m--- a/database/modules/member4_room_frontdesk.sql[m
+[1m+++ b/database/modules/member4_room_frontdesk.sql[m
+[36m@@ -1,4 +1,15 @@[m
+[31m-USE zhisu_hotel;[m
+[32m+[m[32m﻿USE zhisu_hotel;[m
+ [m
+ -- 成员4负责的表：房间、前台相关[m
+[32m+[m[32m-- 房间编号规则确认：[m
+[32m+[m[32m-- 1. 楼层范围：3楼到8楼[m
+[32m+[m[32m-- 2. 每层房间号范围：01到20[m
+[32m+[m[32m-- 3. 最终房间编号：[m
+[32m+[m[32m--    301-320[m
+[32m+[m[32m--    401-420[m
+[32m+[m[32m--    501-520[m
+[32m+[m[32m--    601-620[m
+[32m+[m[32m--    701-720[m
+[32m+[m[32m--    801-820[m
+[32m+[m[32m-- 4. 后续创建 room 表及初始化数据时，必须按以上规则生成房间编号[m
+ -- 预留表结构，后续补充[m
+[1mdiff --git a/database/modules/member5_pricing_content.sql b/database/modules/member5_pricing_content.sql[m
+[1mindex 127d7c0..5e8f942 100644[m
+[1m--- a/database/modules/member5_pricing_content.sql[m
+[1m+++ b/database/modules/member5_pricing_content.sql[m
+[36m@@ -1,27 +1,24 @@[m
+ USE zhisu_hotel;[m
+ [m
+ CREATE TABLE IF NOT EXISTS hotel_info ([m
+[31m-                                          id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '酒店信息主键ID',[m
+[31m-                                          hotel_name VARCHAR(100) NOT NULL COMMENT '酒店名称',[m
+[31m-    logo_url VARCHAR(500) DEFAULT NULL COMMENT '酒店Logo地址',[m
+[31m-    introduction TEXT COMMENT '酒店介绍',[m
+[31m-    address VARCHAR(255) DEFAULT NULL COMMENT '酒店地址',[m
+[31m-    contact_phone VARCHAR(30) DEFAULT NULL COMMENT '联系电话',[m
+[31m-    facilities TEXT COMMENT '酒店设施说明',[m
+[31m-    checkin_notice TEXT COMMENT '入住须知',[m
+[31m-    cancellation_policy TEXT COMMENT '取消规则',[m
+[31m-    traffic_info TEXT COMMENT '交通信息',[m
+[31m-    faq_content TEXT COMMENT '常见问题',[m
+[31m-    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED'[m
+[31m-    COMMENT '状态：ENABLED-启用，DISABLED-停用',[m
+[31m-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP[m
+[31m-    COMMENT '创建时间',[m
+[31m-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP[m
+[31m-    ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'[m
+[31m-    ) ENGINE=InnoDB[m
+[31m-    DEFAULT CHARSET=utf8mb4[m
+[31m-    COLLATE=utf8mb4_unicode_ci[m
+[31m-    COMMENT='酒店基本信息表';[m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '闂備胶澧楃敮鎺旇姳閸偆鈹嶉柍鈺佸暕缁辨牕鈽夐幘鎰佺吋闁轰胶鎷',[m
+[32m+[m[32m    hotel_name VARCHAR(100) NOT NULL COMMENT '闂備胶澧楃敮鎺旇姳閻㈢瑙︾€广儱娉?,[m
+[32m+[m[32m    logo_url VARCHAR(500) DEFAULT NULL COMMENT '闂備胶澧楃敮鎺旇姳缁€姝癵o闂侀潻闄勫妯侯焽?,[m
+[32m+[m[32m    introduction TEXT COMMENT '闂備胶澧楃敮鎺旇姳閸偆顩烽悗锝庡墰閻?,[m
+[32m+[m[32m    address VARCHAR(255) DEFAULT NULL COMMENT '闂備胶澧楃敮鎺旇姳閻㈢鎹堕柡澶嬪缁?,[m
+[32m+[m[32m    contact_phone VARCHAR(30) DEFAULT NULL COMMENT '闂佽壈椴稿濠氭焾閹绢喗鍋ㄥù锝呭暟濡?,[m
+[32m+[m[32m    facilities TEXT COMMENT '闂備胶澧楃敮鎺旇姳閻㈠灚濯奸柣鎰靛墯閻撱垽鎮归崶褏鎽犳俊?,[m
+[32m+[m[32m    checkin_notice TEXT COMMENT '闂佺绻堥崕鎵礊閸ャ劊浜滈柤濮愬€楅崣鈧?,[m
+[32m+[m[32m    cancellation_policy TEXT COMMENT '闂佸憡鐟﹂悧妤冪矓妞嬪孩鍠嗛柛鏇ㄥ亜閻?,[m
+[32m+[m[32m    traffic_info TEXT COMMENT '婵炲瓨鍤庨崐婵嬪焵椤掍胶鐓ǎ鍥э躬楠?,[m
+[32m+[m[32m    faq_content TEXT COMMENT '闁汇埄鍨遍悺鏇綖閸℃稒鈷掓い鏇楀亾妞?,[m
+[32m+[m[32m    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED' COMMENT '闂佺粯顭堥崺鏍焵椤戣法绛忕紒杈╂NABLED-闂佸憡鍑归崹鎶藉极閵堝鏅悗娑樼摜SABLED-闂佺顑嗙划搴ㄥ极?,[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '闂佸憡甯楃粙鎴犵磽閹捐绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '闂佸搫娲ら悺銊╁蓟婵犲洤绫嶉柛顐ｆ礃閿?[m
+[32m+[m[32m) ENGINE=InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET=utf8mb4[m
+[32m+[m[32m  COLLATE=utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT='闂備胶澧楃敮鎺旇姳閻㈢鏄ラ柣鎴炆戦幏鍗炃庨崶锝呭⒉濞寸厧鎳愰幃?;[m
+ [m
+ INSERT INTO hotel_info ([m
+     id,[m
+[36m@@ -32,12 +29,258 @@[m [mINSERT INTO hotel_info ([m
+     status[m
+ )[m
+ VALUES ([m
+[31m-           1,[m
+[31m-           '智宿酒店',[m
+[31m-           '智宿酒店是一家面向商务出行与休闲旅游住客的中小型单体酒店。',[m
+[31m-           '待管理员维护',[m
+[31m-           '待管理员维护',[m
+[31m-           'ENABLED'[m
+[31m-       )[m
+[31m-    ON DUPLICATE KEY UPDATE[m
+[31m-                         hotel_name = VALUES(hotel_name);[m
+\ No newline at end of file[m
+[32m+[m[32m    1,[m
+[32m+[m[32m    '闂佸搫鎳庨幖顐︻敊閺嶎厽鐓€闁圭儤鍨归弳?,[m
+[32m+[m[32m    '闂佸搫鎳庨幖顐︻敊閺嶎厽鐓€闁圭儤鍨归弳妤呮煛閸曢潧鐏熺紒鏂款嚟閳ь剛鎳撻悥鐓庮焽娴兼潙瑙﹂柟瀛樼箖濞呭矂鏌涢弬琛″亾閸愬弶鐦旈柣鐐寸☉婵傛梻绮仦鎯ь嚤闁硅揪闄勯敍婵嬫煛閸愩劍鍣洪柣鏍煐閹峰懓绠涢幙鍐ㄦ倕闂佹眹鍔岀€氼亪鎳欓幋鐘辩剨闊洦鎸鹃埀顒傚厴瀹曪繝寮村杈┬梻浣哄鐢帞鑺遍悽绋课?,[m
+[32m+[m[32m    '閻庡灚婢橀幊鎰邦敇閹间焦鍋犻柛鈩冾殕閸犲懐绱撴担鍝ユ憼濠?,[m
+[32m+[m[32m    '閻庡灚婢橀幊鎰邦敇閹间焦鍋犻柛鈩冾殕閸犲懐绱撴担鍝ユ憼濠?,[m
+[32m+[m[32m    'ENABLED'[m
+[32m+[m[32m)[m
+[32m+[m[32mON DUPLICATE KEY UPDATE[m
+[32m+[m[32m    hotel_name = VALUES(hotel_name);[m
+[32m+[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS hotel_banner ([m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '闁哄鍎愰崰妤呭箰闁秴鐐婄紓宥庢暓',[m
+[32m+[m[32m    title VARCHAR(100) NOT NULL COMMENT '闁哄鍎愰崰妤呭箰闁秴鐐婇柣鎰靛墰閸ㄧ厧螞?,[m
+[32m+[m[32m    image_url VARCHAR(500) NOT NULL COMMENT '闂佹悶鍎辨晶鑺ユ櫠閺嶎厼鎹堕柡澶嬪缁?,[m
+[32m+[m[32m    link_url VARCHAR(500) DEFAULT NULL COMMENT '闁荤姴鎼悿鍥归崱娑樻嵍闁哄瀵х徊?,[m
+[32m+[m[32m    sort_no INT NOT NULL DEFAULT 0 COMMENT '闂佸湱鍎ょ敮鎺旇姳椤撶喐鍎熼煫鍥ㄦ尭婵炲洭鏌ㄥ☉妯肩劮缂佸娅ｆ禍姝岀疀濮樻瘷銊╂⒒閸垹孝濠?,[m
+[32m+[m[32m    status VARCHAR(20) NOT NULL DEFAULT 'OFFLINE' COMMENT '闂佺粯顭堥崺鏍焵椤戣法绛忕紒杈╂珒UBLISHED-閻庣懓鎲¤ぐ鍐亹閸屾粍鏆滈柛鎰硶缁€濉怓FLINE-閻庤鐡曞鎾剁箔閸涙潙鍑?,[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '闂佸憡甯楃粙鎴犵磽閹捐绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '闂佸搫娲ら悺銊╁蓟婵犲洤绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    INDEX idx_banner_status_sort (status, sort_no)[m
+[32m+[m[32m) ENGINE=InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET=utf8mb4[m
+[32m+[m[32m  COLLATE=utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT='闂備胶澧楃敮鎺旇姳閸偓绱旈柡宥庡幑閳ь剙顦板顏堫敊閼恒儱鍟婇梺鎼炲劜瀹曟﹢濡?;[m
+[32m+[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS announcement ([m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '闂佺娴氶崜娆撳箟椤″粚',[m
+[32m+[m[32m    title VARCHAR(150) NOT NULL COMMENT '闂佺娴氶崜娆撳箟閿熺姴鍐€闁搞儺鍓﹂弳?,[m
+[32m+[m[32m    content TEXT NOT NULL COMMENT '闂佺娴氶崜娆撳箟閿熺姴绀冮柛娑卞弾閸?,[m
+[32m+[m[32m    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT '闂佺粯顭堥崺鏍焵椤戣法绛忕紒杈╂RAFT-闂佽壈妫勯ˇ閬嶁€﹂崼銉︽櫖閻庢稓鎸夿LISHED-閻庣懓鎲¤ぐ鍐亹閸屾粍鏆滈柛鎰硶缁€濉怓FLINE-閻庤鐡曞鎾剁箔閸涙潙鍑?,[m
+[32m+[m[32m    is_top TINYINT NOT NULL DEFAULT 0 COMMENT '闂佸搫瀚烽崹浼村箚娴ｈ櫣纾炬い鏇楀亾闁靛棗锕弫?-闂佸憡鐔拋锝囨?-闂?,[m
+[32m+[m[32m    publish_time DATETIME DEFAULT NULL COMMENT '闂佸憡鐟﹂崹鐢电博閻戣棄绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    offline_time DATETIME DEFAULT NULL COMMENT '婵炴垶鎸搁鍡涙倶閿曞倸绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    created_by BIGINT DEFAULT NULL COMMENT '闂佸憡甯楃粙鎴犵磽閹惧顩茬紒鈩冨',[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '闂佸憡甯楃粙鎴犵磽閹捐绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '闂佸搫娲ら悺銊╁蓟婵犲洤绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    INDEX idx_announcement_status_time (status, publish_time),[m
+[32m+[m[32m    INDEX idx_announcement_top_time (is_top, publish_time)[m
+[32m+[m[32m) ENGINE=InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET=utf8mb4[m
+[32m+[m[32m  COLLATE=utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT='闂備胶澧楃敮鎺旇姳閻㈢绀傛い鎺嗗亾闁硅绱曢幃?;[m
+[32m+[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS system_config ([m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '缂備緡鍨靛畷鐢靛垝濞差亜鐭楅柛灞剧⊕濞堢D',[m
+[32m+[m[32m    config_key VARCHAR(100) NOT NULL COMMENT '闂佸憡鐟ラ崐褰掑汲閻斿吋鐓?,[m
+[32m+[m[32m    config_value VARCHAR(500) NOT NULL COMMENT '闂佸憡鐟ラ崐褰掑汲閻旂厧纾?,[m
+[32m+[m[32m    config_name VARCHAR(100) NOT NULL COMMENT '闂佸憡鐟ラ崐褰掑汲閻旂厧瑙︾€广儱娉?,[m
+[32m+[m[32m    value_type VARCHAR(20) NOT NULL DEFAULT 'STRING' COMMENT '闂佺锕ㄩ崑鎰偖椤愶箑鍨傞悗锝呭缁愭〗TRING闂侀潧妫斿ù鐢員EGER闂侀潧妫旂粭宀碈IMAL闂侀潧妫旂粻鎱朚E',[m
+[32m+[m[32m    config_group VARCHAR(50) NOT NULL DEFAULT 'GENERAL' COMMENT '闂佸憡鐟ラ崐褰掑汲閻旂厧绀嗛柛鈩冪懅閻?,[m
+[32m+[m[32m    description VARCHAR(500) DEFAULT NULL COMMENT '闂佸憡鐟ラ崐褰掑汲閻旂儤瀚氶悗娑櫳戦～?,[m
+[32m+[m[32m    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED' COMMENT '闂佺粯顭堥崺鏍焵椤戣法绛忕紒杈╂NABLED闂侀潧妫旂粭宀籗ABLED',[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '闂佸憡甯楃粙鎴犵磽閹捐绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '闂佸搫娲ら悺銊╁蓟婵犲洤绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    UNIQUE KEY uk_system_config_key (config_key),[m
+[32m+[m[32m    INDEX idx_system_config_group (config_group)[m
+[32m+[m[32m) ENGINE=InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET=utf8mb4[m
+[32m+[m[32m  COLLATE=utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT='缂備緡鍨靛畷鐢靛垝濞差亜鐭楅柛灞剧⊕濞堝爼姊洪弶璺ㄐら柣銈呮閹?;[m
+[32m+[m
+[32m+[m[32mINSERT IGNORE INTO system_config[m
+[32m+[m[32m(config_key, config_value, config_name, value_type, config_group, description)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m('MAX_BOOKING_DAYS', '7', '闂佸搫鐗冮崑鎾愁熆閸棗鍟拋鎻捨涢弶鍨伂妞ゆ捁顫夊鍕煛閸屾稒顔?, 'INTEGER', 'BOOKING',[m
+[32m+[m[32m '闂佹椿娼块崝宥夊春濞戙垹瀚夐柍褜鍓氬鍕潩椤掆偓鐠佹煡姊洪銏╂Ч閻庢哎鍔戝鐢割敂閸涱噣妾锋繝銏ｅ煐閼归箖鎯冮娑樼窞闁宠桨绀侀弫鍫曟煟閵娿儱顏╅柛娆忔閹峰懓绠涢弮鈧敍澶愭煛?),[m
+[32m+[m[32m('PAYMENT_TIMEOUT_MINUTES', '15', '闂佽　鍋撴い鏍ㄧ懅鐢盯鎮洪幒鎴炲櫤婵＄偛鍊垮顕€宕奸弴鐕傜吹', 'INTEGER', 'ORDER',[m
+[32m+[m[32m '閻庡灚婢橀幊蹇涘极椤旂晫顩锋俊顖涱儥閸氬倿鏌涘Δ浣圭缂佸鐡ㄥ濠氬炊椤忓秴娈欓梺鍛婂笒濡繈骞愰幘璇叉瀬闁哄瀵ч崐鐢告煠婵傚绨诲┑顔规櫊瀹曟骞庨懞銉川'),[m
+[32m+[m[32m('CANCEL_THRESHOLD', '3', '闁哄鏅濋崑鐔兼偨婵犳艾鐭楅柡宥冨妿鍟搁梻鍌氬暙閻楀棝鍩€?, 'INTEGER', 'CREDIT',[m
+[32m+[m[32m '闁哄鏅濋崑鐔兼偨婵犳艾瀚夊璺侯儐濞呭繘鏌涘▎鎰缂佸鏀卞蹇涘箚瑜嶉悡鍌炴偣閸ャ儱鍔滄い鎰偢瀵偊寮堕幐搴♀偓鐢告偡濞嗘瑧鐣辩憸鏉垮€荤划瀣媴缁涘鎮?),[m
+[32m+[m[32m('BAN_DAYS', '7', '缂備礁鍊峰ù鍥敇鐟欏嫬绶為柍鍝勫€瑰▓?, 'INTEGER', 'CREDIT',[m
+[32m+[m[32m '闁哄鐗婇崕鎶藉春鐏炵偓浜ら柣鎰暩閺侀箖鏌涘▎鎰缂佸鍏樺濂稿醇濠靛啫浜鹃柣鎾冲閸婄敻鏌ｉ妸銉ヮ伀妞も晪濡囬幏瀣閻橆喕鍑介梺?),[m
+[32m+[m[32m('CHECKIN_TIME', '14:00', '婵帗绋掗…鍫ヮ敇婵犳艾绀傞柕澶堝€楃粔鍫曟煛閸愩劎鍩ｆ俊?, 'TIME', 'FRONTDESK',[m
+[32m+[m[32m '闂備胶澧楃敮鎺旇姳閸偒娓舵俊顖涱儥閸氬洭鏌涢弮鍌氫户闁诡喖锕畷妤呭Ψ閵堝洨肖闂佸搫鍟悥鐓幬?),[m
+[32m+[m[32m('CHECKOUT_TIME', '12:00', '婵帗绋掗…鍫ヮ敇婵犳碍鐒婚柍褜鍓熼獮瀣箰鎼淬埄妲梻?, 'TIME', 'FRONTDESK',[m
+[32m+[m[32m '闂備胶澧楃敮鎺旇姳閸偒娓舵俊顖涱儥閸氬洭姊洪鐔蜂壕闂佺懓鐡ㄧ€笛囧春閸涱収娼伴柕蹇婂墲椤ρ囨⒒?),[m
+[32m+[m[32m('INVENTORY_WARNING_VALUE', '2', '闁圭厧鐡ㄩ幐鎼佹偤閵婏讣绱ｉ柛鏇ㄥ櫘閸斿懘鏌?, 'INTEGER', 'INVENTORY',[m
+[32m+[m[32m '闂佸憡鐟崹浼村极椤撶喐鍎熼柟鎯х－閹界娀鎮樿箛鎾剁缂侇煈鍓熼獮瀣冀椤愩倖鎯ｆ繛瀛樼矊濮橈箓顢氬璺虹９闁稿繐鍚嬮ˇ褔鏌熺紒妯哄闁靛洦纰嶉幆鏃堝箻瀹曞洦鎲肩紓浣圭槺閸愵亞鍊?),[m
+[32m+[m[32m('IMAGE_MAX_SIZE_MB', '5', '闂佹悶鍎辨晶鑺ユ櫠閺嶎厼瀚夐柍褜鍓氬鍕槺缂佹鍊圭€靛ジ鎮╃仦鍌欐捣闁?, 'INTEGER', 'CONTENT',[m
+[32m+[m[32m '闂佹悶鍎辨晶鑺ユ櫠閺嶃劎鈻斿┑鐘辫兌閻愬﹪鏌￠崒姘煑婵炲棎鍨介幆鍐礋椤掍椒绮繝銏犵垻閸愭儳鏅ｉ梻浣瑰絻妤犲繒妲愬┑瀣闁哄洦姘ㄧ粔纰滲'),[m
+[32m+[m[32m('DEFAULT_HOLIDAY_COEFFICIENT', '1.20', '婵帗绋掗…鍫ヮ敇婵犳碍鍤嶉柛灞剧煯濞寸兘鏌￠崘锕€鍔欓柣婊庡灦瀵粙鎳栭埡鍛帣闂?, 'DECIMAL', 'PRICING',[m
+[32m+[m[32m '闂佸搫鍊瑰姗€路閸愵喗鍤嶉柛灞剧煯濞寸兘鏌￠崘锕€鍔欓柣婊庡灦瀵粙鎳濋柇锔界秷闂佸憡甯楅悷锕€顪冮崒娑欏閻犳亽鍔嶉弳蹇涙煟閵娿儱顏紒顕呭灣閹峰濡堕崶顒€鍘欓梺?);[m
+[32m+[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS price_operation_log ([m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '婵炲濞€閺€閬嶆偋閹间礁绠肩€广儱瀚粙濠囨煛閸愶箑鍔氱紒缁樻憼D',[m
+[32m+[m[32m    room_type_id BIGINT NOT NULL COMMENT '闂佽娼欓悘婵嬫倵缁嬨€?,[m
+[32m+[m[32m    room_type_name VARCHAR(100) NOT NULL COMMENT '闂佺懓鐏濈粔宕囩礊閺冨牆绫嶉柤鎼佹涧閻擄綁鏌涢妸銉剰闁诡喗娲滅划?,[m
+[32m+[m[32m    old_price DECIMAL(10,2) NOT NULL COMMENT '婵烇絽娴傞崰妤呭极婵傜绀堢€广儱鎳愰崬銊х棯椤撴稑浜炬繛瀵稿█閺€閬嶆偋?,[m
+[32m+[m[32m    new_price DECIMAL(10,2) NOT NULL COMMENT '婵烇絽娴傞崰妤呭极婵傜瑙﹂幖杈剧磿閸炪劎鐥娑樹壕婵炲濞€閺€閬嶆偋?,[m
+[32m+[m[32m    change_reason VARCHAR(200) NOT NULL COMMENT '婵炲濞€閺€閬嶆偋閸涘﹦鈹嶆い鏃囧Г閺嗩參鏌涘Ο鐓庢瀻婵?,[m
+[32m+[m[32m    operator_id BIGINT DEFAULT NULL COMMENT '闂佺懓鐏濈粔宕囩礊閺冣偓缁傚秶寮ч幍?,[m
+[32m+[m[32m    operator_name VARCHAR(100) DEFAULT NULL COMMENT '闂佺懓鐏濈粔宕囩礊閺冣偓缁傚秹宕崟顒€鈧磭绱?,[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '闂佺懓鐏濈粔宕囩礊閺冨牆绫嶉柛顐ｆ礃閿?,[m
+[32m+[m[32m    INDEX idx_price_log_room_type (room_type_id),[m
+[32m+[m[32m    INDEX idx_price_log_created_at (created_at)[m
+[32m+[m[32m) ENGINE=InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET=utf8mb4[m
+[32m+[m[32m  COLLATE=utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT='闂佺硶鏅炲▍锝夈€侀崨顔绢浄闂佸灝顑囨竟鎰庨崶璺烘灍闁轰礁銈稿顕€濡烽妷褏顔嶉柣?;[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS holiday_calendar ([m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'special date id',[m
+[32m+[m[32m    business_date DATE NOT NULL COMMENT 'business date',[m
+[32m+[m[32m    holiday_name VARCHAR(100) NOT NULL COMMENT 'holiday or makeup workday name',[m
+[32m+[m[32m    holiday_code VARCHAR(50) NOT NULL COMMENT 'holiday code',[m
+[32m+[m[32m    day_type VARCHAR(30) NOT NULL COMMENT 'HOLIDAY or MAKEUP_WORKDAY',[m
+[32m+[m[32m    coefficient DECIMAL(5,2) NOT NULL DEFAULT 1.00 COMMENT 'date price coefficient',[m
+[32m+[m[32m    holiday_year INT NOT NULL COMMENT 'holiday year',[m
+[32m+[m[32m    source_status VARCHAR(20) NOT NULL DEFAULT 'OFFICIAL' COMMENT 'OFFICIAL or PROVISIONAL',[m
+[32m+[m[32m    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED' COMMENT 'ENABLED or DISABLED',[m
+[32m+[m[32m    remark VARCHAR(255) DEFAULT NULL COMMENT 'remark',[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m[32m    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,[m
+[32m+[m[32m    UNIQUE KEY uk_holiday_business_date (business_date),[m
+[32m+[m[32m    INDEX idx_holiday_year (holiday_year),[m
+[32m+[m[32m    INDEX idx_holiday_type_status (day_type, status)[m
+[32m+[m[32m) ENGINE=InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET=utf8mb4[m
+[32m+[m[32m  COLLATE=utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT='holiday calendar';[m
+[32m+[m
+[32m+[m[32mINSERT IGNORE INTO system_config[m
+[32m+[m[32m(config_key, config_value, config_name, value_type, config_group, description)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m('FRIDAY_PRICE_COEFFICIENT', '1.05', 'Friday price coefficient', 'DECIMAL', 'PRICING', 'Friday room price coefficient'),[m
+[32m+[m[32m('SATURDAY_PRICE_COEFFICIENT', '1.10', 'Saturday price coefficient', 'DECIMAL', 'PRICING', 'Saturday room price coefficient'),[m
+[32m+[m[32m('SUNDAY_PRICE_COEFFICIENT', '1.05', 'Sunday price coefficient', 'DECIMAL', 'PRICING', 'Sunday room price coefficient'),[m
+[32m+[m[32m('MAJOR_HOLIDAY_COEFFICIENT', '1.30', 'Major holiday coefficient', 'DECIMAL', 'PRICING', 'Spring Festival and National Day coefficient');[m
+[32m+[m
+[32m+[m[32mINSERT INTO holiday_calendar ([m
+[32m+[m[32m    business_date,[m
+[32m+[m[32m    holiday_name,[m
+[32m+[m[32m    holiday_code,[m
+[32m+[m[32m    day_type,[m
+[32m+[m[32m    coefficient,[m
+[32m+[m[32m    holiday_year,[m
+[32m+[m[32m    source_status,[m
+[32m+[m[32m    status,[m
+[32m+[m[32m    remark[m
+[32m+[m[32m) VALUES[m
+[32m+[m[32m('2026-09-20', 'National Day makeup workday', 'NATIONAL_DAY', 'MAKEUP_WORKDAY', 1.00, 2026, 'OFFICIAL', 'ENABLED', 'Sunday workday by official holiday arrangement'),[m
+[32m+[m[32m('2026-09-25', 'Mid-Autumn Festival holiday', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 1'),[m
+[32m+[m[32m('2026-09-26', 'Mid-Autumn Festival holiday', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 2'),[m
+[32m+[m[32m('2026-09-27', 'Mid-Autumn Festival holiday', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 3'),[m
+[32m+[m[32m('2026-10-01', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 1'),[m
+[32m+[m[32m('2026-10-02', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 2'),[m
+[32m+[m[32m('2026-10-03', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 3'),[m
+[32m+[m[32m('2026-10-04', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 4'),[m
+[32m+[m[32m('2026-10-05', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 5'),[m
+[32m+[m[32m('2026-10-06', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 6'),[m
+[32m+[m[32m('2026-10-07', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 7'),[m
+[32m+[m[32m('2026-10-10', 'National Day makeup workday', 'NATIONAL_DAY', 'MAKEUP_WORKDAY', 1.00, 2026, 'OFFICIAL', 'ENABLED', 'Saturday workday by official holiday arrangement'),[m
+[32m+[m[32m('2027-01-01', 'New Year', 'NEW_YEAR', 'HOLIDAY', 1.20, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-02-05', 'Spring Festival Eve', 'SPRING_FESTIVAL', 'HOLIDAY', 1.30, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-02-06', 'Spring Festival Day 1', 'SPRING_FESTIVAL', 'HOLIDAY', 1.30, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-02-07', 'Spring Festival Day 2', 'SPRING_FESTIVAL', 'HOLIDAY', 1.30, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-02-08', 'Spring Festival Day 3', 'SPRING_FESTIVAL', 'HOLIDAY', 1.30, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-04-05', 'Qingming Festival', 'QINGMING', 'HOLIDAY', 1.20, 2027, 'PROVISIONAL', 'ENABLED', 'Pending official holiday arrangement'),[m
+[32m+[m[32m('2027-05-01', 'Labor Day', 'LABOR_DAY', 'HOLIDAY', 1.20, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-05-02', 'Labor Day', 'LABOR_DAY', 'HOLIDAY', 1.20, 2027, 'PROVISIONAL', 'ENABLED', 'Core statutory date pending official release'),[m
+[32m+[m[32m('2027-06-09', 'Dragon Boat Festival', 'DRAGON_BOAT', 'HOLIDAY', 1.20, 2027, 'PROVISIONAL', 'ENABLED', 'Pending official holiday arrangement')[m
+[32m+[m[32mON DUPLICATE KEY UPDATE[m
+[32m+[m[32m    holiday_name = VALUES(holiday_name),[m
+[32m+[m[32m    holiday_code = VALUES(holiday_code),[m
+[32m+[m[32m    day_type = VALUES(day_type),[m
+[32m+[m[32m    coefficient = VALUES(coefficient),[m
+[32m+[m[32m    holiday_year = VALUES(holiday_year),[m
+[32m+[m[32m    source_status = VALUES(source_status),[m
+[32m+[m[32m    status = VALUES(status),[m
+[32m+[m[32m    remark = VALUES(remark);[m
+[32m+[m[32m-- =========================================================[m
+[32m+[m[32m-- 鎴愬憳5锛氭埧鍨嬫瘡鏃ラ攢鍞环鏍?-- 姣忎釜鎴垮瀷銆佹瘡涓棩鏈熶粎鍏佽瀛樺湪涓€鏉′环鏍艰褰?-- =========================================================[m
+[32m+[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS daily_price ([m
+[32m+[m[32m    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '姣忔棩浠锋牸ID',[m
+[32m+[m
+[32m+[m[32m    room_type_id BIGINT NOT NULL COMMENT '鎴垮瀷ID',[m
+[32m+[m
+[32m+[m[32m    business_date DATE NOT NULL COMMENT '涓氬姟鏃ユ湡',[m
+[32m+[m
+[32m+[m[32m    base_price DECIMAL(10, 2) NOT NULL COMMENT '鐢熸垚鏃剁殑鎴垮瀷鍩虹浠锋牸',[m
+[32m+[m
+[32m+[m[32m    date_coefficient DECIMAL(5, 2) NOT NULL DEFAULT 1.00[m
+[32m+[m[32m        COMMENT '鏃ユ湡浠锋牸绯绘暟',[m
+[32m+[m
+[32m+[m[32m    final_price DECIMAL(10, 2) NOT NULL COMMENT '鏈€缁堥攢鍞环鏍?,[m
+[32m+[m
+[32m+[m[32m    price_source VARCHAR(50) NOT NULL[m
+[32m+[m[32m        COMMENT '浠锋牸鏉ユ簮锛歂ORMAL_DAY銆丗RIDAY銆丼ATURDAY銆丼UNDAY銆丮AKEUP_WORKDAY鎴栬妭鍋囨棩浠ｇ爜',[m
+[32m+[m
+[32m+[m[32m    price_description VARCHAR(150) DEFAULT NULL[m
+[32m+[m[32m        COMMENT '浠锋牸鏉ユ簮璇存槑',[m
+[32m+[m
+[32m+[m[32m    holiday_calendar_id BIGINT DEFAULT NULL[m
+[32m+[m[32m        COMMENT '鍏宠仈鐗规畩鏃ユ湡ID锛屾櫘閫氭棩鏈熶负绌?,[m
+[32m+[m
+[32m+[m[32m    source_status VARCHAR(20) NOT NULL DEFAULT 'SYSTEM'[m
+[32m+[m[32m        COMMENT '鏁版嵁鏉ユ簮鐘舵€侊細SYSTEM銆丱FFICIAL銆丳ROVISIONAL',[m
+[32m+[m
+[32m+[m[32m    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP[m
+[32m+[m[32m        COMMENT '鍒涘缓鏃堕棿',[m
+[32m+[m
+[32m+[m[32m    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP[m
+[32m+[m[32m        ON UPDATE CURRENT_TIMESTAMP COMMENT '鏇存柊鏃堕棿',[m
+[32m+[m
+[32m+[m[32m    UNIQUE KEY uk_daily_price_room_date ([m
+[32m+[m[32m        room_type_id,[m
+[32m+[m[32m        business_date[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    INDEX idx_daily_price_date (business_date),[m
+[32m+[m
+[32m+[m[32m    INDEX idx_daily_price_room_type (room_type_id),[m
+[32m+[m
+[32m+[m[32m    INDEX idx_daily_price_source (price_source)[m
+[32m+[m
+[32m+[m[32m) ENGINE = InnoDB[m
+[32m+[m[32m  DEFAULT CHARSET = utf8mb4[m
+[32m+[m[32m  COLLATE = utf8mb4_unicode_ci[m
+[32m+[m[32m  COMMENT = '鎴垮瀷姣忔棩閿€鍞环鏍艰〃';[m
+[32m+[m[32mINSERT INTO system_config ([m
+[32m+[m[32m    config_key,[m
+[32m+[m[32m    config_value,[m
+[32m+[m[32m    config_name,[m
+[32m+[m[32m    value_type,[m
+[32m+[m[32m    config_group,[m
+[32m+[m[32m    description[m
+[32m+[m[32m)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m([m
+[32m+[m[32m    'BOOKING_WINDOW_MONTHS',[m
+[32m+[m[32m    '12',[m
+[32m+[m[32m    'Booking window months',[m
+[32m+[m[32m    'INTEGER',[m
+[32m+[m[32m    'BOOKING',[m
+[32m+[m[32m    'Maximum months ahead for check-in date'[m
+[32m+[m[32m),[m
+[32m+[m[32m([m
+[32m+[m[32m    'MAX_STAY_NIGHTS',[m
+[32m+[m[32m    '30',[m
+[32m+[m[32m    'Maximum stay nights',[m
+[32m+[m[32m    'INTEGER',[m
+[32m+[m[32m    'BOOKING',[m
+[32m+[m[32m    'Maximum number of nights allowed in one booking'[m
+[32m+[m[32m)[m
+[32m+[m[32mON DUPLICATE KEY UPDATE[m
+[32m+[m[32m    config_value = VALUES(config_value),[m
+[32m+[m[32m    config_name = VALUES(config_name),[m
+[32m+[m[32m    value_type = VALUES(value_type),[m
+[32m+[m[32m    config_group = VALUES(config_group),[m
+[32m+[m[32m    description = VALUES(description);[m
+[32m+[m[32m-- Rolling booking window support[m
+[32m+[m[32mALTER TABLE daily_price[m
+[32m+[m[32m    ADD COLUMN IF NOT EXISTS manual_price DECIMAL(10,2) DEFAULT NULL COMMENT 'manual override price',[m
+[32m+[m[32m    ADD COLUMN IF NOT EXISTS manual_override TINYINT NOT NULL DEFAULT 0 COMMENT 'whether manual override is enabled',[m
+[32m+[m[32m    ADD COLUMN IF NOT EXISTS override_reason VARCHAR(200) DEFAULT NULL COMMENT 'manual override reason';[m
+[1mdiff --git a/frontend/src/layouts/AdminLayout.vue b/frontend/src/layouts/AdminLayout.vue[m
+[1mindex 48497f7..da6f8a6 100644[m
+[1m--- a/frontend/src/layouts/AdminLayout.vue[m
+[1m+++ b/frontend/src/layouts/AdminLayout.vue[m
+[36m@@ -1,7 +1,42 @@[m
+ <template>[m
+   <div class="admin-layout">[m
+[31m-    <header>管理员端布局</header>[m
+[31m-    <main><router-view /></main>[m
+[32m+[m[32m    <aside class="admin-sidebar">[m
+[32m+[m[32m      <div class="brand">[m
+[32m+[m[32m        <h1>知宿酒店</h1>[m
+[32m+[m[32m        <p>后台管理</p>[m
+[32m+[m[32m      </div>[m
+[32m+[m
+[32m+[m[32m      <el-menu :default-active="$route.path" class="sidebar-menu" router unique-opened>[m
+[32m+[m[32m        <el-sub-menu index="hotel-ops">[m
+[32m+[m[32m          <template #title>酒店运营</template>[m
+[32m+[m[32m          <el-menu-item index="/admin/content/hotel-info">酒店信息管理</el-menu-item>[m
+[32m+[m[32m          <el-menu-item index="/admin/content/banners">首页轮播图管理</el-menu-item>[m
+[32m+[m[32m          <el-menu-item index="/admin/content/announcements">酒店公告管理</el-menu-item>[m
+[32m+[m[32m        </el-sub-menu>[m
+[32m+[m[32m        <el-sub-menu index="pricing-admin">[m
+[32m+[m[32m          <template #title>价格管理</template>[m
+[32m+[m[32m          <el-menu-item index="/admin/pricing/base-prices">基础价格管理</el-menu-item>[m
+[32m+[m[32m          <el-menu-item index="/admin/pricing/holiday-calendar">节假日日期管理</el-menu-item>[m
+[32m+[m[32m          <el-menu-item index="/admin/pricing/daily-prices">每日价格日历</el-menu-item>[m
+[32m+[m[32m        </el-sub-menu>[m
+[32m+[m[32m        <el-sub-menu index="system-admin">[m
+[32m+[m[32m          <template #title>系统管理</template>[m
+[32m+[m[32m          <el-menu-item index="/admin/system-config">系统参数管理</el-menu-item>[m
+[32m+[m[32m        </el-sub-menu>[m
+[32m+[m[32m      </el-menu>[m
+[32m+[m[32m    </aside>[m
+[32m+[m
+[32m+[m[32m    <div class="admin-main">[m
+[32m+[m[32m      <header class="admin-header">[m
+[32m+[m[32m        <div>[m
+[32m+[m[32m          <h2>管理员控制台</h2>[m
+[32m+[m[32m          <p>管理酒店内容、价格策略与系统基础配置。</p>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </header>[m
+[32m+[m[32m      <main class="admin-content">[m
+[32m+[m[32m        <router-view />[m
+[32m+[m[32m      </main>[m
+[32m+[m[32m    </div>[m
+   </div>[m
+ </template>[m
+ [m
+[36m@@ -11,5 +46,98 @@[m
+ <style scoped>[m
+ .admin-layout {[m
+   min-height: 100vh;[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: 260px 1fr;[m
+[32m+[m[32m  background:[m
+[32m+[m[32m    radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 28%),[m
+[32m+[m[32m    linear-gradient(135deg, #f6f8fc 0%, #edf4f7 100%);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.admin-sidebar {[m
+[32m+[m[32m  padding: 28px 20px;[m
+[32m+[m[32m  background: linear-gradient(180deg, #12343b 0%, #0f2027 100%);[m
+[32m+[m[32m  color: #f8fafc;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.brand {[m
+[32m+[m[32m  margin-bottom: 28px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.brand h1 {[m
+[32m+[m[32m  margin: 0 0 6px;[m
+[32m+[m[32m  font-size: 24px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.brand p {[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m  color: rgba(248, 250, 252, 0.72);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.sidebar-menu {[m
+[32m+[m[32m  border-right: none;[m
+[32m+[m[32m  background: transparent;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.sidebar-menu :deep(.el-sub-menu__title),[m
+[32m+[m[32m.sidebar-menu :deep(.el-menu-item) {[m
+[32m+[m[32m  margin-bottom: 8px;[m
+[32m+[m[32m  border-radius: 12px;[m
+[32m+[m[32m  color: #dbeafe;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.sidebar-menu :deep(.el-sub-menu__title:hover),[m
+[32m+[m[32m.sidebar-menu :deep(.el-menu-item:hover) {[m
+[32m+[m[32m  background: rgba(255, 255, 255, 0.08);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.sidebar-menu :deep(.el-menu) {[m
+[32m+[m[32m  background: transparent;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.sidebar-menu :deep(.el-menu-item.is-active) {[m
+[32m+[m[32m  background: linear-gradient(135deg, #f59e0b, #f97316);[m
+[32m+[m[32m  color: #111827;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.admin-main {[m
+[32m+[m[32m  padding: 24px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.admin-header {[m
+[32m+[m[32m  margin-bottom: 20px;[m
+[32m+[m[32m  padding: 20px 24px;[m
+[32m+[m[32m  border-radius: 24px;[m
+[32m+[m[32m  background: rgba(255, 255, 255, 0.72);[m
+[32m+[m[32m  backdrop-filter: blur(10px);[m
+[32m+[m[32m  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.admin-header h2 {[m
+[32m+[m[32m  margin: 0 0 6px;[m
+[32m+[m[32m  font-size: 24px;[m
+[32m+[m[32m  color: #111827;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.admin-header p {[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m  color: #6b7280;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.admin-content {[m
+[32m+[m[32m  min-width: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m@media (max-width: 900px) {[m
+[32m+[m[32m  .admin-layout {[m
+[32m+[m[32m    grid-template-columns: 1fr;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  .admin-sidebar {[m
+[32m+[m[32m    padding-bottom: 12px;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  .admin-main {[m
+[32m+[m[32m    padding: 16px;[m
+[32m+[m[32m  }[m
+ }[m
+[31m-</style>[m
+[32m+[m[32m</style>[m
+\ No newline at end of file[m
+[1mdiff --git a/frontend/src/modules/home/Home.vue b/frontend/src/modules/home/Home.vue[m
+[1mindex aeec052..506033a 100644[m
+[1m--- a/frontend/src/modules/home/Home.vue[m
+[1m+++ b/frontend/src/modules/home/Home.vue[m
+[36m@@ -1,66 +1,341 @@[m
+[31m-<template>[m
+[31m-  <div class="home">[m
+[31m-    <h1>智宿酒店在线预订与运营管理系统</h1>[m
+[31m-    <el-card class="health-card">[m
+[31m-      <template #header>[m
+[31m-        <div class="card-header">[m
+[31m-          <span>后端连接状态</span>[m
+[32m+[m[32m﻿<template>[m
+[32m+[m[32m  <div class="home-page">[m
+[32m+[m[32m    <section class="hero">[m
+[32m+[m[32m      <div class="hero-copy">[m
+[32m+[m[32m        <p class="eyebrow">Zhisu Hotel</p>[m
+[32m+[m[32m        <h1>住得舒适，也住得有仪式感</h1>[m
+[32m+[m[32m        <p class="hero-text">[m
+[32m+[m[32m          首页轮播图与酒店公告都只展示已发布内容，方便前台页面与后台运营状态保持实时同步。[m
+[32m+[m[32m        </p>[m
+[32m+[m[32m        <div class="hero-actions">[m
+[32m+[m[32m          <el-button type="primary" size="large">立即预订</el-button>[m
+[32m+[m[32m          <el-button size="large" plain>查看房型</el-button>[m
+         </div>[m
+[31m-      </template>[m
+[31m-      <div v-if="loading" class="loading">加载中...</div>[m
+[31m-      <div v-else-if="healthStatus" class="status success">[m
+[31m-        <el-icon :size="40" color="#67c23a"><CircleCheck /></el-icon>[m
+[31m-        <p>{{ healthStatus }}</p>[m
+       </div>[m
+[31m-      <div v-else class="status error">[m
+[31m-        <el-icon :size="40" color="#f56c6c"><CircleClose /></el-icon>[m
+[31m-        <p>后端连接失败</p>[m
+[31m-        <el-button @click="checkHealth" type="primary">重试</el-button>[m
+[32m+[m
+[32m+[m[32m      <div class="hero-visual">[m
+[32m+[m[32m        <el-carousel[m
+[32m+[m[32m          v-if="banners.length"[m
+[32m+[m[32m          height="360px"[m
+[32m+[m[32m          indicator-position="outside"[m
+[32m+[m[32m          class="banner-carousel"[m
+[32m+[m[32m        >[m
+[32m+[m[32m          <el-carousel-item v-for="banner in banners" :key="banner.id">[m
+[32m+[m[32m            <a[m
+[32m+[m[32m              :href="banner.linkUrl || 'javascript:void(0)'"[m
+[32m+[m[32m              class="banner-card"[m
+[32m+[m[32m              :target="banner.linkUrl ? '_blank' : undefined"[m
+[32m+[m[32m              :rel="banner.linkUrl ? 'noreferrer' : undefined"[m
+[32m+[m[32m              @click.prevent="handleBannerClick(banner)"[m
+[32m+[m[32m            >[m
+[32m+[m[32m              <img :src="banner.imageUrl" :alt="banner.title" class="banner-image" />[m
+[32m+[m[32m              <div class="banner-overlay">[m
+[32m+[m[32m                <span class="banner-badge">已发布轮播图</span>[m
+[32m+[m[32m                <h2>{{ banner.title }}</h2>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </a>[m
+[32m+[m[32m          </el-carousel-item>[m
+[32m+[m[32m        </el-carousel>[m
+[32m+[m
+[32m+[m[32m        <div v-else class="banner-empty">[m
+[32m+[m[32m          <p>当前没有已发布的首页轮播图</p>[m
+[32m+[m[32m          <span>管理员发布后会在这里自动展示。</span>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m    </section>[m
+[32m+[m
+[32m+[m[32m    <section class="announcement-section">[m
+[32m+[m[32m      <div class="section-heading">[m
+[32m+[m[32m        <div>[m
+[32m+[m[32m          <p class="eyebrow">Announcement</p>[m
+[32m+[m[32m          <h2>酒店公告</h2>[m
+[32m+[m[32m        </div>[m
+       </div>[m
+[31m-    </el-card>[m
+[32m+[m
+[32m+[m[32m      <div v-if="announcements.length" class="announcement-list">[m
+[32m+[m[32m        <article[m
+[32m+[m[32m          v-for="item in announcements"[m
+[32m+[m[32m          :key="item.id"[m
+[32m+[m[32m          class="announcement-card"[m
+[32m+[m[32m          :class="{ pinned: item.isTop }"[m
+[32m+[m[32m        >[m
+[32m+[m[32m          <div class="announcement-meta">[m
+[32m+[m[32m            <el-tag v-if="item.isTop" type="danger">置顶</el-tag>[m
+[32m+[m[32m            <span>{{ formatDateTime(item.publishTime) }}</span>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m          <h3>{{ item.title }}</h3>[m
+[32m+[m[32m          <p>{{ item.content }}</p>[m
+[32m+[m[32m        </article>[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m      <div v-else class="announcement-empty">[m
+[32m+[m[32m        当前暂无已发布公告。[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m    </section>[m
+[32m+[m
+[32m+[m[32m    <section class="status-section">[m
+[32m+[m[32m      <el-card class="status-card" shadow="hover">[m
+[32m+[m[32m        <template #header>[m
+[32m+[m[32m          <div class="card-header">[m
+[32m+[m[32m            <span>后端连接状态</span>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </template>[m
+[32m+[m[32m        <div v-if="loadingHealth" class="loading">加载中...</div>[m
+[32m+[m[32m        <div v-else-if="healthStatus" class="status success">[m
+[32m+[m[32m          <el-icon :size="40" color="#67c23a"><CircleCheck /></el-icon>[m
+[32m+[m[32m          <p>{{ healthStatus }}</p>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m        <div v-else class="status error">[m
+[32m+[m[32m          <el-icon :size="40" color="#f56c6c"><CircleClose /></el-icon>[m
+[32m+[m[32m          <p>后端连接失败</p>[m
+[32m+[m[32m          <el-button @click="loadHealthStatus" type="primary">重试</el-button>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </el-card>[m
+[32m+[m[32m    </section>[m
+   </div>[m
+ </template>[m
+ [m
+ <script setup>[m
+ import { ref, onMounted } from 'vue'[m
+[31m-import { checkHealth } from '@/api/health'[m
+ import { ElMessage } from 'element-plus'[m
+ import { CircleCheck, CircleClose } from '@element-plus/icons-vue'[m
+[32m+[m[32mimport { checkHealth as fetchHealth } from '@/api/health'[m
+[32m+[m[32mimport { getPublicBanners } from '@/api/content/banner'[m
+[32m+[m[32mimport { getPublicAnnouncements } from '@/api/content/announcement'[m
+ [m
+[31m-const loading = ref(true)[m
+[32m+[m[32mconst loadingHealth = ref(true)[m
+ const healthStatus = ref('')[m
+[32m+[m[32mconst banners = ref([])[m
+[32m+[m[32mconst announcements = ref([])[m
+ [m
+[31m-const checkHealth = async () => {[m
+[31m-  loading.value = true[m
+[32m+[m[32mfunction extractResult(result, fallbackMessage) {[m
+[32m+[m[32m  if (result.code !== 'SUCCESS') {[m
+[32m+[m[32m    throw new Error(result.message || fallbackMessage)[m
+[32m+[m[32m  }[m
+[32m+[m[32m  return result.data[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mconst loadHealthStatus = async () => {[m
+[32m+[m[32m  loadingHealth.value = true[m
+   try {[m
+[31m-    const response = await checkHealth()[m
+[31m-    if (response.code === 'SUCCESS') {[m
+[31m-      healthStatus.value = '后端连接成功: ' + response.data[m
+[32m+[m[32m    const result = await fetchHealth()[m
+[32m+[m[32m    if (result.code === 'SUCCESS') {[m
+[32m+[m[32m      healthStatus.value = '后端连接成功: ' + result.data[m
+     } else {[m
+       healthStatus.value = ''[m
+[32m+[m[32m      ElMessage.error(result.message || '连接后端失败')[m
+     }[m
+   } catch (error) {[m
+     healthStatus.value = ''[m
+[31m-    ElMessage.error('连接后端失败')[m
+[32m+[m[32m    ElMessage.error(error?.message || '连接后端失败')[m
+   } finally {[m
+[31m-    loading.value = false[m
+[32m+[m[32m    loadingHealth.value = false[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32masync function loadBanners() {[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    const result = await getPublicBanners()[m
+[32m+[m[32m    banners.value = extractResult(result, '加载轮播图失败')[m
+[32m+[m[32m  } catch (error) {[m
+[32m+[m[32m    banners.value = [][m
+[32m+[m[32m    ElMessage.error(error?.response?.data?.message || error?.message || '加载轮播图失败')[m
+   }[m
+ }[m
+ [m
+[32m+[m[32masync function loadAnnouncements() {[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    const result = await getPublicAnnouncements()[m
+[32m+[m[32m    announcements.value = extractResult(result, '加载公告失败')[m
+[32m+[m[32m  } catch (error) {[m
+[32m+[m[32m    announcements.value = [][m
+[32m+[m[32m    ElMessage.error(error?.response?.data?.message || error?.message || '加载公告失败')[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction handleBannerClick(banner) {[m
+[32m+[m[32m  if (banner.linkUrl) {[m
+[32m+[m[32m    window.open(banner.linkUrl, '_blank', 'noopener,noreferrer')[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction formatDateTime(value) {[m
+[32m+[m[32m  if (!value) {[m
+[32m+[m[32m    return '-'[m
+[32m+[m[32m  }[m
+[32m+[m[32m  return value.replace('T', ' ')[m
+[32m+[m[32m}[m
+[32m+[m
+ onMounted(() => {[m
+[31m-  checkHealth()[m
+[32m+[m[32m  loadHealthStatus()[m
+[32m+[m[32m  loadBanners()[m
+[32m+[m[32m  loadAnnouncements()[m
+ })[m
+ </script>[m
+ [m
+ <style scoped>[m
+[31m-.home {[m
+[32m+[m[32m.home-page {[m
+[32m+[m[32m  min-height: 100vh;[m
+[32m+[m[32m  padding: 32px;[m
+[32m+[m[32m  background:[m
+[32m+[m[32m    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 28%),[m
+[32m+[m[32m    linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.hero {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: minmax(280px, 420px) 1fr;[m
+[32m+[m[32m  gap: 28px;[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.eyebrow {[m
+[32m+[m[32m  margin: 0 0 12px;[m
+[32m+[m[32m  text-transform: uppercase;[m
+[32m+[m[32m  letter-spacing: 0.18em;[m
+[32m+[m[32m  color: #0f766e;[m
+[32m+[m[32m  font-size: 12px;[m
+[32m+[m[32m  font-weight: 700;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.hero-copy h1 {[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m  font-size: clamp(34px, 4vw, 56px);[m
+[32m+[m[32m  line-height: 1.05;[m
+[32m+[m[32m  color: #0f172a;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.hero-text {[m
+[32m+[m[32m  margin: 18px 0 0;[m
+[32m+[m[32m  font-size: 16px;[m
+[32m+[m[32m  line-height: 1.7;[m
+[32m+[m[32m  color: #475569;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.hero-actions {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  gap: 14px;[m
+[32m+[m[32m  margin-top: 28px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.hero-visual {[m
+[32m+[m[32m  min-width: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-carousel,[m
+[32m+[m[32m.banner-empty {[m
+[32m+[m[32m  border-radius: 28px;[m
+[32m+[m[32m  overflow: hidden;[m
+[32m+[m[32m  background: #dbeafe;[m
+[32m+[m[32m  box-shadow: 0 26px 60px rgba(15, 23, 42, 0.14);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-card {[m
+[32m+[m[32m  position: relative;[m
+[32m+[m[32m  display: block;[m
+[32m+[m[32m  width: 100%;[m
+[32m+[m[32m  height: 360px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-image {[m
+[32m+[m[32m  width: 100%;[m
+[32m+[m[32m  height: 100%;[m
+[32m+[m[32m  object-fit: cover;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-overlay {[m
+[32m+[m[32m  position: absolute;[m
+[32m+[m[32m  inset: auto 0 0 0;[m
+[32m+[m[32m  padding: 24px;[m
+[32m+[m[32m  background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.76));[m
+[32m+[m[32m  color: #fff;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-overlay h2 {[m
+[32m+[m[32m  margin: 12px 0 0;[m
+[32m+[m[32m  font-size: 28px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-badge {[m
+[32m+[m[32m  display: inline-flex;[m
+[32m+[m[32m  padding: 6px 12px;[m
+[32m+[m[32m  border-radius: 999px;[m
+[32m+[m[32m  background: rgba(255, 255, 255, 0.18);[m
+[32m+[m[32m  backdrop-filter: blur(8px);[m
+[32m+[m[32m  font-size: 12px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.banner-empty {[m
+[32m+[m[32m  height: 360px;[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  flex-direction: column;[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m  justify-content: center;[m
+[32m+[m[32m  color: #475569;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-section {[m
+[32m+[m[32m  margin-top: 36px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.section-heading h2 {[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m  font-size: 30px;[m
+[32m+[m[32m  color: #0f172a;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-list {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));[m
+[32m+[m[32m  gap: 18px;[m
+[32m+[m[32m  margin-top: 16px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-card {[m
+   padding: 20px;[m
+[31m-  text-align: center;[m
+[32m+[m[32m  border-radius: 22px;[m
+[32m+[m[32m  background: rgba(255, 255, 255, 0.82);[m
+[32m+[m[32m  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);[m
+ }[m
+ [m
+[31m-.health-card {[m
+[32m+[m[32m.announcement-card.pinned {[m
+[32m+[m[32m  border: 1px solid rgba(239, 68, 68, 0.24);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-meta {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m  gap: 10px;[m
+[32m+[m[32m  color: #64748b;[m
+[32m+[m[32m  font-size: 13px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-card h3 {[m
+[32m+[m[32m  margin: 14px 0 10px;[m
+[32m+[m[32m  font-size: 20px;[m
+[32m+[m[32m  color: #111827;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-card p {[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m  color: #475569;[m
+[32m+[m[32m  line-height: 1.7;[m
+[32m+[m[32m  white-space: pre-wrap;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.announcement-empty {[m
+[32m+[m[32m  margin-top: 16px;[m
+[32m+[m[32m  padding: 24px;[m
+[32m+[m[32m  border-radius: 20px;[m
+[32m+[m[32m  background: rgba(255, 255, 255, 0.76);[m
+[32m+[m[32m  color: #64748b;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.status-section {[m
+[32m+[m[32m  margin-top: 32px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.status-card {[m
+   max-width: 500px;[m
+[31m-  margin: 20px auto;[m
+ }[m
+ [m
+ .card-header {[m
+[36m@@ -69,11 +344,23 @@[m [monMounted(() => {[m
+   align-items: center;[m
+ }[m
+ [m
+[31m-.status {[m
+[32m+[m[32m.status,[m
+[32m+[m[32m.loading {[m
+   padding: 20px;[m
+[32m+[m[32m  text-align: center;[m
+ }[m
+ [m
+[31m-.loading {[m
+[31m-  padding: 20px;[m
+[32m+[m[32m@media (max-width: 900px) {[m
+[32m+[m[32m  .home-page {[m
+[32m+[m[32m    padding: 20px;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  .hero {[m
+[32m+[m[32m    grid-template-columns: 1fr;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  .hero-actions {[m
+[32m+[m[32m    flex-direction: column;[m
+[32m+[m[32m  }[m
+ }[m
+ </style>[m
+[1mdiff --git a/frontend/src/router/index.js b/frontend/src/router/index.js[m
+[1mindex 10a6aa2..d8527fe 100644[m
+[1m--- a/frontend/src/router/index.js[m
+[1m+++ b/frontend/src/router/index.js[m
+[36m@@ -11,6 +11,48 @@[m [mconst routes = [[m
+     name: 'Login',[m
+     component: () => import('@/modules/auth/Login.vue')[m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    path: '/admin',[m
+[32m+[m[32m    component: () => import('@/layouts/AdminLayout.vue'),[m
+[32m+[m[32m    redirect: '/admin/content/hotel-info',[m
+[32m+[m[32m    children: [[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'content/hotel-info',[m
+[32m+[m[32m        name: 'AdminHotelInfo',[m
+[32m+[m[32m        component: () => import('@/views/admin/content/HotelInfoView.vue')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'content/banners',[m
+[32m+[m[32m        name: 'AdminBanners',[m
+[32m+[m[32m        component: () => import('@/views/admin/content/BannerManageView.vue')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'content/announcements',[m
+[32m+[m[32m        name: 'AdminAnnouncements',[m
+[32m+[m[32m        component: () => import('@/views/admin/content/AnnouncementManageView.vue')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'pricing/base-prices',[m
+[32m+[m[32m        name: 'AdminBasePrices',[m
+[32m+[m[32m        component: () => import('@/views/admin/pricing/BasePriceView.vue')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'pricing/holiday-calendar',[m
+[32m+[m[32m        name: 'AdminHolidayCalendar',[m
+[32m+[m[32m        component: () => import('@/views/admin/pricing/HolidayCalendarView.vue')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'pricing/daily-prices',[m
+[32m+[m[32m        name: 'AdminDailyPrices',[m
+[32m+[m[32m        component: () => import('@/views/admin/pricing/DailyPriceCalendarView.vue')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        path: 'system-config',[m
+[32m+[m[32m        name: 'AdminSystemConfig',[m
+[32m+[m[32m        component: () => import('@/views/admin/systemconfig/SystemConfigView.vue')[m
+[32m+[m[32m      }[m
+[32m+[m[32m    ][m
+[32m+[m[32m  },[m
+   {[m
+     path: '/403',[m
+     name: 'Forbidden',[m
+[36m@@ -32,4 +74,4 @@[m [mconst router = createRouter({[m
+   routes[m
+ })[m
+ [m
+[31m-export default router[m
+[32m+[m[32mexport default router[m
+\ No newline at end of file[m

@@ -1,8 +1,6 @@
 package com.zhisu.hotel.roomtype.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.zhisu.hotel.inventory.entity.DailyInventory;
-import com.zhisu.hotel.inventory.mapper.DailyInventoryMapper;
+import com.zhisu.hotel.inventory.service.InventoryService;
 import com.zhisu.hotel.roomtype.dto.RoomTypeSummary;
 import com.zhisu.hotel.roomtype.entity.RoomType;
 import com.zhisu.hotel.roomtype.mapper.RoomTypeMapper;
@@ -17,7 +15,7 @@ import java.time.LocalDate;
 public class RoomTypeQueryServiceImpl implements RoomTypeQueryService {
 
     private final RoomTypeMapper roomTypeMapper;
-    private final DailyInventoryMapper dailyInventoryMapper;
+    private final InventoryService inventoryService;
 
     @Override
     public RoomTypeSummary getRoomTypeById(Long roomTypeId) {
@@ -54,18 +52,7 @@ public class RoomTypeQueryServiceImpl implements RoomTypeQueryService {
 
     @Override
     public boolean hasAvailableInventory(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count) {
-        LocalDate date = checkIn;
-        while (date.isBefore(checkOut)) {
-            LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(DailyInventory::getRoomTypeId, roomTypeId)
-                    .eq(DailyInventory::getInventoryDate, date)
-                    .eq(DailyInventory::getStatus, "ACTIVE");
-            DailyInventory inventory = dailyInventoryMapper.selectOne(wrapper);
-            if (inventory == null || inventory.getAvailableRooms() < count) {
-                return false;
-            }
-            date = date.plusDays(1);
-        }
-        return true;
+        inventoryService.ensureInventoryExists(roomTypeId, checkIn, checkOut.minusDays(1));
+        return inventoryService.checkInventory(roomTypeId, checkIn, checkOut, count);
     }
 }

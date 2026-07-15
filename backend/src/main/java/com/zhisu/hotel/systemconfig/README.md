@@ -8,7 +8,7 @@
 - common
 
 ## 对外提供的Service
-- 待补充
+- `SystemConfigService`
 
 ## 禁止直接访问的其他模块Mapper
 - 所有其他模块的Mapper
