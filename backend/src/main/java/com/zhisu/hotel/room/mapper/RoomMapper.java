@@ -1,6 +1,7 @@
 package com.zhisu.hotel.room.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhisu.hotel.common.enums.RoomStatus;
 import com.zhisu.hotel.room.entity.Room;
 import org.apache.ibatis.annotations.Mapper;
@@ -49,6 +50,23 @@ public interface RoomMapper extends BaseMapper<Room> {
     })
     List<Room> selectByIdsForUpdate(@Param("roomIds") List<Long> roomIds);
 
+    @Select({
+            "<script>",
+            "SELECT * FROM room",
+            "WHERE room_status = 'DIRTY'",
+            "AND is_deleted = 0",
+            "<if test='floor != null'>AND floor = #{floor}</if>",
+            "<if test='roomTypeId != null'>AND room_type_id = #{roomTypeId}</if>",
+            "ORDER BY floor, room_no",
+            "</script>"
+    })
+    Page<Room> pageDirtyRooms(Page<Room> page,
+                              @Param("floor") Integer floor,
+                              @Param("roomTypeId") Long roomTypeId);
+
+    @Select("SELECT * FROM room WHERE id = #{roomId} AND is_deleted = 0 FOR UPDATE")
+    Room selectByIdForUpdate(@Param("roomId") Long roomId);
+
     @Update("UPDATE room " +
             "SET room_status = 'OCCUPIED', version = version + 1, updated_at = #{updatedAt} " +
             "WHERE id = #{roomId} " +
@@ -58,4 +76,35 @@ public interface RoomMapper extends BaseMapper<Room> {
     int markOccupiedForCheckin(@Param("roomId") Long roomId,
                                @Param("version") Integer version,
                                @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Update("UPDATE room " +
+            "SET room_status = 'DIRTY', version = version + 1, updated_at = #{updatedAt} " +
+            "WHERE id = #{roomId} " +
+            "  AND room_status = 'OCCUPIED' " +
+            "  AND version = #{version} " +
+            "  AND is_deleted = 0")
+    int markDirtyForCheckout(@Param("roomId") Long roomId,
+                             @Param("version") Integer version,
+                             @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Update("UPDATE room " +
+            "SET room_status = 'AVAILABLE', maintenance_reason = NULL, version = version + 1, updated_at = #{updatedAt} " +
+            "WHERE id = #{roomId} " +
+            "  AND room_status = 'DIRTY' " +
+            "  AND version = #{version} " +
+            "  AND is_deleted = 0")
+    int markAvailableAfterCleaning(@Param("roomId") Long roomId,
+                                   @Param("version") Integer version,
+                                   @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Update("UPDATE room " +
+            "SET room_status = 'MAINTENANCE', maintenance_reason = #{reason}, version = version + 1, updated_at = #{updatedAt} " +
+            "WHERE id = #{roomId} " +
+            "  AND room_status = 'DIRTY' " +
+            "  AND version = #{version} " +
+            "  AND is_deleted = 0")
+    int markMaintenanceFromDirty(@Param("roomId") Long roomId,
+                                 @Param("version") Integer version,
+                                 @Param("reason") String reason,
+                                 @Param("updatedAt") LocalDateTime updatedAt);
 }
