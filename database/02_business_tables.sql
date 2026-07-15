@@ -96,26 +96,61 @@ CREATE TABLE IF NOT EXISTS room (
     INDEX idx_room_status (room_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='room';
 
-CREATE TABLE IF NOT EXISTS hotel_order (
+CREATE TABLE IF NOT EXISTS booking_order (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     order_no VARCHAR(64) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
     room_type_id BIGINT NOT NULL,
+    room_type_name VARCHAR(100),
+    room_type_snapshot TEXT,
+    facilities_snapshot TEXT,
+    room_count INT NOT NULL DEFAULT 1,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
-    room_count INT NOT NULL DEFAULT 1,
-    guest_name VARCHAR(50) NOT NULL,
-    guest_phone VARCHAR(20) NOT NULL,
-    total_amount DECIMAL(10,2) NOT NULL,
-    order_status VARCHAR(20) NOT NULL DEFAULT 'PENDING_PAYMENT',
+    total_nights INT NOT NULL DEFAULT 1,
+    guest_count INT NOT NULL DEFAULT 1,
+    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total_amount_fen INT NOT NULL DEFAULT 0,
+    idempotency_key VARCHAR(128),
+    phone VARCHAR(20),
+    order_status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PAYMENT',
+    payment_status VARCHAR(30) NOT NULL DEFAULT 'UNPAID',
+    payment_timeout DATETIME,
+    paid_at DATETIME,
+    cancelled_at DATETIME,
+    cancel_type VARCHAR(30),
+    cancel_reason VARCHAR(500),
     remark VARCHAR(500),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_hotel_order_user_id (user_id),
-    INDEX idx_hotel_order_room_type_id (room_type_id),
-    INDEX idx_hotel_order_status (order_status),
-    INDEX idx_hotel_order_dates (check_in_date, check_out_date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='hotel_order';
+    INDEX idx_booking_order_user_id (user_id),
+    INDEX idx_booking_order_room_type_id (room_type_id),
+    INDEX idx_booking_order_status_timeout (order_status, payment_timeout),
+    INDEX idx_booking_order_dates (check_in_date, check_out_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='booking_order';
+
+CREATE TABLE IF NOT EXISTS order_guest (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id BIGINT NOT NULL,
+    guest_name VARCHAR(50) NOT NULL,
+    guest_phone VARCHAR(20),
+    id_type VARCHAR(20),
+    id_number VARCHAR(64),
+    is_main TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_order_guest_order_id (order_id),
+    INDEX idx_order_guest_name (guest_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='order_guest';
+
+CREATE TABLE IF NOT EXISTS order_daily_price (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id BIGINT NOT NULL,
+    price_date DATE NOT NULL,
+    daily_price DECIMAL(10,2) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_order_daily_price (order_id, price_date),
+    INDEX idx_order_daily_price_order_id (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='order_daily_price';
 
 CREATE TABLE IF NOT EXISTS order_cancel_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -177,14 +212,19 @@ CREATE TABLE IF NOT EXISTS checkin_qr_token (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     order_id BIGINT NOT NULL,
     token_hash VARCHAR(255) NOT NULL,
-    token_status VARCHAR(20) NOT NULL DEFAULT 'VALID',
+    token_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     expire_at DATETIME NOT NULL,
     used_at DATETIME,
+    revoked_at DATETIME,
+    revoked_reason VARCHAR(100),
+    version INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_checkin_qr_order_id (order_id),
-    INDEX idx_checkin_qr_token_hash (token_hash),
-    INDEX idx_checkin_qr_status (token_status)
+    UNIQUE KEY uk_checkin_qr_token_hash (token_hash),
+    INDEX idx_checkin_qr_status (token_status),
+    INDEX idx_checkin_qr_expire_at (expire_at),
+    INDEX idx_checkin_qr_order_status (order_id, token_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='checkin_qr_token';
 
 CREATE TABLE IF NOT EXISTS hotel_info (

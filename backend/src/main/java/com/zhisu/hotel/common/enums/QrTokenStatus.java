@@ -1,7 +1,8 @@
 package com.zhisu.hotel.common.enums;
 
 public enum QrTokenStatus {
-    VALID,
+    ACTIVE,
     USED,
-    EXPIRED
+    EXPIRED,
+    REVOKED
 }
