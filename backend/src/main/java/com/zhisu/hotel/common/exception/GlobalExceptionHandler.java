@@ -18,16 +18,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<Void> handleBusinessException(BusinessException e) {
-        log.warn("业务异常: {}", e.getMessage());
+        log.warn("Business exception: {}", e.getMessage());
         return ApiResponse.error(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleValidationException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldError() != null 
-                ? e.getBindingResult().getFieldError().getDefaultMessage() 
-                : "参数校验失败";
+        String message = e.getBindingResult().getFieldError() != null
+                ? e.getBindingResult().getFieldError().getDefaultMessage()
+                : "Parameter validation failed";
         return ApiResponse.error(ErrorCode.VALIDATION_ERROR, message);
     }
 
@@ -40,19 +40,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse<Void> handleBadCredentialsException(BadCredentialsException e) {
-        return ApiResponse.error(ErrorCode.UNAUTHORIZED, "用户名或密码错误");
+        return ApiResponse.error(ErrorCode.UNAUTHORIZED, "Bad username or password");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ApiResponse<Void> handleAccessDeniedException(AccessDeniedException e) {
-        return ApiResponse.error(ErrorCode.FORBIDDEN, "无权限访问");
+        return ApiResponse.error(ErrorCode.FORBIDDEN, "Access denied");
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleException(Exception e) {
-        log.error("系统异常", e);
-        return ApiResponse.error(ErrorCode.INTERNAL_ERROR, "系统内部错误");
+        log.error("System exception", e);
+        return ApiResponse.error(ErrorCode.INTERNAL_ERROR, "Internal server error");
     }
 }

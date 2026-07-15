@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RoomStatusChangeRequest {
 
-    @NotNull(message = "目标状态不能为空")
+    @NotNull(message = "Target status must not be null")
     private RoomStatus targetStatus;
 
     private String reason;

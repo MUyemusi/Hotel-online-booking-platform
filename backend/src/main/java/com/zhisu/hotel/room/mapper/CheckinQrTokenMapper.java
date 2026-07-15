@@ -5,12 +5,16 @@ import com.zhisu.hotel.common.enums.QrTokenStatus;
 import com.zhisu.hotel.room.entity.CheckinQrToken;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 
 @Mapper
 public interface CheckinQrTokenMapper extends BaseMapper<CheckinQrToken> {
+
+    @Select("SELECT * FROM checkin_qr_token WHERE token_hash = #{tokenHash} LIMIT 1 FOR UPDATE")
+    CheckinQrToken selectByTokenHashForUpdate(@Param("tokenHash") String tokenHash);
 
     @Update("UPDATE checkin_qr_token " +
             "SET token_status = 'REVOKED', revoked_at = #{revokedAt}, revoked_reason = #{reason}, " +
@@ -33,4 +37,15 @@ public interface CheckinQrTokenMapper extends BaseMapper<CheckinQrToken> {
                            @Param("orderId") Long orderId,
                            @Param("requiredStatus") QrTokenStatus requiredStatus,
                            @Param("usedAt") LocalDateTime usedAt);
+
+    @Update("UPDATE checkin_qr_token " +
+            "SET token_status = 'USED', used_at = #{usedAt}, version = version + 1, updated_at = #{usedAt} " +
+            "WHERE id = #{tokenId} " +
+            "  AND order_id = #{orderId} " +
+            "  AND token_status = 'ACTIVE' " +
+            "  AND version = #{version}")
+    int markUsedForCheckinWithVersion(@Param("tokenId") Long tokenId,
+                                      @Param("orderId") Long orderId,
+                                      @Param("version") Integer version,
+                                      @Param("usedAt") LocalDateTime usedAt);
 }

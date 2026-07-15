@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RoomCreateRequest {
 
-    @NotBlank(message = "房间号不能为空")
+    @NotBlank(message = "Room number must not be blank")
     private String roomNo;
 
-    @NotNull(message = "楼层不能为空")
+    @NotNull(message = "Floor must not be null")
     private Integer floor;
 
-    @NotNull(message = "房型ID不能为空")
+    @NotNull(message = "Room type ID must not be null")
     private Long roomTypeId;
 
     private String remark;

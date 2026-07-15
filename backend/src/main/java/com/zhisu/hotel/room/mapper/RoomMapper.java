@@ -5,7 +5,11 @@ import com.zhisu.hotel.common.enums.RoomStatus;
 import com.zhisu.hotel.room.entity.Room;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface RoomMapper extends BaseMapper<Room> {
@@ -30,4 +34,28 @@ public interface RoomMapper extends BaseMapper<Room> {
             @Param("maintenanceReason") String maintenanceReason,
             @Param("version") Integer version
     );
+
+    @Select({
+            "<script>",
+            "SELECT * FROM room",
+            "WHERE id IN",
+            "<foreach collection='roomIds' item='roomId' open='(' separator=',' close=')'>",
+            "#{roomId}",
+            "</foreach>",
+            "AND is_deleted = 0",
+            "ORDER BY id",
+            "FOR UPDATE",
+            "</script>"
+    })
+    List<Room> selectByIdsForUpdate(@Param("roomIds") List<Long> roomIds);
+
+    @Update("UPDATE room " +
+            "SET room_status = 'OCCUPIED', version = version + 1, updated_at = #{updatedAt} " +
+            "WHERE id = #{roomId} " +
+            "  AND room_status = 'AVAILABLE' " +
+            "  AND version = #{version} " +
+            "  AND is_deleted = 0")
+    int markOccupiedForCheckin(@Param("roomId") Long roomId,
+                               @Param("version") Integer version,
+                               @Param("updatedAt") LocalDateTime updatedAt);
 }
