@@ -12,6 +12,48 @@ const routes = [
     component: () => import('@/modules/auth/Login.vue')
   },
   {
+    path: '/admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    redirect: '/admin/content/hotel-info',
+    children: [
+      {
+        path: 'content/hotel-info',
+        name: 'AdminHotelInfo',
+        component: () => import('@/views/admin/content/HotelInfoView.vue')
+      },
+      {
+        path: 'content/banners',
+        name: 'AdminBanners',
+        component: () => import('@/views/admin/content/BannerManageView.vue')
+      },
+      {
+        path: 'content/announcements',
+        name: 'AdminAnnouncements',
+        component: () => import('@/views/admin/content/AnnouncementManageView.vue')
+      },
+      {
+        path: 'pricing/base-prices',
+        name: 'AdminBasePrices',
+        component: () => import('@/views/admin/pricing/BasePriceView.vue')
+      },
+      {
+        path: 'pricing/holiday-calendar',
+        name: 'AdminHolidayCalendar',
+        component: () => import('@/views/admin/pricing/HolidayCalendarView.vue')
+      },
+      {
+        path: 'pricing/daily-prices',
+        name: 'AdminDailyPrices',
+        component: () => import('@/views/admin/pricing/DailyPriceCalendarView.vue')
+      },
+      {
+        path: 'system-config',
+        name: 'AdminSystemConfig',
+        component: () => import('@/views/admin/systemconfig/SystemConfigView.vue')
+      }
+    ]
+  },
+  {
     path: '/403',
     name: 'Forbidden',
     component: () => import('@/components/403.vue')
