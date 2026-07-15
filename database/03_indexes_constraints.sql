@@ -94,7 +94,7 @@ SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHE
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_checkin_qr_order'),
-    'ALTER TABLE checkin_qr_token ADD CONSTRAINT fk_checkin_qr_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'SELECT ''checkin_qr_token order foreign key deferred until booking_order constraints are finalized''',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 

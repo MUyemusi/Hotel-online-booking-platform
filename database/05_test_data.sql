@@ -2,7 +2,9 @@ USE zhisu_hotel;
 SET NAMES utf8mb4;
 
 DELETE FROM payment_record WHERE id = 1;
-DELETE FROM hotel_order WHERE id = 1;
+DELETE FROM order_guest WHERE order_id = 1;
+DELETE FROM order_daily_price WHERE order_id = 1;
+DELETE FROM booking_order WHERE id = 1;
 DELETE FROM daily_inventory WHERE inventory_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 6 DAY);
 DELETE FROM room WHERE room_no BETWEEN '301' AND '820';
 
@@ -56,8 +58,11 @@ CROSS JOIN (
 ) d
 GROUP BY rt.id, d.inventory_date;
 
-INSERT INTO hotel_order (id, order_no, user_id, room_type_id, check_in_date, check_out_date, room_count, guest_name, guest_phone, total_amount, order_status, remark) VALUES
-(1, 'TEST202607150001', 3, 2, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 DAY), 1, CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 228.00, 'PAID', CONVERT(0xE5889DE5A78BE58C96E6B58BE8AF95E8AEA2E58D95 USING utf8mb4));
+INSERT INTO booking_order (id, order_no, user_id, room_type_id, room_type_name, room_count, check_in_date, check_out_date, total_nights, guest_count, total_amount, total_amount_fen, phone, order_status, payment_status, paid_at, remark) VALUES
+(1, 'TEST202607150001', 3, 2, CONVERT(0xE6A087E58786E5A4A7E5BA8AE688BF USING utf8mb4), 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 DAY), 1, 1, 228.00, 22800, '13800000002', 'PENDING_CHECK_IN', 'PAID', NOW(), CONVERT(0xE5889DE5A78BE58C96E6B58BE8AF95E8AEA2E58D95 USING utf8mb4));
+
+INSERT INTO order_guest (order_id, guest_name, guest_phone, id_type, id_number, is_main) VALUES
+(1, CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'ID_CARD', '110101199001010011', 1);
 
 INSERT INTO payment_record (id, order_id, payment_no, payment_method, payment_status, amount, paid_at) VALUES
 (1, 1, 'PAY202607150001', 'MOCK', 'PAID', 228.00, NOW());
