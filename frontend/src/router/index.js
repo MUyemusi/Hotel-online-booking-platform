@@ -14,8 +14,13 @@ const routes = [
   {
     path: '/admin',
     component: () => import('@/layouts/AdminLayout.vue'),
-    redirect: '/admin/content/hotel-info',
+    redirect: '/admin/dashboard/overview',
     children: [
+      {
+        path: 'dashboard/overview',
+        name: 'AdminDashboardOverview',
+        component: () => import('@/views/admin/dashboard/DashboardOverviewView.vue')
+      },
       {
         path: 'content/hotel-info',
         name: 'AdminHotelInfo',

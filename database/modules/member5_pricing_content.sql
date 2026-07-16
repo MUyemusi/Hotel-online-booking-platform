@@ -141,3 +141,25 @@ holiday_year = VALUES(holiday_year),
 source_status = VALUES(source_status),
 status = VALUES(status),
 remark = VALUES(remark);
+
+-- =========================================================
+-- 成员5：基础价格操作日志
+-- 记录房型基础价格调整历史
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS price_operation_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '价格操作日志ID',
+    room_type_id BIGINT NOT NULL COMMENT '房型ID',
+    room_type_name VARCHAR(100) NOT NULL COMMENT '房型名称',
+    old_price DECIMAL(10,2) NOT NULL COMMENT '调整前基础价格',
+    new_price DECIMAL(10,2) NOT NULL COMMENT '调整后基础价格',
+    change_reason VARCHAR(200) NOT NULL COMMENT '调整原因',
+    operator_id BIGINT DEFAULT NULL COMMENT '操作人ID',
+    operator_name VARCHAR(100) DEFAULT NULL COMMENT '操作人名称',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_price_log_room_type (room_type_id),
+    INDEX idx_price_log_created_at (created_at)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='基础价格操作日志表';

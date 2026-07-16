@@ -86,3 +86,31 @@ INSERT INTO traffic_info (id, traffic_type, title, content, sort_order) VALUES
 (1, 'SUBWAY', CONVERT(0xE59CB0E99381 USING utf8mb4), CONVERT(0xE8B79DE7A6BBE4B8ADE5BF83E7AB99E6ADA5E8A18CE7BAA6203820E58886E9929FE38082 USING utf8mb4), 1),
 (2, 'AIRPORT', CONVERT(0xE69CBAE59CBA USING utf8mb4), CONVERT(0xE8B79DE69CBAE59CBAE7BAA620343020E58886E9929FE8BDA6E7A88BE38082 USING utf8mb4), 2)
 ON DUPLICATE KEY UPDATE traffic_type = VALUES(traffic_type), title = VALUES(title), content = VALUES(content), sort_order = VALUES(sort_order);
+
+-- 默认管理员账号：admin / admin123
+INSERT INTO sys_user (username, password, nickname, phone, email, status, credit_score, is_blacklisted)
+VALUES (
+    'admin',
+    '$2a$10$JuRMjKGLYEPU/lkVlQdw6Oxk03xzuLlaicInPXjIThY0ZfFrR6kV6',
+    '系统管理员',
+    '13800000000',
+    'admin@zhisu.local',
+    'ENABLED',
+    100,
+    FALSE
+)
+ON DUPLICATE KEY UPDATE
+    password = VALUES(password),
+    nickname = VALUES(nickname),
+    phone = VALUES(phone),
+    email = VALUES(email),
+    status = VALUES(status),
+    credit_score = VALUES(credit_score),
+    is_blacklisted = VALUES(is_blacklisted);
+
+INSERT INTO sys_user_role (user_id, role_id)
+SELECT u.id, r.id
+FROM sys_user u
+JOIN sys_role r ON r.role_code = 'ADMIN'
+WHERE u.username = 'admin'
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), role_id = VALUES(role_id);
