@@ -6,6 +6,10 @@ public interface ErrorCode {
     String FORBIDDEN = "FORBIDDEN";
     String NOT_FOUND = "NOT_FOUND";
     String INTERNAL_ERROR = "INTERNAL_ERROR";
+    String BUSINESS_ERROR = "BUSINESS_ERROR";
+    String INVALID_REQUEST = "INVALID_REQUEST";
+    String METHOD_NOT_ALLOWED = "METHOD_NOT_ALLOWED";
+    String CONFLICT = "CONFLICT";
 
     // 房间管理相关错误码
     String ROOM_NO_DUPLICATE = "ROOM_NO_DUPLICATE";
