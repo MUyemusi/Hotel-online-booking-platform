@@ -1,4 +1,5 @@
 USE zhisu_hotel;
+SET NAMES utf8mb4;
 
--- 成员1负责的表：用户相关、信用相关
--- 预留表结构，后续补充
+-- Member 1: user, role, credit, and operation log tables.
+SOURCE E:/Hotel-online-booking-platform/database/01_base_tables.sql;

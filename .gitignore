@@ -1,6 +1,10 @@
 ﻿# Backend
 /target/
+**/target/
 *.log
+database/backup_*.sql
+database/*validation*.log
+backend/*.log
 application-local.yml
 application-dev.local.yml
 application-dev.yml

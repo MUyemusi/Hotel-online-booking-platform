@@ -1,0 +1,43 @@
+package com.zhisu.hotel.payment.controller;
+
+import com.zhisu.hotel.common.response.ApiResponse;
+import com.zhisu.hotel.payment.dto.PaymentRequest;
+import com.zhisu.hotel.payment.service.PaymentService;
+import com.zhisu.hotel.payment.vo.PaymentVO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/payments")
+@RequiredArgsConstructor
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    @PostMapping("/pay")
+    public ApiResponse<PaymentVO> pay(@Valid @RequestBody PaymentRequest request) {
+        Long userId = getCurrentUserId();
+        PaymentVO vo = paymentService.processPayment(request, userId);
+        return ApiResponse.success(vo);
+    }
+
+    @GetMapping("/{orderId}")
+    public ApiResponse<List<PaymentVO>> getPayments(@PathVariable Long orderId) {
+        Long userId = getCurrentUserId();
+        List<PaymentVO> records = paymentService.getPaymentRecords(orderId, userId);
+        return ApiResponse.success(records);
+    }
+
+    @GetMapping("/admin/{orderId}")
+    public ApiResponse<List<PaymentVO>> getAdminPayments(@PathVariable Long orderId) {
+        List<PaymentVO> records = paymentService.getPaymentRecordsByOrderId(orderId);
+        return ApiResponse.success(records);
+    }
+
+    private Long getCurrentUserId() {
+        return 1L; // TODO: 替换为JWT认证
+    }
+}
