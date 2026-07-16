@@ -1,6 +1,7 @@
 package com.zhisu.hotel.pricing.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -42,10 +43,12 @@ public class DailyPrice {
 
     private String sourceStatus;
 
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private BigDecimal manualPrice;
 
     private Integer manualOverride;
 
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String overrideReason;
 
     @TableField(fill = FieldFill.INSERT)
