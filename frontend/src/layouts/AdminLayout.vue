@@ -23,6 +23,11 @@
           <el-menu-item index="/admin/pricing/holiday-calendar">节假日日历管理</el-menu-item>
           <el-menu-item index="/admin/pricing/daily-prices">每日价格日历</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="room-admin">
+          <template #title>房型与库存</template>
+          <el-menu-item index="/admin/room-types">房型管理</el-menu-item>
+          <el-menu-item index="/admin/inventory">库存管理</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="system-admin">
           <template #title>系统管理</template>
           <el-menu-item index="/admin/system-config">系统参数管理</el-menu-item>

@@ -3,8 +3,24 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/modules/home/Home.vue')
+    component: () => import('@/layouts/UserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('@/modules/home/Home.vue')
+      },
+      {
+        path: 'rooms',
+        name: 'RoomTypeList',
+        component: () => import('@/views/user/roomtypes/RoomTypeListView.vue')
+      },
+      {
+        path: 'rooms/:id',
+        name: 'RoomTypeDetail',
+        component: () => import('@/views/user/roomtypes/RoomTypeDetailView.vue')
+      }
+    ]
   },
   {
     path: '/login',
@@ -50,6 +66,16 @@ const routes = [
         path: 'pricing/daily-prices',
         name: 'AdminDailyPrices',
         component: () => import('@/views/admin/pricing/DailyPriceCalendarView.vue')
+      },
+      {
+        path: 'room-types',
+        name: 'AdminRoomTypes',
+        component: () => import('@/views/admin/roomtype/RoomTypeManageView.vue')
+      },
+      {
+        path: 'inventory',
+        name: 'AdminInventory',
+        component: () => import('@/views/admin/inventory/InventoryManageView.vue')
       },
       {
         path: 'system-config',
