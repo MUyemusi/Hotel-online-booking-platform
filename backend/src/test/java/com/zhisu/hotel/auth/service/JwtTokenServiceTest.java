@@ -14,8 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JwtTokenServiceTest {
 
-    private static final Instant FIXED_TIME =
-            Instant.parse("2026-07-20T06:00:00Z");
 
     private JwtProperties jwtProperties;
     private JwtTokenService jwtTokenService;
@@ -28,7 +26,7 @@ class JwtTokenServiceTest {
         );
         jwtProperties.setExpiration(7_200_000L);
 
-        Clock clock = Clock.fixed(FIXED_TIME, ZoneOffset.UTC);
+        Clock clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
         jwtTokenService = new JwtTokenService(jwtProperties, clock);
     }
 

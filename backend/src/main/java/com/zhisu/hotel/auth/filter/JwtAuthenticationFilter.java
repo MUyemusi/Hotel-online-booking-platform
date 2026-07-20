@@ -71,6 +71,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(username);
 
+        if (!userDetails.isEnabled()) {
+            throw new UsernameNotFoundException("用户已被禁用");
+        }
+
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         userDetails,
