@@ -1,15 +1,20 @@
 ﻿<template>
   <div class="home-page">
     <section class="hero">
+      <div class="hero-bg-img"></div>
       <div class="hero-copy">
         <p class="eyebrow">Zhisu Hotel</p>
         <h1>住得舒适，也住得有仪式感</h1>
         <p class="hero-text">
-          首页轮播图与酒店公告都只展示已发布内容，方便前台页面与后台运营状态保持实时同步。
+          于繁华之外，寻一处雅居，让每一次停留都成为风景
         </p>
         <div class="hero-actions">
-          <el-button type="primary" size="large">立即预订</el-button>
-          <el-button size="large" plain>查看房型</el-button>
+          <router-link to="/rooms">
+            <el-button type="primary" size="large">立即预订</el-button>
+          </router-link>
+          <router-link to="/rooms">
+            <el-button size="large" plain>查看房型</el-button>
+          </router-link>
         </div>
       </div>
 
@@ -176,9 +181,15 @@ onMounted(() => {
 .home-page {
   min-height: 100vh;
   padding: 32px;
-  background:
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+  background: linear-gradient(180deg, #fef9f3 0%, #f5efe6 30%, #ede4d8 100%);
+}
+
+.hero-bg-img {
+  position: absolute;
+  inset: 0;
+  background: url('/images/bg/hero-bg-2.jpg') center/cover no-repeat;
+  opacity: 0.3;
+  z-index: 0;
 }
 
 .hero {

@@ -5,38 +5,30 @@ const request = axios.create({
   timeout: 10000
 })
 
-function resolveAdminAuthorization() {
-  const stored = window.sessionStorage.getItem('zhisu_admin_basic_auth')
-  if (stored) {
-    return stored
-  }
-  const defaultToken = `Basic ${window.btoa('admin:admin123')}`
-  window.sessionStorage.setItem('zhisu_admin_basic_auth', defaultToken)
-  return defaultToken
-}
-
+// 请求拦截器：给 /api/admin/ 和 /api/frontdesk/ 自动加 JWT
 request.interceptors.request.use(config => {
   const url = config.url || ''
-  if (url.startsWith('/api/admin/')) {
-    config.headers = config.headers || {}
-    config.headers.Authorization = resolveAdminAuthorization()
+  if (url.startsWith('/api/admin/') || url.startsWith('/api/frontdesk/')) {
+    const token = window.sessionStorage.getItem('zhisu_token')
+    if (token) {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
+    }
   }
   return config
 })
 
+// 响应拦截器
 request.interceptors.response.use(
-  response => {
-    return response.data
-  },
+  response => response.data,
   error => {
     const status = error?.response?.status
     if (status === 401) {
-      console.error('管理员认证失败，请确认默认账号 admin / admin123 已初始化')
+      console.error('未登录或登录已过期，请重新登录')
     }
     if (status === 403) {
-      console.error('当前账号没有管理员权限')
+      console.error('当前账号没有操作权限')
     }
-    console.error('请求错误:', error)
     return Promise.reject(error)
   }
 )

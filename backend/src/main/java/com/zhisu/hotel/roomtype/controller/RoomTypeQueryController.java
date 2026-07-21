@@ -1,5 +1,6 @@
 package com.zhisu.hotel.roomtype.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhisu.hotel.common.response.ApiResponse;
 import com.zhisu.hotel.roomtype.dto.RoomTypeSummary;
 import com.zhisu.hotel.roomtype.entity.RoomType;
@@ -19,6 +20,14 @@ public class RoomTypeQueryController {
 
     private final RoomTypeService roomTypeService;
     private final RoomTypeQueryService roomTypeQueryService;
+
+    @GetMapping
+    public ApiResponse<Page<RoomTypeSummary>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+        return ApiResponse.success(roomTypeService.pageRoomTypes(page, size, keyword, null, "ONLINE"));
+    }
 
     @GetMapping("/{id}")
     public ApiResponse<RoomType> getDetail(@PathVariable Long id) {

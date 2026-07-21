@@ -23,6 +23,11 @@
           <el-menu-item index="/admin/pricing/holiday-calendar">节假日日历管理</el-menu-item>
           <el-menu-item index="/admin/pricing/daily-prices">每日价格日历</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="room-admin">
+          <template #title>房型与库存</template>
+          <el-menu-item index="/admin/room-types">房型管理</el-menu-item>
+          <el-menu-item index="/admin/inventory">库存管理</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="system-admin">
           <template #title>系统管理</template>
           <el-menu-item index="/admin/system-config">系统参数管理</el-menu-item>
@@ -52,15 +57,14 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
-  background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 28%),
-    linear-gradient(135deg, #f6f8fc 0%, #edf4f7 100%);
+  background: linear-gradient(135deg, #fef9f3 0%, #f5efe6 30%, #ede4d8 100%);
 }
 
 .admin-sidebar {
   padding: 28px 20px;
-  background: linear-gradient(180deg, #12343b 0%, #0f2027 100%);
-  color: #f8fafc;
+  background: linear-gradient(180deg, #f5efe6 0%, #ede4d8 100%);
+  color: #2c2416;
+  border-right: 1px solid rgba(0,0,0,0.05);
 }
 
 .brand {
@@ -70,11 +74,12 @@
 .brand h1 {
   margin: 0 0 6px;
   font-size: 24px;
+  color: #2c2416;
 }
 
 .brand p {
   margin: 0;
-  color: rgba(248, 250, 252, 0.72);
+  color: #a69888;
 }
 
 .sidebar-menu {
@@ -86,12 +91,13 @@
 .sidebar-menu :deep(.el-menu-item) {
   margin-bottom: 8px;
   border-radius: 12px;
-  color: #dbeafe;
+  color: #5c5040;
 }
 
 .sidebar-menu :deep(.el-sub-menu__title:hover),
 .sidebar-menu :deep(.el-menu-item:hover) {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(200, 148, 92, 0.1);
+  color: #2c2416;
 }
 
 .sidebar-menu :deep(.el-menu) {
@@ -99,8 +105,8 @@
 }
 
 .sidebar-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, #f59e0b, #f97316);
-  color: #111827;
+  background: linear-gradient(135deg, #c8945c, #b07840);
+  color: #fff;
 }
 
 .admin-main {
