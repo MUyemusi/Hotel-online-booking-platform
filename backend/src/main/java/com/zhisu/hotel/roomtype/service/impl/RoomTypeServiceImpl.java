@@ -3,6 +3,8 @@ package com.zhisu.hotel.roomtype.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhisu.hotel.common.exception.BusinessException;
+import com.zhisu.hotel.inventory.entity.DailyInventory;
+import com.zhisu.hotel.inventory.mapper.DailyInventoryMapper;
 import com.zhisu.hotel.roomtype.dto.RoomTypeSummary;
 import com.zhisu.hotel.roomtype.entity.RoomType;
 import com.zhisu.hotel.roomtype.entity.RoomTypeFacility;
@@ -15,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     private final RoomTypeMapper roomTypeMapper;
     private final RoomTypeImageMapper roomTypeImageMapper;
     private final RoomTypeFacilityMapper roomTypeFacilityMapper;
+    private final DailyInventoryMapper dailyInventoryMapper;
 
     @Override
     @Transactional
@@ -56,7 +61,8 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     }
 
     @Override
-    public Page<RoomTypeSummary> pageRoomTypes(int page, int size, String keyword, String category, String status) {
+    public Page<RoomTypeSummary> pageRoomTypes(int page, int size, String keyword, String category, String status,
+                                                Integer guests, LocalDate checkIn, LocalDate checkOut) {
         LambdaQueryWrapper<RoomType> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(RoomType::getName, keyword);
@@ -67,13 +73,58 @@ public class RoomTypeServiceImpl implements RoomTypeService {
         if (status != null && !status.isEmpty()) {
             wrapper.eq(RoomType::getStatus, status);
         }
+        // 人数筛选：房型最大入住人数 >= 查询人数
+        if (guests != null && guests > 0) {
+            wrapper.ge(RoomType::getMaxGuests, guests);
+        }
         wrapper.orderByAsc(RoomType::getId);
 
-        Page<RoomType> entityPage = roomTypeMapper.selectPage(new Page<>(page, size), wrapper);
+        // 有日期范围时，需要按库存筛选，查全量数据后在Java层过滤
+        boolean needInventoryFilter = checkIn != null && checkOut != null && checkIn.isBefore(checkOut);
+        if (needInventoryFilter) {
+            // 查全量（不分页），Java层过滤后再手动分页
+            List<RoomType> allEntities = roomTypeMapper.selectList(wrapper);
+            List<RoomType> availableList = allEntities.stream()
+                    .filter(rt -> hasInventoryForDateRange(rt.getId(), checkIn, checkOut))
+                    .collect(Collectors.toList());
 
+            int total = availableList.size();
+            int fromIndex = (page - 1) * size;
+            int toIndex = Math.min(fromIndex + size, total);
+            List<RoomTypeSummary> records = (fromIndex < total)
+                    ? availableList.subList(fromIndex, toIndex).stream().map(this::toSummary).toList()
+                    : List.of();
+
+            Page<RoomTypeSummary> result = new Page<>(page, size, total);
+            result.setRecords(records);
+            return result;
+        }
+
+        Page<RoomType> entityPage = roomTypeMapper.selectPage(new Page<>(page, size), wrapper);
         Page<RoomTypeSummary> result = new Page<>(page, size, entityPage.getTotal());
         result.setRecords(entityPage.getRecords().stream().map(this::toSummary).toList());
         return result;
+    }
+
+    /**
+     * 检查指定房型在日期范围内每天是否都有可售库存（availableRooms >= 1）
+     */
+    private boolean hasInventoryForDateRange(Long roomTypeId, LocalDate checkIn, LocalDate checkOut) {
+        LambdaQueryWrapper<DailyInventory> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(DailyInventory::getRoomTypeId, roomTypeId)
+                .ge(DailyInventory::getInventoryDate, checkIn)
+                .lt(DailyInventory::getInventoryDate, checkOut)  // 离店日不住，不需要库存
+                .eq(DailyInventory::getStatus, "ACTIVE");
+        List<DailyInventory> inventories = dailyInventoryMapper.selectList(wrapper);
+
+        // 日期范围内没有任何库存记录 → 不可售
+        long expectedDays = checkIn.until(checkOut).getDays();
+        if (inventories.size() < expectedDays) {
+            return false;
+        }
+
+        // 每天都至少要有1间可售
+        return inventories.stream().allMatch(inv -> inv.getAvailableRooms() != null && inv.getAvailableRooms() >= 1);
     }
 
     @Override
