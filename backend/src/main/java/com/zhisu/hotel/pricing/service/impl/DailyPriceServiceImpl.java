@@ -40,7 +40,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
     @Transactional
     public int generateAllRoomTypePrices(LocalDate startDate, LocalDate endDate) {
         validateDateRange(startDate, endDate);
-        Page<RoomTypeSummary> roomTypePage = roomTypeService.pageRoomTypes(1, 1000, null, null, null);
+        Page<RoomTypeSummary> roomTypePage = roomTypeService.pageRoomTypes(1, 1000, null, null, null, null, null, null);
         if (roomTypePage.getRecords().isEmpty()) {
             throw new BusinessException("ROOM_TYPE_EMPTY", "No room types available for daily price generation");
         }
