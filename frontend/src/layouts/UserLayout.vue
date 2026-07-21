@@ -1,11 +1,11 @@
 <template>
   <div class="user-layout" :class="{ 'is-scrolled': scrolled }">
     <!-- 顶部导航 -->
-    <header class="top-nav" :class="{ 'nav-scrolled': scrolled }">
+    <header class="top-nav" :class="{ 'nav-scrolled': scrolled || !immersiveHeader }">
       <div class="nav-inner">
         <router-link to="/" class="brand">
           <span class="brand-zh">智宿</span>
-          <span class="brand-en">ZHISU HOTEL</span>
+          <span class="brand-en">COASTAL ECO RETREAT</span>
         </router-link>
 
         <nav class="nav-links">
@@ -17,10 +17,29 @@
             <span>客房鉴赏</span>
             <small>Rooms</small>
           </router-link>
+          <router-link v-if="isGuest" to="/account/profile" class="nav-item" active-class="nav-active">
+            <span>个人中心</span>
+            <small>Account</small>
+          </router-link>
+          <router-link v-if="isGuest" to="/account/credit" class="nav-item" active-class="nav-active">
+            <span>信用中心</span>
+            <small>Credit</small>
+          </router-link>
+          <router-link v-if="workspaceRoute" :to="workspaceRoute" class="nav-item workspace-entry">
+            <span>{{ workspaceLabel }}</span>
+            <small>Workspace</small>
+          </router-link>
         </nav>
 
         <div class="nav-actions">
-          <router-link to="/login" class="btn-outline">登录</router-link>
+          <template v-if="!loggedIn">
+            <router-link to="/register" class="register-link">注册住客账号</router-link>
+            <router-link to="/login" class="btn-outline">登录</router-link>
+          </template>
+          <el-dropdown v-else trigger="click" @command="handleCommand">
+            <button class="user-button"><span class="user-dot">{{ userInitial }}</span><span class="user-copy"><b>{{ userName }}</b><small>{{ roleLabel }}</small></span></button>
+            <template #dropdown><el-dropdown-menu><el-dropdown-item command="account">个人中心</el-dropdown-item><el-dropdown-item command="password">修改密码</el-dropdown-item><el-dropdown-item v-if="isGuest" command="credit">信用中心</el-dropdown-item><el-dropdown-item v-if="isAdmin" command="admin">进入管理员后台</el-dropdown-item><el-dropdown-item v-if="isFrontdesk" command="frontdesk">进入前台工作台</el-dropdown-item><el-dropdown-item divided command="logout">退出登录</el-dropdown-item></el-dropdown-menu></template>
+          </el-dropdown>
         </div>
       </div>
     </header>
@@ -47,7 +66,7 @@
         </div>
         <div class="footer-info">
           <p>© 2026 智宿酒店在线预订与运营管理系统</p>
-          <p>为每一位宾客，呈献至臻体验</p>
+          <p>向海而居，与自然相逢</p>
         </div>
       </div>
     </footer>
@@ -55,12 +74,41 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
+import { logout } from '@/api/auth'
+import { clearSession, getStoredUser, getToken, hasRole } from '@/utils/auth'
 
 const router = useRouter()
+const route = useRoute()
 const scrolled = ref(false)
 const transitionName = ref('slide-left')
+const loggedIn = computed(() => Boolean(getToken()))
+const storedUser = computed(() => getStoredUser() || {})
+const userName = computed(() => storedUser.value.nickname || storedUser.value.username || '我的账号')
+const userInitial = computed(() => userName.value.slice(0, 1))
+const isAdmin = computed(() => hasRole('ADMIN'))
+const isFrontdesk = computed(() => hasRole('FRONT_DESK', 'FRONTDESK') && !isAdmin.value)
+const isGuest = computed(() => loggedIn.value && !isAdmin.value && !isFrontdesk.value)
+const roleLabel = computed(() => isAdmin.value ? '系统管理员' : isFrontdesk.value ? '酒店前台' : '住客账号')
+const workspaceRoute = computed(() => isAdmin.value ? '/admin' : isFrontdesk.value ? '/frontdesk' : '')
+const workspaceLabel = computed(() => isAdmin.value ? '管理后台' : isFrontdesk.value ? '前台工作台' : '')
+const immersiveHeader = computed(() => route.path === '/' || route.path === '/rooms' || route.path.startsWith('/rooms/'))
+
+async function handleCommand(command) {
+  if (command === 'account') return router.push('/account/profile')
+  if (command === 'password') return router.push('/account/password')
+  if (command === 'credit') return router.push('/account/credit')
+  if (command === 'admin') return router.push('/admin')
+  if (command === 'frontdesk') return router.push('/frontdesk')
+  if (command === 'logout') {
+    await ElMessageBox.confirm('确认退出当前账号吗？', '退出登录', { type: 'warning' })
+    try { await logout() } catch { /* JWT 无状态，服务异常时仍允许本地退出 */ }
+    clearSession()
+    router.replace('/login')
+  }
+}
 
 window.addEventListener('scroll', () => {
   scrolled.value = window.scrollY > 60
@@ -76,21 +124,21 @@ router.beforeEach((to, from) => {
 <style>
 /* ========== 全局设计令牌 ========== */
 .user-layout {
-  --cream: #fef9f3;
-  --cream-dark: #f5efe6;
-  --warm-white: #fdfaf7;
+  --cream: #f7f3ea;
+  --cream-dark: #e9ddc8;
+  --warm-white: #fffdf8;
   --card-bg: rgba(255, 255, 255, 0.72);
   --card-border: rgba(255, 255, 255, 0.55);
   --glass-bg: rgba(255, 255, 255, 0.48);
   --glass-border: rgba(255, 255, 255, 0.65);
-  --text-primary: #2c2416;
-  --text-secondary: #6b5e4f;
-  --text-muted: #a69888;
-  --accent: #c8945c;
-  --accent-light: #dbb882;
-  --accent-soft: rgba(200, 148, 92, 0.12);
-  --accent-glow: rgba(200, 148, 92, 0.18);
-  --sage: #8b9d83;
+  --text-primary: #302a24;
+  --text-secondary: #6d6258;
+  --text-muted: #9b8c7d;
+  --accent: #a4774f;
+  --accent-light: #c2a477;
+  --accent-soft: rgba(164, 119, 79, 0.12);
+  --accent-glow: rgba(164, 119, 79, 0.18);
+  --sage: #496454;
   --sage-soft: rgba(139, 157, 131, 0.10);
   --shadow-sm: 0 2px 12px rgba(44, 36, 22, 0.06);
   --shadow-md: 0 8px 32px rgba(44, 36, 22, 0.08);
@@ -103,7 +151,7 @@ router.beforeEach((to, from) => {
   --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   min-height: 100vh;
-  background: linear-gradient(180deg, #fef9f3 0%, #f5efe6 30%, #ede4d8 100%);
+  background: #f7f3ea;
   color: var(--text-primary);
   font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -149,14 +197,14 @@ router.beforeEach((to, from) => {
 .brand-zh {
   font-size: 24px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #fff;
   letter-spacing: 0.06em;
 }
 
 .brand-en {
   font-size: 10px;
   font-weight: 400;
-  color: var(--accent);
+  color: rgba(255,255,255,.72);
   letter-spacing: 0.24em;
   text-transform: uppercase;
 }
@@ -168,7 +216,7 @@ router.beforeEach((to, from) => {
   flex-direction: column;
   align-items: center;
   text-decoration: none;
-  color: var(--text-secondary);
+  color: rgba(255,255,255,.86);
   font-size: 15px;
   font-weight: 500;
   transition: color 0.3s;
@@ -177,13 +225,13 @@ router.beforeEach((to, from) => {
 .nav-item small {
   font-size: 10px;
   font-weight: 400;
-  color: var(--text-muted);
+  color: rgba(255,255,255,.55);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .nav-item:hover,
-.nav-active { color: var(--accent); }
+.nav-active { color: #fff; }
 
 .nav-active::after {
   content: '';
@@ -191,7 +239,7 @@ router.beforeEach((to, from) => {
   bottom: -8px;
   width: 20px;
   height: 3px;
-  background: var(--accent);
+  background: #d9c3a1;
   border-radius: 3px;
 }
 
@@ -199,23 +247,35 @@ router.beforeEach((to, from) => {
   display: inline-flex;
   align-items: center;
   padding: 10px 28px;
-  border: 1.5px solid rgba(200, 148, 92, 0.35);
+  border: 1px solid rgba(255,255,255,.5);
   border-radius: 50px;
-  color: var(--accent);
+  color: #fff;
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
   transition: all 0.3s;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255,255,255,.08);
   backdrop-filter: blur(6px);
 }
 
 .btn-outline:hover {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: #a4774f;
+  background: #a4774f;
   color: #fff;
   box-shadow: var(--shadow-glow);
 }
+.user-button { display:flex;align-items:center;gap:9px;padding:7px 15px 7px 8px;border:1px solid rgba(255,255,255,.35);border-radius:30px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer; }
+.user-dot { width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#a4774f;color:#fff;font-weight:700; }
+.user-copy{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}.user-copy b{font-size:13px}.user-copy small{font-size:9px;color:rgba(255,255,255,.62);letter-spacing:.06em}.register-link{color:rgba(255,255,255,.84);font-size:13px;text-decoration:none}.register-link:hover{color:#fff}.nav-actions{display:flex;align-items:center;gap:16px}.workspace-entry span{color:#ead4ad}
+
+.nav-scrolled .brand-zh { color: var(--text-primary); }
+.nav-scrolled .brand-en { color: var(--accent); }
+.nav-scrolled .nav-item { color: var(--text-secondary); }
+.nav-scrolled .nav-item small { color: var(--text-muted); }
+.nav-scrolled .nav-item:hover,.nav-scrolled .nav-active { color: var(--accent); }
+.nav-scrolled .btn-outline { color: var(--accent); border-color: rgba(164,119,79,.4); background: rgba(255,255,255,.45); }
+.nav-scrolled .user-button { color: #5c5040; border-color: rgba(164,119,79,.25); background: rgba(255,255,255,.6); }
+.nav-scrolled .user-copy small{color:#9b8c7d}.nav-scrolled .register-link{color:#6d6258}.nav-scrolled .workspace-entry span{color:#496454}
 
 /* ========== 页面切换动画 ========== */
 .page-stage { position: relative; overflow: hidden; }
@@ -239,7 +299,7 @@ router.beforeEach((to, from) => {
   margin-top: 80px;
   padding: 48px 0;
   position: relative;
-  background: rgba(255, 255, 255, 0.35);
+  background: #33483b;
   backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.5);
 }
@@ -266,7 +326,9 @@ router.beforeEach((to, from) => {
 
 .footer-brand .brand-zh { font-size: 20px; }
 .footer-info { text-align: right; }
-.footer-info p { margin: 4px 0; color: var(--text-muted); font-size: 13px; }
+.site-footer .brand-zh { color: #fff; }
+.site-footer .brand-en { color: #cdb897; }
+.footer-info p { margin: 4px 0; color: rgba(255,255,255,.58); font-size: 13px; }
 
 @media (max-width: 768px) {
   .nav-inner, .footer-inner { padding: 0 20px; }

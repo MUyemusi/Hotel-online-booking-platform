@@ -1,16 +1,3 @@
-<template>
-  <div class="error-page">
-    <h1>403</h1>
-    <p>无权限访问</p>
-  </div>
-</template>
-
-<script setup>
-</script>
-
-<style scoped>
-.error-page {
-  text-align: center;
-  padding: 50px;
-}
-</style>
+<template><main class="error-page"><span class="badge">ACCESS DENIED</span><div class="code">403</div><h1>没有访问权限</h1><p>当前账号没有访问此功能的角色权限，请返回账号中心或联系管理员。</p><div><el-button type="primary" round @click="goHome">返回账号中心</el-button><el-button round @click="$router.back()">返回上一页</el-button></div></main></template>
+<script setup>import { useRouter } from 'vue-router';import { defaultRouteForCurrentUser } from '@/utils/auth';const router=useRouter();const goHome=()=>router.replace(defaultRouteForCurrentUser())</script>
+<style scoped>.error-page{min-height:100vh;display:grid;place-content:center;justify-items:center;padding:24px;text-align:center;background:radial-gradient(circle at 50% 30%,rgba(200,148,92,.14),transparent 34%),#f8f2ea;color:#2c2416}.code{font-size:112px;font-weight:800;line-height:1;color:transparent;-webkit-text-stroke:2px #c8945c}h1{margin:18px 0 8px;font-size:30px}p{max-width:480px;margin:0 0 28px;color:#827568}</style>
