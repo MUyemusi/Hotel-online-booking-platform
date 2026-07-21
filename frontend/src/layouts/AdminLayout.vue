@@ -5,43 +5,30 @@
         <h1>智宿酒店</h1>
         <p>后台管理</p>
       </div>
-
-      <el-menu :default-active="$route.path" class="sidebar-menu" router unique-opened>
-        <el-sub-menu index="dashboard-admin">
-          <template #title>运营看板</template>
-          <el-menu-item index="/admin/dashboard/overview">数据总览</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="hotel-ops">
-          <template #title>酒店运营</template>
-          <el-menu-item index="/admin/content/hotel-info">酒店信息管理</el-menu-item>
-          <el-menu-item index="/admin/content/banners">首页轮播图管理</el-menu-item>
-          <el-menu-item index="/admin/content/announcements">酒店公告管理</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="pricing-admin">
-          <template #title>价格管理</template>
-          <el-menu-item index="/admin/pricing/base-prices">基础价格管理</el-menu-item>
-          <el-menu-item index="/admin/pricing/holiday-calendar">节假日日历管理</el-menu-item>
-          <el-menu-item index="/admin/pricing/daily-prices">每日价格日历</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="room-admin">
-          <template #title>房型与库存</template>
-          <el-menu-item index="/admin/room-types">房型管理</el-menu-item>
-          <el-menu-item index="/admin/inventory">库存管理</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="system-admin">
-          <template #title>系统管理</template>
-          <el-menu-item index="/admin/system-config">系统参数管理</el-menu-item>
-        </el-sub-menu>
-      </el-menu>
     </aside>
 
     <div class="admin-main">
       <header class="admin-header">
         <div>
+          <span class="admin-role">ADMIN CONSOLE · 管理员专属</span>
           <h2>管理员控制台</h2>
-          <p>管理酒店内容、价格策略、库存观察与系统基础配置。</p>
         </div>
+
+        <el-dropdown @command="handleCommand">
+          <button class="admin-user">
+            <span>{{ initial }}</span>
+            {{ displayName }}
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="home">酒店首页</el-dropdown-item>
+              <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </header>
+
       <main class="admin-content">
         <router-view />
       </main>
@@ -50,6 +37,31 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
+import { logout } from '@/api/auth'
+import { clearSession, getStoredUser } from '@/utils/auth'
+
+const router = useRouter()
+const user = getStoredUser() || {}
+const displayName = computed(() => user.nickname || user.username || '管理员')
+const initial = computed(() => displayName.value.slice(0, 1))
+
+async function handleCommand(command) {
+  if (command === 'home') return router.push('/')
+  if (command === 'profile') return router.push('/account/profile')
+  if (command === 'logout') {
+    await ElMessageBox.confirm('确认退出管理后台吗？', '退出登录', { type: 'warning' })
+    try {
+      await logout()
+    } catch {
+      // JWT 无状态，后端暂不可用时仍允许清除本地登录状态。
+    }
+    clearSession()
+    router.replace('/login')
+  }
+}
 </script>
 
 <style scoped>
@@ -57,84 +69,81 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
-  background: linear-gradient(135deg, #fef9f3 0%, #f5efe6 30%, #ede4d8 100%);
+  background: #f4f0e8;
 }
 
 .admin-sidebar {
   padding: 28px 20px;
-  background: linear-gradient(180deg, #f5efe6 0%, #ede4d8 100%);
-  color: #2c2416;
-  border-right: 1px solid rgba(0,0,0,0.05);
-}
-
-.brand {
-  margin-bottom: 28px;
+  background: linear-gradient(180deg, #263b30 0%, #33483b 100%);
+  color: #fff;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .brand h1 {
   margin: 0 0 6px;
   font-size: 24px;
-  color: #2c2416;
+  color: #fff;
 }
 
 .brand p {
   margin: 0;
-  color: #a69888;
-}
-
-.sidebar-menu {
-  border-right: none;
-  background: transparent;
-}
-
-.sidebar-menu :deep(.el-sub-menu__title),
-.sidebar-menu :deep(.el-menu-item) {
-  margin-bottom: 8px;
-  border-radius: 12px;
-  color: #5c5040;
-}
-
-.sidebar-menu :deep(.el-sub-menu__title:hover),
-.sidebar-menu :deep(.el-menu-item:hover) {
-  background: rgba(200, 148, 92, 0.1);
-  color: #2c2416;
-}
-
-.sidebar-menu :deep(.el-menu) {
-  background: transparent;
-}
-
-.sidebar-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, #c8945c, #b07840);
-  color: #fff;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .admin-main {
+  min-width: 0;
   padding: 24px;
 }
 
 .admin-header {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 20px 24px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 253, 248, 0.88);
   backdrop-filter: blur(10px);
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
 .admin-header h2 {
-  margin: 0 0 6px;
+  margin: 5px 0 0;
   font-size: 24px;
   color: #111827;
 }
 
-.admin-header p {
-  margin: 0;
-  color: #6b7280;
+.admin-role {
+  color: #9a7652;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 15px 7px 8px;
+  border: 1px solid rgba(73, 100, 84, 0.2);
+  border-radius: 30px;
+  background: #fff;
+  color: #5c5040;
+  cursor: pointer;
+}
+
+.admin-user span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #496454;
+  color: #fff;
+  font-weight: 700;
 }
 
 .admin-content {
-  min-width: 0;
+  min-height: calc(100vh - 136px);
 }
 
 @media (max-width: 900px) {
@@ -143,7 +152,7 @@
   }
 
   .admin-sidebar {
-    padding-bottom: 12px;
+    min-height: 92px;
   }
 
   .admin-main {
