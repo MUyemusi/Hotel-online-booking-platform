@@ -25,12 +25,8 @@ public class RoomTypeQueryController {
     public ApiResponse<Page<RoomTypeSummary>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer guests,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut) {
-        return ApiResponse.success(
-                roomTypeService.pageRoomTypes(page, size, keyword, null, "ONLINE", guests, checkIn, checkOut));
+            @RequestParam(required = false) String keyword) {
+        return ApiResponse.success(roomTypeService.pageRoomTypes(page, size, keyword, null, "ONLINE"));
     }
 
     @GetMapping("/{id}")

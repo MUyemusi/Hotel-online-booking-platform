@@ -26,7 +26,7 @@ public class BasePriceServiceImpl implements BasePriceService {
 
     @Override
     public Page<RoomTypeSummary> pageBasePrices(int page, int size, String keyword, String status) {
-        return roomTypeService.pageRoomTypes(page, size, keyword, null, status, null, null, null);
+        return roomTypeService.pageRoomTypes(page, size, keyword, null, status);
     }
 
     @Override

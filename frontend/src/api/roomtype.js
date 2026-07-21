@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 // ========== 用户端 ==========
 
-/** 获取已上架房型列表（含分页 + 日期人数筛选） */
+/** 获取已上架房型列表（含分页） */
 export function getPublicRoomTypes(params = {}) {
   return request({
     url: '/api/room-types',
@@ -10,10 +10,7 @@ export function getPublicRoomTypes(params = {}) {
     params: {
       page: params.page || 1,
       size: params.size || 10,
-      keyword: params.keyword || undefined,
-      guests: params.guests || undefined,
-      checkIn: params.checkIn || undefined,
-      checkOut: params.checkOut || undefined
+      keyword: params.keyword || undefined
     }
   })
 }

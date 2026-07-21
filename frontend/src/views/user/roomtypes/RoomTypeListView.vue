@@ -187,14 +187,7 @@ function handleSearch() { searchForm.page = 1; searchPerformed.value = true; fet
 async function fetchRooms() {
   loading.value = true
   try {
-    const res = await getPublicRoomTypes({
-      page: searchForm.page,
-      size: searchForm.size,
-      keyword: searchForm.keyword || undefined,
-      guests: searchForm.guests || undefined,
-      checkIn: searchForm.checkIn || undefined,
-      checkOut: searchForm.checkOut || undefined
-    })
+    const res = await getPublicRoomTypes({ page: searchForm.page, size: searchForm.size, keyword: searchForm.keyword || undefined })
     if (res.code === 'SUCCESS' && res.data) {
       const list = res.data.records || []
       total.value = res.data.total || 0
