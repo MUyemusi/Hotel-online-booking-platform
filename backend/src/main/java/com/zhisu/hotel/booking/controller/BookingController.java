@@ -5,6 +5,8 @@ import com.zhisu.hotel.booking.dto.CreateOrderRequest;
 import com.zhisu.hotel.booking.service.BookingOrderService;
 import com.zhisu.hotel.booking.vo.OrderDetailVO;
 import com.zhisu.hotel.booking.vo.OrderVO;
+import com.zhisu.hotel.common.context.UserContext;
+import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.common.response.ApiResponse;
 import com.zhisu.hotel.common.response.PageResponse;
 import com.zhisu.hotel.payment.vo.CancellationVO;
@@ -52,6 +54,10 @@ public class BookingController {
     }
 
     private Long getCurrentUserId() {
-        return 1L; // TODO: 替换为JWT认证
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("UNAUTHORIZED", "请先登录");
+        }
+        return userId;
     }
 }

@@ -190,6 +190,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void adminUpdateStatus(Long orderId, String targetStatus) {
         BookingOrder order = bookingOrderMapper.selectById(orderId);
         if (order == null) throw new BusinessException("ORDER_NOT_FOUND", "订单不存在");
@@ -200,6 +201,9 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         }
         order.setOrderStatus(target.name());
         bookingOrderMapper.updateById(order);
+        if (target == OrderStatus.COMPLETED) {
+            creditService.resetContinuousCancellation(order.getUserId(), order.getId());
+        }
         log.info("管理员变更订单 {} 状态: {} → {}", order.getOrderNo(), current, target);
     }
 

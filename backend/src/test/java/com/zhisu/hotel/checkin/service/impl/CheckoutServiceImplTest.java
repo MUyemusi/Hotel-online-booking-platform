@@ -16,6 +16,7 @@ import com.zhisu.hotel.room.entity.RoomStatusLog;
 import com.zhisu.hotel.room.mapper.RoomAssignmentMapper;
 import com.zhisu.hotel.room.mapper.RoomMapper;
 import com.zhisu.hotel.room.mapper.RoomStatusLogMapper;
+import com.zhisu.hotel.user.service.CreditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,13 +37,15 @@ class CheckoutServiceImplTest {
     private final RoomAssignmentMapper assignmentMapper = mock(RoomAssignmentMapper.class);
     private final RoomMapper roomMapper = mock(RoomMapper.class);
     private final RoomStatusLogMapper roomStatusLogMapper = mock(RoomStatusLogMapper.class);
+    private final CreditService creditService = mock(CreditService.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-07-15T03:00:00Z"), ZoneId.of("Asia/Shanghai"));
 
     private CheckoutServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new CheckoutServiceImpl(bookingOrderMapper, assignmentMapper, roomMapper, roomStatusLogMapper, clock);
+        service = new CheckoutServiceImpl(bookingOrderMapper, assignmentMapper, roomMapper, roomStatusLogMapper,
+                creditService, clock);
     }
 
     @Test
@@ -61,6 +64,7 @@ class CheckoutServiceImplTest {
         verify(roomMapper).markDirtyForCheckout(eq(101L), eq(0), any());
         verify(roomStatusLogMapper).insert(any(RoomStatusLog.class));
         verify(bookingOrderMapper).markCompletedIfCheckedIn(eq(1L), any());
+        verify(creditService).resetContinuousCancellation(order.getUserId(), order.getId());
     }
 
     @Test
@@ -78,6 +82,7 @@ class CheckoutServiceImplTest {
         verify(assignmentMapper, never()).markCheckedOutWithVersion(anyLong(), anyInt(), any(), any());
         verify(roomMapper, never()).markDirtyForCheckout(anyLong(), anyInt(), any());
         verify(bookingOrderMapper, never()).markCompletedIfCheckedIn(anyLong(), any());
+        verify(creditService, never()).resetContinuousCancellation(anyLong(), anyLong());
     }
 
     @Test
@@ -159,6 +164,7 @@ class CheckoutServiceImplTest {
     private BookingOrder order(String orderStatus, int roomCount) {
         return BookingOrder.builder()
                 .id(1L)
+                .userId(7L)
                 .orderNo("M4S5-CHECKOUT")
                 .roomTypeId(2L)
                 .roomTypeName("Standard")

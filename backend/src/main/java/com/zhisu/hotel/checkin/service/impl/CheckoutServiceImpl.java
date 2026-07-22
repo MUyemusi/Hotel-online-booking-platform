@@ -19,6 +19,7 @@ import com.zhisu.hotel.room.entity.RoomStatusLog;
 import com.zhisu.hotel.room.mapper.RoomAssignmentMapper;
 import com.zhisu.hotel.room.mapper.RoomMapper;
 import com.zhisu.hotel.room.mapper.RoomStatusLogMapper;
+import com.zhisu.hotel.user.service.CreditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final RoomAssignmentMapper roomAssignmentMapper;
     private final RoomMapper roomMapper;
     private final RoomStatusLogMapper roomStatusLogMapper;
+    private final CreditService creditService;
     private final Clock clock;
 
     @Override
@@ -110,6 +112,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new BusinessException(ErrorCode.CHECKOUT_ORDER_UPDATE_FAILED, "Failed to update order checkout status");
         }
         order.setOrderStatus(OrderStatus.COMPLETED.name());
+        creditService.resetContinuousCancellation(order.getUserId(), order.getId());
 
         return buildVO(order, assignments, rooms, request.getRequestToken(), operatorId, now, "Checkout confirmed");
     }

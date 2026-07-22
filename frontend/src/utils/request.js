@@ -20,7 +20,16 @@ request.interceptors.request.use(config => {
 
 // 响应拦截器
 request.interceptors.response.use(
-  response => response.data,
+  response => {
+    const payload = response.data
+    if (payload && typeof payload === 'object' && payload.code && payload.code !== 'SUCCESS') {
+      const error = new Error(payload.message || '操作失败')
+      error.code = payload.code
+      error.response = response
+      return Promise.reject(error)
+    }
+    return payload
+  },
   error => {
     const status = error?.response?.status
     if (status === 401) {
