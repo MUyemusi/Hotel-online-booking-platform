@@ -54,27 +54,27 @@ SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHE
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_user'),
-    'ALTER TABLE hotel_order ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES sys_user(id)',
+    'ALTER TABLE booking_order ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES sys_user(id)',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_room_type'),
-    'ALTER TABLE hotel_order ADD CONSTRAINT fk_order_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'ALTER TABLE booking_order ADD CONSTRAINT fk_order_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_credit_record_order'),
-    'ALTER TABLE credit_record ADD CONSTRAINT fk_credit_record_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'ALTER TABLE credit_record ADD CONSTRAINT fk_credit_record_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_cancel_order'),
-    'ALTER TABLE order_cancel_record ADD CONSTRAINT fk_order_cancel_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'ALTER TABLE order_cancel_record ADD CONSTRAINT fk_order_cancel_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_payment_order'),
-    'ALTER TABLE payment_record ADD CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'ALTER TABLE payment_record ADD CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -84,7 +84,7 @@ SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHE
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_assignment_order'),
-    'ALTER TABLE room_assignment ADD CONSTRAINT fk_room_assignment_order FOREIGN KEY (order_id) REFERENCES hotel_order(id)',
+    'ALTER TABLE room_assignment ADD CONSTRAINT fk_room_assignment_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
