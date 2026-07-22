@@ -6,6 +6,7 @@ import com.zhisu.hotel.roomtype.entity.RoomType;
 import com.zhisu.hotel.roomtype.entity.RoomTypeFacility;
 import com.zhisu.hotel.roomtype.entity.RoomTypeImage;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface RoomTypeService {
@@ -15,7 +16,8 @@ public interface RoomTypeService {
     RoomType updateRoomType(RoomType roomType);
     void deleteRoomType(Long id);
     RoomType getRoomTypeDetail(Long id);
-    Page<RoomTypeSummary> pageRoomTypes(int page, int size, String keyword, String category, String status);
+    Page<RoomTypeSummary> pageRoomTypes(int page, int size, String keyword, String category, String status,
+                                       Integer guests, LocalDate checkIn, LocalDate checkOut);
 
     // 上下架
     void onlineRoomType(Long id);

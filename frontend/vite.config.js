@@ -15,4 +15,5 @@ export default defineConfig({
   },
   test: { environment: 'jsdom', globals: true },
   build: { chunkSizeWarningLimit: 1000, rollupOptions: { output: { manualChunks: { vue: ['vue','vue-router','pinia'], element: ['element-plus'] } } } }
+  }
 })

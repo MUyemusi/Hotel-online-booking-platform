@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { clearSession, getToken } from '@/utils/auth'
 
 const ACCESS_KEY = 'zhisu_access_token'
 const USER_KEY = 'zhisu_current_user'
@@ -28,10 +29,19 @@ request.interceptors.request.use(config => {
   if (token) {
     config.headers = config.headers || {}
     config.headers.Authorization = 'Bearer ' + token
+// 除登录、注册外，所有业务接口都自动携带 JWT。
+request.interceptors.request.use(config => {
+  const url = config.url || ''
+  const publicAuthApi = url === '/api/auth/login' || url === '/api/auth/register'
+  const token = getToken()
+  if (!publicAuthApi && token) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
+// 响应拦截器
 request.interceptors.response.use(
   response => response.data,
   async error => {
@@ -60,4 +70,33 @@ request.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+export default request
+  response => {
+    const payload = response.data
+    if (payload && typeof payload === 'object' && payload.code && payload.code !== 'SUCCESS') {
+      const error = new Error(payload.message || '操作失败')
+      error.code = payload.code
+      error.response = response
+      return Promise.reject(error)
+    }
+    return payload
+  },
+  error => {
+    const status = error?.response?.status
+    if (status === 401) {
+      clearSession()
+      if (window.location.pathname !== '/login') {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search)
+        window.location.replace(`/login?redirect=${redirect}`)
+      }
+    }
+    if (status === 403) {
+      if (window.location.pathname !== '/403') window.location.replace('/403')
+    }
+    // 业务接口的 5xx 由当前页面就地展示错误，避免一个统计接口失败时
+    // 把整个后台强制跳转到 500 页面，导致其他可用模块也无法访问。
+    return Promise.reject(error)
+  }
+)
+
 export default request

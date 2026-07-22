@@ -1,6 +1,11 @@
 <template>
   <div class="home-page">
     <section class="hero">
+      <picture>
+        <source media="(max-width: 720px)" srcset="/images/eco/zhisu-coastal-hero.png" />
+        <img class="hero-image" src="/images/eco/zhisu-coastal-hero.png" alt="智宿海滨生态酒店外景" fetchpriority="high" />
+      </picture>
+      <div class="hero-shade"></div>
       <div class="hero-copy">
         <div class="hotel-brand"><img v-if="hotelInfo.logoUrl" :src="hotelInfo.logoUrl" alt="酒店Logo" /><p class="eyebrow">{{ hotelInfo.hotelName || 'Zhisu Hotel' }}</p></div>
         <h1>住得舒适，也住得有仪式感</h1>
@@ -16,37 +21,28 @@
           <el-button type="primary" size="large" @click="goRooms">立即预订</el-button>
           <el-button size="large" plain @click="goRooms">查看房型</el-button>
           <el-button size="large" link @click="scrollToHotelInfo">了解酒店</el-button>
+        <p class="eyebrow">ZHISU · COASTAL RETREAT</p>
+        <h1>向海而居，<br />让自然住进旅程</h1>
+        <p class="hero-text">以海风、原木与日光，构筑一段安静而丰盛的海滨假日。</p>
+        <div class="hero-actions">
+          <router-link to="/rooms" class="primary-link">探索客房 <span>→</span></router-link>
+          <a href="#experience" class="ghost-link">了解智宿</a>
         </div>
       </div>
+      <div class="hero-note">
+        <span class="note-line"></span>
+        <div><small>OUR PHILOSOPHY</small><p>自然并非装饰，而是每一次入住的主角</p></div>
+      </div>
+      <a href="#booking" class="scroll-hint"><span></span>SCROLL</a>
+    </section>
 
-      <div class="hero-visual">
-        <el-carousel
-          v-if="banners.length"
-          height="360px"
-          indicator-position="outside"
-          class="banner-carousel"
-        >
-          <el-carousel-item v-for="banner in banners" :key="banner.id">
-            <a
-              :href="banner.linkUrl || 'javascript:void(0)'"
-              class="banner-card"
-              :target="banner.linkUrl ? '_blank' : undefined"
-              :rel="banner.linkUrl ? 'noreferrer' : undefined"
-              @click.prevent="handleBannerClick(banner)"
-            >
-              <img :src="banner.imageUrl" :alt="banner.title" class="banner-image" />
-              <div class="banner-overlay">
-                <span class="banner-badge">已发布轮播图</span>
-                <h2>{{ banner.title }}</h2>
-              </div>
-            </a>
-          </el-carousel-item>
-        </el-carousel>
-
-        <div v-else class="banner-empty">
-          <p>当前没有已发布的首页轮播图</p>
-          <span>管理员发布后会在这里自动展示。</span>
-        </div>
+    <section id="booking" class="booking-wrap">
+      <div class="booking-card">
+        <div class="booking-intro"><span>RESERVATION</span><strong>开启你的海岸假日</strong></div>
+        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkIn" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast" /></div>
+        <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOut" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
+        <div class="booking-field"><small>入住人数</small><el-select v-model="booking.guests"><el-option v-for="n in 6" :key="n" :label="`${n} 位宾客`" :value="n" /></el-select></div>
+        <button class="booking-btn" @click="searchRooms">查询客房 <span>→</span></button>
       </div>
     </section>
 
@@ -67,57 +63,48 @@
           <p class="eyebrow">Announcement</p>
           <h2>酒店公告</h2>
         </div>
+    <section id="experience" class="story section-shell">
+      <div class="story-copy">
+        <p class="eyebrow dark">A SLOWER RHYTHM</p>
+        <h2>住进海岸，<br />也住进自然的节奏</h2>
+        <p>浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。</p>
+        <div class="story-metrics"><div><strong>7</strong><span>种特色房型</span></div><div><strong>海岸</strong><span>自然景观体验</span></div><div><strong>一站式</strong><span>预订与入住服务</span></div></div>
       </div>
+      <div class="story-image"><img src="/images/eco/zhisu-courtyard.png" alt="酒店自然庭院" loading="lazy" /><span>石 · 木 · 水 · 光</span></div>
+    </section>
 
-      <div v-if="announcements.length" class="announcement-list">
-        <article
-          v-for="item in announcements"
-          :key="item.id"
-          class="announcement-card"
-          :class="{ pinned: item.isTop }"
-        >
-          <div class="announcement-meta">
-            <el-tag v-if="item.isTop" type="danger">置顶</el-tag>
-            <span>{{ formatDateTime(item.publishTime) }}</span>
-          </div>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.content }}</p>
+    <section class="stay-section">
+      <div class="section-shell">
+        <div class="section-title"><div><p class="eyebrow dark">STAY WITH NATURE</p><h2>一间房，一片海</h2></div><router-link to="/rooms">查看全部房型 <span>→</span></router-link></div>
+        <article class="room-feature">
+          <img src="/images/eco/zhisu-ocean-suite.png" alt="智宿海景套房" loading="lazy" />
+          <div class="room-panel"><p>OCEAN SUITE</p><h3>临海自然套房</h3><span>让晨光越过海面抵达枕边，让原木与亚麻留住松弛的触感。</span><ul><li>独立海景露台</li><li>天然材质客房</li><li>舒适起居空间</li></ul><router-link to="/rooms">发现更多 <b>→</b></router-link></div>
         </article>
       </div>
-      <div v-else class="announcement-empty">
-        当前暂无已发布公告。
+    </section>
+
+    <section class="experience-grid section-shell">
+      <div class="experience-copy"><p class="eyebrow dark">TASTE THE COAST</p><h2>让味觉，也抵达海边</h2><p>从清晨的在地早餐，到暮色中的临海晚餐，我们以当季食材和自然风味，延续海岸生活的轻盈与丰盛。</p></div>
+      <img src="/images/eco/zhisu-seaside-dining.png" alt="智宿临海餐厅" loading="lazy" />
+    </section>
+
+    <section v-if="announcements.length" class="announcement-section section-shell">
+      <div class="section-title compact"><div><p class="eyebrow dark">NEWS & STORIES</p><h2>酒店讯息</h2></div></div>
+      <div class="announcement-list">
+        <article v-for="item in announcements.slice(0, 3)" :key="item.id"><small>{{ formatDate(item.publishTime) }}</small><h3>{{ item.title }}</h3><p>{{ item.content }}</p></article>
       </div>
     </section>
 
-    <section class="status-section">
-      <el-card class="status-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <span>后端连接状态</span>
-          </div>
-        </template>
-        <div v-if="loadingHealth" class="loading">加载中...</div>
-        <div v-else-if="healthStatus" class="status success">
-          <el-icon :size="40" color="#67c23a"><CircleCheck /></el-icon>
-          <p>{{ healthStatus }}</p>
-        </div>
-        <div v-else class="status error">
-          <el-icon :size="40" color="#f56c6c"><CircleClose /></el-icon>
-          <p>后端连接失败</p>
-          <el-button @click="loadHealthStatus" type="primary">重试</el-button>
-        </div>
-      </el-card>
-    </section>
+    <div v-if="!healthy" class="health-pill" :class="{ failed: healthFailed }">{{ healthFailed ? '服务暂时离线' : '正在连接服务…' }}</div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { CircleCheck, CircleClose } from '@element-plus/icons-vue'
-import { checkHealth as fetchHealth } from '@/api/health'
-import { getPublicBanners } from '@/api/content/banner'
+import { checkHealth } from '@/api/health'
 import { getPublicAnnouncements } from '@/api/content/announcement'
 import { getPublicHotelInfo } from '@/api/content/hotelInfo'
 
@@ -215,6 +202,20 @@ onMounted(() => {
   loadHotelInfo()
   loadBanners()
   loadAnnouncements()
+const announcements = ref([])
+const healthy = ref(false)
+const healthFailed = ref(false)
+const booking = reactive({ checkIn: '', checkOut: '', guests: 2 })
+function disablePast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
+function disableCheckOut(t) { if (!booking.checkIn) return disablePast(t); const d = new Date(booking.checkIn); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime() }
+function searchRooms() {
+  if ((booking.checkIn && !booking.checkOut) || (!booking.checkIn && booking.checkOut)) return ElMessage.warning('请选择完整的入住和离店日期')
+  router.push({ path: '/rooms', query: { checkIn: booking.checkIn || undefined, checkOut: booking.checkOut || undefined, guests: booking.guests } })
+}
+function formatDate(v) { return v ? v.slice(0, 10).replaceAll('-', '.') : '' }
+onMounted(async () => {
+  try { const r = await checkHealth(); healthy.value = r.code === 'SUCCESS'; healthFailed.value = !healthy.value } catch { healthFailed.value = true }
+  try { const r = await getPublicAnnouncements(); if (r.code === 'SUCCESS') announcements.value = r.data || [] } catch { announcements.value = [] }
 })
 </script>
 
@@ -431,3 +432,8 @@ onMounted(() => {
 .info-grid h3 { margin: 0 0 10px; color: #0f172a; }
 .info-grid p { margin: 6px 0; color: #475569; line-height: 1.7; white-space: pre-wrap; }
 @media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } }</style>
+.home-page{background:#f7f2e9;color:#302a24;overflow:hidden}.hero{position:relative;height:min(860px,94vh);min-height:680px;color:#fff}.hero-image,.hero-shade{position:absolute;inset:0;width:100%;height:100%}.hero-image{object-fit:cover}.hero-shade{background:linear-gradient(90deg,rgba(25,35,30,.74) 0%,rgba(31,39,34,.32) 42%,rgba(25,30,27,.08) 70%),linear-gradient(0deg,rgba(18,23,20,.38),transparent 45%)}.hero-copy{position:relative;z-index:2;max-width:1280px;margin:auto;padding:190px 48px 0}.eyebrow{margin:0 0 20px;font-size:11px;font-weight:650;letter-spacing:.3em;color:#e4d2b6}.eyebrow.dark{color:#8c6d4f}.hero h1{margin:0;font-family:"Noto Serif SC","Songti SC",serif;font-size:clamp(48px,6vw,82px);font-weight:500;line-height:1.18;letter-spacing:.04em}.hero-text{max-width:520px;margin:26px 0 0;font-size:16px;line-height:1.9;color:rgba(255,255,255,.82)}.hero-actions{display:flex;align-items:center;gap:28px;margin-top:38px}.primary-link,.ghost-link{display:inline-flex;align-items:center;gap:35px;color:#fff;text-decoration:none}.primary-link{padding:15px 24px;background:#a4774f;font-weight:650}.primary-link:hover{background:#8f623f}.ghost-link{padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.45)}.hero-note{position:absolute;z-index:2;right:5%;bottom:72px;display:flex;align-items:center;gap:16px;max-width:340px}.note-line{width:46px;height:1px;background:#d9c3a1}.hero-note small{letter-spacing:.18em;color:#d9c3a1}.hero-note p{margin:6px 0 0;font-family:"Noto Serif SC",serif}.scroll-hint{position:absolute;z-index:2;left:48px;bottom:24px;display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.65);font-size:9px;letter-spacing:.24em;text-decoration:none;transform:rotate(-90deg);transform-origin:left center}.scroll-hint span{display:block;width:38px;height:1px;background:rgba(255,255,255,.5)}.booking-wrap{position:relative;z-index:3;max-width:1180px;margin:-34px auto 0;padding:0 30px}.booking-card{display:grid;grid-template-columns:1.3fr repeat(3,1fr) auto;align-items:center;gap:0;padding:18px 18px 18px 26px;background:#fffdf8;box-shadow:0 24px 60px rgba(49,40,31,.14)}.booking-intro,.booking-field{padding:4px 22px;border-right:1px solid #e7dfd3}.booking-intro span,.booking-field small{display:block;margin-bottom:7px;font-size:9px;letter-spacing:.17em;color:#917c68}.booking-intro strong{font-family:"Noto Serif SC",serif;font-size:17px}.booking-field :deep(.el-input__wrapper),.booking-field :deep(.el-select__wrapper){padding:0;background:transparent;box-shadow:none!important}.booking-btn{align-self:stretch;margin-left:18px;padding:0 26px;border:0;background:#33483b;color:#fff;cursor:pointer;font-weight:650}.booking-btn span{margin-left:18px}.section-shell{width:min(1180px,calc(100% - 60px));margin-inline:auto}.story{display:grid;grid-template-columns:.85fr 1.15fr;gap:100px;align-items:center;padding:145px 0}.story-copy h2,.section-title h2,.experience-copy h2{margin:0;font-family:"Noto Serif SC","Songti SC",serif;font-size:clamp(34px,4vw,52px);font-weight:500;line-height:1.35}.story-copy>p:last-of-type,.experience-copy>p:last-child{margin:28px 0 0;line-height:2;color:#756b61}.story-image{position:relative}.story-image img{width:100%;height:550px;object-fit:cover}.story-image span{position:absolute;right:-28px;bottom:32px;padding:18px 15px;background:#33483b;color:#fff;font-size:12px;letter-spacing:.18em;writing-mode:vertical-rl}.story-metrics{display:flex;gap:28px;margin-top:38px;padding-top:28px;border-top:1px solid #ded4c7}.story-metrics div{display:flex;flex-direction:column}.story-metrics strong{font-family:Georgia,serif;font-size:30px;color:#33483b}.story-metrics span{margin-top:4px;font-size:12px;color:#8f8378}.stay-section{padding:115px 0 125px;background:#e9ddc8}.section-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:45px}.section-title a{padding-bottom:8px;color:#5e554d;text-decoration:none;border-bottom:1px solid #a4774f}.room-feature{display:grid;grid-template-columns:1.45fr .75fr;min-height:540px}.room-feature>img{width:100%;height:100%;object-fit:cover}.room-panel{display:flex;flex-direction:column;justify-content:center;padding:55px;background:#33483b;color:#fff}.room-panel>p{font-size:10px;letter-spacing:.24em;color:#c8b18e}.room-panel h3{margin:10px 0 20px;font-family:"Noto Serif SC",serif;font-size:34px;font-weight:500}.room-panel>span{line-height:1.9;color:rgba(255,255,255,.72)}.room-panel ul{margin:28px 0;padding:0;list-style:none}.room-panel li{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.8)}.room-panel a{align-self:flex-start;margin-top:12px;color:#fff;text-decoration:none;border-bottom:1px solid #b99a6b;padding-bottom:5px}.room-panel b{margin-left:35px}.experience-grid{display:grid;grid-template-columns:.72fr 1.28fr;gap:80px;align-items:center;padding:140px 0}.experience-grid img{width:100%;height:500px;object-fit:cover}.announcement-section{padding-bottom:100px}.section-title.compact{margin-bottom:30px}.announcement-list{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.announcement-list article{padding:28px;background:#fffdf8;border-top:2px solid #a4774f}.announcement-list small{color:#9b8c7d}.announcement-list h3{margin:12px 0}.announcement-list p{display:-webkit-box;overflow:hidden;color:#756b61;line-height:1.7;-webkit-line-clamp:2;-webkit-box-orient:vertical}.health-pill{position:fixed;z-index:30;right:20px;bottom:20px;padding:8px 13px;border-radius:30px;background:#d9c7a9;color:#55483b;font-size:12px}.health-pill.failed{background:#7e4b3c;color:#fff}
+@media(max-width:980px){.booking-card{grid-template-columns:1fr 1fr}.booking-intro{grid-column:1/-1}.booking-intro,.booking-field{border:0}.booking-btn{height:48px}.story,.experience-grid{grid-template-columns:1fr;gap:45px}.story{padding:100px 0}.room-feature{grid-template-columns:1fr}.room-panel{padding:40px}.story-image img,.experience-grid img{height:440px}}
+@media(max-width:680px){.hero{min-height:720px}.hero-copy{padding:170px 22px 0}.hero h1{font-size:44px}.hero-note{right:20px;bottom:70px}.scroll-hint{display:none}.booking-wrap{padding:0 16px}.booking-card{grid-template-columns:1fr;padding:20px}.booking-field{padding:10px 0;border-bottom:1px solid #eee4d8}.booking-btn{margin:16px 0 0}.section-shell{width:calc(100% - 40px)}.story{padding:85px 0}.story-image img,.experience-grid img{height:330px}.story-image span{right:-10px}.story-metrics{gap:15px}.story-metrics strong{font-size:24px}.stay-section{padding:80px 0}.section-title{align-items:flex-start;gap:20px}.section-title a{font-size:12px}.experience-grid{padding:90px 0}.announcement-list{grid-template-columns:1fr}}
+.hero picture{position:absolute;inset:0;width:100%;height:100%}.hero picture .hero-image{image-rendering:auto}.story-metrics strong{font-family:"Noto Serif SC",Georgia,serif;font-size:27px}
+</style>

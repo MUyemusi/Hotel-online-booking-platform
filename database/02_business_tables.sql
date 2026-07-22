@@ -163,12 +163,20 @@ CREATE TABLE IF NOT EXISTS cancellation_record (
     payment_status_before VARCHAR(30),
     refund_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     refund_amount_fen INT NOT NULL DEFAULT 0,
+    cancel_type VARCHAR(20) NOT NULL,
+    cancel_reason VARCHAR(500),
+    cancel_time DATETIME NOT NULL,
+    order_status_before VARCHAR(30),
+    payment_status_before VARCHAR(30),
+    refund_amount DECIMAL(10,2),
+    refund_amount_fen INT,
     refund_id VARCHAR(64),
     operator_id BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_cancellation_order_id (order_id),
     INDEX idx_cancellation_user_id (user_id),
     INDEX idx_cancellation_time (cancel_time)
+    INDEX idx_cancellation_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='cancellation_record';
 
 CREATE TABLE IF NOT EXISTS payment_record (
@@ -178,6 +186,7 @@ CREATE TABLE IF NOT EXISTS payment_record (
     user_id BIGINT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     amount_fen INT NOT NULL,
+    user_id BIGINT NOT NULL,
     payment_method VARCHAR(20) NOT NULL,
     transaction_id VARCHAR(100),
     payment_status VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
@@ -186,6 +195,13 @@ CREATE TABLE IF NOT EXISTS payment_record (
     refund_amount DECIMAL(10,2),
     refund_amount_fen INT,
     refund_transaction_id VARCHAR(100),
+    amount DECIMAL(10,2) NOT NULL,
+    amount_fen INT NOT NULL,
+    transaction_id VARCHAR(64),
+    paid_at DATETIME,
+    refund_amount DECIMAL(10,2),
+    refund_amount_fen INT,
+    refund_transaction_id VARCHAR(64),
     refunded_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

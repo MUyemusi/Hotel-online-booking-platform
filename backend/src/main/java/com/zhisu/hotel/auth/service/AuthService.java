@@ -158,4 +158,12 @@ public class AuthService {
     private record UserRow(Long id, String username, String passwordHash, String status) {}
     private record RefreshRow(Long id, Long userId, String username, String status, LocalDateTime expiresAt, LocalDateTime revokedAt) {}
     public record AuthSession(AuthTokenVO response, String refreshToken, long refreshMaxAgeSeconds) {}
+import com.zhisu.hotel.auth.dto.LoginResponse;
+import com.zhisu.hotel.auth.dto.RegisterRequest;
+
+public interface AuthService {
+
+    Long register(RegisterRequest request);
+
+    LoginResponse login(LoginRequest request);
 }

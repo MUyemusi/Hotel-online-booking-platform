@@ -49,7 +49,7 @@ public class RoomTypeController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status) {
-        return ApiResponse.success(roomTypeService.pageRoomTypes(page, size, keyword, category, status));
+        return ApiResponse.success(roomTypeService.pageRoomTypes(page, size, keyword, category, status, null, null, null));
     }
 
     @PutMapping("/{id}/online")

@@ -1,0 +1,3 @@
+<template><main class="error-page"><div class="code">500</div><h1>系统暂时开了个小差</h1><p>服务暂时无法完成请求，请稍后重试。如果问题持续出现，请联系管理员。</p><div><el-button type="primary" round @click="$router.replace('/')">返回账号中心</el-button><el-button round @click="reload">重新加载</el-button></div></main></template>
+<script setup>const reload=()=>window.location.reload()</script>
+<style scoped>.error-page{min-height:100vh;display:grid;place-content:center;justify-items:center;padding:24px;text-align:center;background:radial-gradient(circle at 50% 30%,rgba(245,108,108,.12),transparent 34%),#f8f2ea;color:#2c2416}.code{font-size:112px;font-weight:800;line-height:1;color:transparent;-webkit-text-stroke:2px #d08b78}h1{margin:18px 0 8px;font-size:30px}p{max-width:520px;margin:0 0 28px;color:#827568}</style>

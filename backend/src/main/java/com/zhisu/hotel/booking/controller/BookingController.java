@@ -6,6 +6,8 @@ import com.zhisu.hotel.booking.service.BookingOrderService;
 import com.zhisu.hotel.booking.vo.OrderDetailVO;
 import com.zhisu.hotel.booking.vo.OrderVO;
 import com.zhisu.hotel.auth.security.CurrentUserProvider;
+import com.zhisu.hotel.common.context.UserContext;
+import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.common.response.ApiResponse;
 import com.zhisu.hotel.common.response.PageResponse;
 import com.zhisu.hotel.payment.vo.CancellationVO;
@@ -50,5 +52,13 @@ public class BookingController {
         Long userId = CurrentUserProvider.requireUserId();
         CancellationVO vo = bookingOrderService.cancelOrder(id, request, userId);
         return ApiResponse.success(vo);
+    }
+
+    private Long getCurrentUserId() {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("UNAUTHORIZED", "请先登录");
+        }
+        return userId;
     }
 }

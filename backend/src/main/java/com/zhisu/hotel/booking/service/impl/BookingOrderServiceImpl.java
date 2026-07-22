@@ -193,6 +193,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void adminUpdateStatus(Long orderId, String targetStatus) {
         BookingOrder order = bookingOrderMapper.selectById(orderId);
         if (order == null) throw new BusinessException("ORDER_NOT_FOUND", "订单不存在");
@@ -203,6 +204,9 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         }
         order.setOrderStatus(target.name());
         bookingOrderMapper.updateById(order);
+        if (target == OrderStatus.COMPLETED) {
+            creditService.resetContinuousCancellation(order.getUserId(), order.getId());
+        }
         log.info("管理员变更订单 {} 状态: {} → {}", order.getOrderNo(), current, target);
     }
 
@@ -256,7 +260,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         }
         order.setOrderStatus(OrderStatus.COMPLETED.name());
         bookingOrderMapper.updateById(order);
-        creditService.resetContinuousCancellation(order.getUserId());
+        creditService.resetContinuousCancellation(order.getUserId(), order.getId());
         log.info("订单 {} 退房完成，用户 {} 连续取消计数已重置", order.getOrderNo(), order.getUserId());
     }
 
@@ -301,7 +305,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
                 .refundId(refundId).operatorId(operatorId).build();
         cancellationRecordMapper.insert(record);
         if (CancelType.USER_CANCEL.name().equals(cancelType)) {
-            creditService.recordUserCancellation(order.getUserId());
+            creditService.recordUserCancellation(order.getUserId(), order.getId());
         }
         log.info("订单 {} 已取消 type={} wasPaid={} refund={}", order.getOrderNo(), cancelType, wasPaid, refundAmount);
         return CancellationVO.builder().id(record.getId()).orderId(order.getId())

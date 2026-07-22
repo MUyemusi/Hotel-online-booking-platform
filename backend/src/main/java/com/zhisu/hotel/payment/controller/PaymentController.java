@@ -2,6 +2,8 @@ package com.zhisu.hotel.payment.controller;
 
 import com.zhisu.hotel.common.response.ApiResponse;
 import com.zhisu.hotel.auth.security.CurrentUserProvider;
+import com.zhisu.hotel.common.context.UserContext;
+import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.payment.dto.PaymentRequest;
 import com.zhisu.hotel.payment.service.PaymentService;
 import com.zhisu.hotel.payment.vo.PaymentVO;
@@ -36,5 +38,13 @@ public class PaymentController {
     public ApiResponse<List<PaymentVO>> getAdminPayments(@PathVariable Long orderId) {
         List<PaymentVO> records = paymentService.getPaymentRecordsByOrderId(orderId);
         return ApiResponse.success(records);
+    }
+
+    private Long getCurrentUserId() {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("UNAUTHORIZED", "请先登录");
+        }
+        return userId;
     }
 }
