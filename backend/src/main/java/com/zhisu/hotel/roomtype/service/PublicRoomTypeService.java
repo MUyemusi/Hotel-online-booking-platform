@@ -2,6 +2,7 @@ package com.zhisu.hotel.roomtype.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.zhisu.hotel.inventory.service.InventoryService;
+import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.pricing.service.PriceQuoteService;
 import com.zhisu.hotel.pricing.vo.PriceQuoteVO;
 import com.zhisu.hotel.roomtype.entity.RoomType;
@@ -28,7 +29,8 @@ public class PublicRoomTypeService {
     private final InventoryService inventoryService;
     private final PriceQuoteService priceQuoteService;
 
-    public List<PublicRoomTypeVO> search(LocalDate checkIn, LocalDate checkOut, int roomCount) {
+    public List<PublicRoomTypeVO> search(LocalDate checkIn, LocalDate checkOut, int roomCount, int guests) {
+        validateSearch(checkIn, checkOut, roomCount, guests);
         List<RoomType> roomTypes = roomTypeMapper.selectList(
                 new LambdaQueryWrapper<RoomType>().eq(RoomType::getStatus, "ONLINE").orderByAsc(RoomType::getBasePrice));
         if (roomTypes.isEmpty()) return List.of();
@@ -41,7 +43,10 @@ public class PublicRoomTypeService {
                         new LambdaQueryWrapper<RoomTypeFacility>().in(RoomTypeFacility::getRoomTypeId, ids))
                 .stream().collect(Collectors.groupingBy(RoomTypeFacility::getRoomTypeId));
 
-        return roomTypes.stream().map(roomType -> {
+        return roomTypes.stream()
+                .filter(roomType -> roomType.getMaxGuests() != null
+                        && roomType.getMaxGuests() * roomCount >= guests)
+                .map(roomType -> {
             int available = inventoryService.getMinAvailableCount(roomType.getId(), checkIn, checkOut.minusDays(1));
             if (available == 0) {
                 inventoryService.ensureInventoryExists(roomType.getId(), checkIn, checkOut.minusDays(1));
@@ -63,5 +68,20 @@ public class PublicRoomTypeService {
                     .availableRooms(available).totalAmount(quote.getTotalAmount()).dailyPrices(quote.getDailyPrices())
                     .build();
         }).filter(item -> item.getAvailableRooms() >= roomCount).toList();
+    }
+
+    private void validateSearch(LocalDate checkIn, LocalDate checkOut, int roomCount, int guests) {
+        if (checkIn == null || checkOut == null) {
+            throw new BusinessException("INVALID_STAY_DATES", "入住日期和离店日期不能为空");
+        }
+        if (checkIn.isBefore(LocalDate.now())) {
+            throw new BusinessException("INVALID_STAY_DATES", "入住日期不能早于今天");
+        }
+        if (!checkOut.isAfter(checkIn)) {
+            throw new BusinessException("INVALID_STAY_DATES", "离店日期必须晚于入住日期");
+        }
+        if (roomCount < 1 || roomCount > 5 || guests < 1 || guests > 20) {
+            throw new BusinessException("INVALID_REQUEST", "房间数或入住人数超出允许范围");
+        }
     }
 }

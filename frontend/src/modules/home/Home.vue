@@ -2,25 +2,11 @@
   <div class="home-page">
     <section class="hero">
       <picture>
-        <source media="(max-width: 720px)" srcset="/images/eco/zhisu-coastal-hero.png" />
-        <img class="hero-image" src="/images/eco/zhisu-coastal-hero.png" alt="智宿海滨生态酒店外景" fetchpriority="high" />
+        <source media="(max-width: 720px)" :srcset="heroImage" />
+        <img class="hero-image" :src="heroImage" :alt="hotelName + '外景'" fetchpriority="high" />
       </picture>
       <div class="hero-shade"></div>
       <div class="hero-copy">
-        <div class="hotel-brand"><img v-if="hotelInfo.logoUrl" :src="hotelInfo.logoUrl" alt="酒店Logo" /><p class="eyebrow">{{ hotelInfo.hotelName || 'Zhisu Hotel' }}</p></div>
-        <h1>住得舒适，也住得有仪式感</h1>
-        <p class="hero-text">
-          首页轮播图与酒店公告都只展示已发布内容，方便前台页面与后台运营状态保持实时同步。
-        </p>
-        <div class="booking-search">
-          <el-date-picker v-model="searchDates" type="daterange" value-format="YYYY-MM-DD" range-separator="至"
-            start-placeholder="入住日期" end-placeholder="离店日期" :disabled-date="disablePast" />
-          <el-input-number v-model="searchRoomCount" :min="1" :max="5" />
-        </div>
-        <div class="hero-actions">
-          <el-button type="primary" size="large" @click="goRooms">立即预订</el-button>
-          <el-button size="large" plain @click="goRooms">查看房型</el-button>
-          <el-button size="large" link @click="scrollToHotelInfo">了解酒店</el-button>
         <p class="eyebrow">ZHISU · COASTAL RETREAT</p>
         <h1>向海而居，<br />让自然住进旅程</h1>
         <p class="hero-text">以海风、原木与日光，构筑一段安静而丰盛的海滨假日。</p>
@@ -38,36 +24,19 @@
 
     <section id="booking" class="booking-wrap">
       <div class="booking-card">
-        <div class="booking-intro"><span>RESERVATION</span><strong>开启你的海岸假日</strong></div>
-        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkIn" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast" /></div>
-        <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOut" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
+        <div class="booking-intro"><span>RESERVATION</span><strong>{{ hotelName }}</strong></div>
+        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkInDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast" /></div>
+        <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOutDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
         <div class="booking-field"><small>入住人数</small><el-select v-model="booking.guests"><el-option v-for="n in 6" :key="n" :label="`${n} 位宾客`" :value="n" /></el-select></div>
         <button class="booking-btn" @click="searchRooms">查询客房 <span>→</span></button>
       </div>
     </section>
 
-
-    <section id="hotel-info" class="hotel-info-section">
-      <div class="section-heading"><div><p class="eyebrow">Hotel Information</p><h2>{{ hotelInfo.hotelName || '酒店信息' }}</h2></div></div>
-      <div class="info-grid">
-        <el-card shadow="never"><h3>酒店介绍</h3><p>{{ hotelInfo.introduction || '暂无介绍' }}</p></el-card>
-        <el-card shadow="never"><h3>联系方式</h3><p>{{ hotelInfo.address || '-' }}</p><p>{{ hotelInfo.contactPhone || '-' }}</p><p>{{ hotelInfo.trafficInfo || '' }}</p></el-card>
-        <el-card shadow="never"><h3>酒店设施</h3><p>{{ hotelInfo.facilities || '暂无设施说明' }}</p></el-card>
-        <el-card shadow="never"><h3>入住须知</h3><p>{{ hotelInfo.checkinNotice || '暂无入住须知' }}</p></el-card>
-        <el-card shadow="never"><h3>取消规则</h3><p>{{ hotelInfo.cancellationPolicy || '暂无取消规则' }}</p></el-card>
-        <el-card shadow="never"><h3>常见问题</h3><p>{{ hotelInfo.faqContent || '暂无常见问题' }}</p></el-card>
-      </div>
-    </section>    <section class="announcement-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Announcement</p>
-          <h2>酒店公告</h2>
-        </div>
     <section id="experience" class="story section-shell">
       <div class="story-copy">
         <p class="eyebrow dark">A SLOWER RHYTHM</p>
         <h2>住进海岸，<br />也住进自然的节奏</h2>
-        <p>浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。</p>
+        <p>{{ hotelIntroduction }}</p>
         <div class="story-metrics"><div><strong>7</strong><span>种特色房型</span></div><div><strong>海岸</strong><span>自然景观体验</span></div><div><strong>一站式</strong><span>预订与入住服务</span></div></div>
       </div>
       <div class="story-image"><img src="/images/eco/zhisu-courtyard.png" alt="酒店自然庭院" loading="lazy" /><span>石 · 木 · 水 · 光</span></div>
@@ -100,338 +69,57 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { reactive, ref, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { checkHealth } from '@/api/health'
 import { getPublicAnnouncements } from '@/api/content/announcement'
+import { getPublicBanners } from '@/api/content/banner'
 import { getPublicHotelInfo } from '@/api/content/hotelInfo'
+import { toBookingQuery } from '@/utils/bookingQuery'
 
 const router = useRouter()
-const loadingHealth = ref(true)
-const healthStatus = ref('')
+const announcements = ref([])
 const banners = ref([])
-const announcements = ref([])
-const hotelInfo = ref({})
-const dateText = offset => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0, 10) }
-const searchDates = ref([dateText(1), dateText(2)])
-const searchRoomCount = ref(1)
-
-function extractResult(result, fallbackMessage) {
-  if (result.code !== 'SUCCESS') {
-    throw new Error(result.message || fallbackMessage)
-  }
-  return result.data
-}
-
-const loadHealthStatus = async () => {
-  loadingHealth.value = true
-  try {
-    const result = await fetchHealth()
-    if (result.code === 'SUCCESS') {
-      healthStatus.value = '后端连接成功: ' + result.data
-    } else {
-      healthStatus.value = ''
-      ElMessage.error(result.message || '连接后端失败')
-    }
-  } catch (error) {
-    healthStatus.value = ''
-    ElMessage.error(error?.message || '连接后端失败')
-  } finally {
-    loadingHealth.value = false
-  }
-}
-
-async function loadBanners() {
-  try {
-    const result = await getPublicBanners()
-    banners.value = extractResult(result, '加载轮播图失败')
-  } catch (error) {
-    banners.value = []
-    ElMessage.error(error?.response?.data?.message || error?.message || '加载轮播图失败')
-  }
-}
-
-async function loadAnnouncements() {
-  try {
-    const result = await getPublicAnnouncements()
-    announcements.value = extractResult(result, '加载公告失败')
-  } catch (error) {
-    announcements.value = []
-    ElMessage.error(error?.response?.data?.message || error?.message || '加载公告失败')
-  }
-}
-
-
-async function loadHotelInfo() {
-  try {
-    const result = await getPublicHotelInfo()
-    hotelInfo.value = extractResult(result, '加载酒店信息失败') || {}
-  } catch (error) {
-    hotelInfo.value = {}
-    ElMessage.error(error?.response?.data?.message || error?.message || '加载酒店信息失败')
-  }
-}
-
-function disablePast(date) {
-  return date < new Date(new Date().toDateString())
-}
-function goRooms() {
-  if (!searchDates.value?.[0]) return ElMessage.warning('请选择入住和离店日期')
-  router.push({ path: '/rooms', query: { checkInDate: searchDates.value[0], checkOutDate: searchDates.value[1], roomCount: searchRoomCount.value } })
-}
-function scrollToHotelInfo() {
-  document.getElementById('hotel-info')?.scrollIntoView({ behavior: 'smooth' })
-}
-function handleBannerClick(banner) {
-  if (banner.linkUrl) {
-    window.open(banner.linkUrl, '_blank', 'noopener,noreferrer')
-  }
-}
-
-function formatDateTime(value) {
-  if (!value) {
-    return '-'
-  }
-  return value.replace('T', ' ')
-}
-
-onMounted(() => {
-  loadHealthStatus()
-  loadHotelInfo()
-  loadBanners()
-  loadAnnouncements()
-const announcements = ref([])
+const bannerIndex = ref(0)
+const hotelName = ref('智宿海滨生态酒店')
+const hotelIntroduction = ref('浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。')
 const healthy = ref(false)
 const healthFailed = ref(false)
-const booking = reactive({ checkIn: '', checkOut: '', guests: 2 })
+const booking = reactive({ checkInDate: '', checkOutDate: '', roomCount: 1, guests: 2 })
+let bannerTimer
+const heroImage = computed(() => banners.value[bannerIndex.value]?.imageUrl || '/images/eco/zhisu-coastal-hero.png')
 function disablePast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
-function disableCheckOut(t) { if (!booking.checkIn) return disablePast(t); const d = new Date(booking.checkIn); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime() }
+function disableCheckOut(t) { if (!booking.checkInDate) return disablePast(t); const d = new Date(booking.checkInDate); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime() }
 function searchRooms() {
-  if ((booking.checkIn && !booking.checkOut) || (!booking.checkIn && booking.checkOut)) return ElMessage.warning('请选择完整的入住和离店日期')
-  router.push({ path: '/rooms', query: { checkIn: booking.checkIn || undefined, checkOut: booking.checkOut || undefined, guests: booking.guests } })
+  if ((booking.checkInDate && !booking.checkOutDate) || (!booking.checkInDate && booking.checkOutDate)) return ElMessage.warning('请选择完整的入住和离店日期')
+  router.push({ path: '/rooms', query: toBookingQuery(booking) })
 }
 function formatDate(v) { return v ? v.slice(0, 10).replaceAll('-', '.') : '' }
+function startBannerRotation() {
+  if (banners.value.length < 2) return
+  bannerTimer = window.setInterval(() => { bannerIndex.value = (bannerIndex.value + 1) % banners.value.length }, 6000)
+}
 onMounted(async () => {
   try { const r = await checkHealth(); healthy.value = r.code === 'SUCCESS'; healthFailed.value = !healthy.value } catch { healthFailed.value = true }
   try { const r = await getPublicAnnouncements(); if (r.code === 'SUCCESS') announcements.value = r.data || [] } catch { announcements.value = [] }
+  try {
+    const r = await getPublicHotelInfo()
+    if (r.code === 'SUCCESS' && r.data) {
+      hotelName.value = r.data.hotelName || hotelName.value
+      hotelIntroduction.value = r.data.introduction || hotelIntroduction.value
+    }
+  } catch { /* keep current visual fallback */ }
+  try {
+    const r = await getPublicBanners()
+    if (r.code === 'SUCCESS') banners.value = (r.data || []).filter(item => item.imageUrl)
+    startBannerRotation()
+  } catch { banners.value = [] }
 })
+onBeforeUnmount(() => { if (bannerTimer) window.clearInterval(bannerTimer) })
 </script>
 
 <style scoped>
-.home-page {
-  min-height: 100vh;
-  padding: 32px;
-  background:
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
-}
-
-.hero {
-  display: grid;
-  grid-template-columns: minmax(280px, 420px) 1fr;
-  gap: 28px;
-  align-items: center;
-}
-
-.eyebrow {
-  margin: 0 0 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: #0f766e;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.hero-copy h1 {
-  margin: 0;
-  font-size: clamp(34px, 4vw, 56px);
-  line-height: 1.05;
-  color: #0f172a;
-}
-
-.hero-text {
-  margin: 18px 0 0;
-  font-size: 16px;
-  line-height: 1.7;
-  color: #475569;
-}
-
-.booking-search {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 20px 0 14px;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 14px;
-  margin-top: 28px;
-}
-
-.hero-visual {
-  min-width: 0;
-}
-
-.banner-carousel,
-.banner-empty {
-  border-radius: 28px;
-  overflow: hidden;
-  background: #dbeafe;
-  box-shadow: 0 26px 60px rgba(15, 23, 42, 0.14);
-}
-
-.banner-card {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 360px;
-}
-
-.banner-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.banner-overlay {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: 24px;
-  background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.76));
-  color: #fff;
-}
-
-.banner-overlay h2 {
-  margin: 12px 0 0;
-  font-size: 28px;
-}
-
-.banner-badge {
-  display: inline-flex;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  font-size: 12px;
-}
-
-.banner-empty {
-  height: 360px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #475569;
-}
-
-.announcement-section {
-  margin-top: 36px;
-}
-
-.section-heading h2 {
-  margin: 0;
-  font-size: 30px;
-  color: #0f172a;
-}
-
-.announcement-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
-  margin-top: 16px;
-}
-
-.announcement-card {
-  padding: 20px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-}
-
-.announcement-card.pinned {
-  border: 1px solid rgba(239, 68, 68, 0.24);
-}
-
-.announcement-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.announcement-card h3 {
-  margin: 14px 0 10px;
-  font-size: 20px;
-  color: #111827;
-}
-
-.announcement-card p {
-  margin: 0;
-  color: #475569;
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-.announcement-empty {
-  margin-top: 16px;
-  padding: 24px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.76);
-  color: #64748b;
-}
-
-.status-section {
-  margin-top: 32px;
-}
-
-.status-card {
-  max-width: 500px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.status,
-.loading {
-  padding: 20px;
-  text-align: center;
-}
-
-@media (max-width: 900px) {
-  .home-page {
-    padding: 20px;
-  }
-
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .booking-search {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 20px 0 14px;
-}
-
-.hero-actions {
-    flex-direction: column;
-  }
-}
-
-.hotel-brand { display: flex; align-items: center; gap: 12px; }
-.hotel-brand img { width: 44px; height: 44px; border-radius: 12px; object-fit: contain; }
-.hotel-info-section { margin-top: 36px; }
-.info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 16px; }
-.info-grid h3 { margin: 0 0 10px; color: #0f172a; }
-.info-grid p { margin: 6px 0; color: #475569; line-height: 1.7; white-space: pre-wrap; }
-@media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } }</style>
 .home-page{background:#f7f2e9;color:#302a24;overflow:hidden}.hero{position:relative;height:min(860px,94vh);min-height:680px;color:#fff}.hero-image,.hero-shade{position:absolute;inset:0;width:100%;height:100%}.hero-image{object-fit:cover}.hero-shade{background:linear-gradient(90deg,rgba(25,35,30,.74) 0%,rgba(31,39,34,.32) 42%,rgba(25,30,27,.08) 70%),linear-gradient(0deg,rgba(18,23,20,.38),transparent 45%)}.hero-copy{position:relative;z-index:2;max-width:1280px;margin:auto;padding:190px 48px 0}.eyebrow{margin:0 0 20px;font-size:11px;font-weight:650;letter-spacing:.3em;color:#e4d2b6}.eyebrow.dark{color:#8c6d4f}.hero h1{margin:0;font-family:"Noto Serif SC","Songti SC",serif;font-size:clamp(48px,6vw,82px);font-weight:500;line-height:1.18;letter-spacing:.04em}.hero-text{max-width:520px;margin:26px 0 0;font-size:16px;line-height:1.9;color:rgba(255,255,255,.82)}.hero-actions{display:flex;align-items:center;gap:28px;margin-top:38px}.primary-link,.ghost-link{display:inline-flex;align-items:center;gap:35px;color:#fff;text-decoration:none}.primary-link{padding:15px 24px;background:#a4774f;font-weight:650}.primary-link:hover{background:#8f623f}.ghost-link{padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.45)}.hero-note{position:absolute;z-index:2;right:5%;bottom:72px;display:flex;align-items:center;gap:16px;max-width:340px}.note-line{width:46px;height:1px;background:#d9c3a1}.hero-note small{letter-spacing:.18em;color:#d9c3a1}.hero-note p{margin:6px 0 0;font-family:"Noto Serif SC",serif}.scroll-hint{position:absolute;z-index:2;left:48px;bottom:24px;display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.65);font-size:9px;letter-spacing:.24em;text-decoration:none;transform:rotate(-90deg);transform-origin:left center}.scroll-hint span{display:block;width:38px;height:1px;background:rgba(255,255,255,.5)}.booking-wrap{position:relative;z-index:3;max-width:1180px;margin:-34px auto 0;padding:0 30px}.booking-card{display:grid;grid-template-columns:1.3fr repeat(3,1fr) auto;align-items:center;gap:0;padding:18px 18px 18px 26px;background:#fffdf8;box-shadow:0 24px 60px rgba(49,40,31,.14)}.booking-intro,.booking-field{padding:4px 22px;border-right:1px solid #e7dfd3}.booking-intro span,.booking-field small{display:block;margin-bottom:7px;font-size:9px;letter-spacing:.17em;color:#917c68}.booking-intro strong{font-family:"Noto Serif SC",serif;font-size:17px}.booking-field :deep(.el-input__wrapper),.booking-field :deep(.el-select__wrapper){padding:0;background:transparent;box-shadow:none!important}.booking-btn{align-self:stretch;margin-left:18px;padding:0 26px;border:0;background:#33483b;color:#fff;cursor:pointer;font-weight:650}.booking-btn span{margin-left:18px}.section-shell{width:min(1180px,calc(100% - 60px));margin-inline:auto}.story{display:grid;grid-template-columns:.85fr 1.15fr;gap:100px;align-items:center;padding:145px 0}.story-copy h2,.section-title h2,.experience-copy h2{margin:0;font-family:"Noto Serif SC","Songti SC",serif;font-size:clamp(34px,4vw,52px);font-weight:500;line-height:1.35}.story-copy>p:last-of-type,.experience-copy>p:last-child{margin:28px 0 0;line-height:2;color:#756b61}.story-image{position:relative}.story-image img{width:100%;height:550px;object-fit:cover}.story-image span{position:absolute;right:-28px;bottom:32px;padding:18px 15px;background:#33483b;color:#fff;font-size:12px;letter-spacing:.18em;writing-mode:vertical-rl}.story-metrics{display:flex;gap:28px;margin-top:38px;padding-top:28px;border-top:1px solid #ded4c7}.story-metrics div{display:flex;flex-direction:column}.story-metrics strong{font-family:Georgia,serif;font-size:30px;color:#33483b}.story-metrics span{margin-top:4px;font-size:12px;color:#8f8378}.stay-section{padding:115px 0 125px;background:#e9ddc8}.section-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:45px}.section-title a{padding-bottom:8px;color:#5e554d;text-decoration:none;border-bottom:1px solid #a4774f}.room-feature{display:grid;grid-template-columns:1.45fr .75fr;min-height:540px}.room-feature>img{width:100%;height:100%;object-fit:cover}.room-panel{display:flex;flex-direction:column;justify-content:center;padding:55px;background:#33483b;color:#fff}.room-panel>p{font-size:10px;letter-spacing:.24em;color:#c8b18e}.room-panel h3{margin:10px 0 20px;font-family:"Noto Serif SC",serif;font-size:34px;font-weight:500}.room-panel>span{line-height:1.9;color:rgba(255,255,255,.72)}.room-panel ul{margin:28px 0;padding:0;list-style:none}.room-panel li{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.8)}.room-panel a{align-self:flex-start;margin-top:12px;color:#fff;text-decoration:none;border-bottom:1px solid #b99a6b;padding-bottom:5px}.room-panel b{margin-left:35px}.experience-grid{display:grid;grid-template-columns:.72fr 1.28fr;gap:80px;align-items:center;padding:140px 0}.experience-grid img{width:100%;height:500px;object-fit:cover}.announcement-section{padding-bottom:100px}.section-title.compact{margin-bottom:30px}.announcement-list{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.announcement-list article{padding:28px;background:#fffdf8;border-top:2px solid #a4774f}.announcement-list small{color:#9b8c7d}.announcement-list h3{margin:12px 0}.announcement-list p{display:-webkit-box;overflow:hidden;color:#756b61;line-height:1.7;-webkit-line-clamp:2;-webkit-box-orient:vertical}.health-pill{position:fixed;z-index:30;right:20px;bottom:20px;padding:8px 13px;border-radius:30px;background:#d9c7a9;color:#55483b;font-size:12px}.health-pill.failed{background:#7e4b3c;color:#fff}
 @media(max-width:980px){.booking-card{grid-template-columns:1fr 1fr}.booking-intro{grid-column:1/-1}.booking-intro,.booking-field{border:0}.booking-btn{height:48px}.story,.experience-grid{grid-template-columns:1fr;gap:45px}.story{padding:100px 0}.room-feature{grid-template-columns:1fr}.room-panel{padding:40px}.story-image img,.experience-grid img{height:440px}}
 @media(max-width:680px){.hero{min-height:720px}.hero-copy{padding:170px 22px 0}.hero h1{font-size:44px}.hero-note{right:20px;bottom:70px}.scroll-hint{display:none}.booking-wrap{padding:0 16px}.booking-card{grid-template-columns:1fr;padding:20px}.booking-field{padding:10px 0;border-bottom:1px solid #eee4d8}.booking-btn{margin:16px 0 0}.section-shell{width:calc(100% - 40px)}.story{padding:85px 0}.story-image img,.experience-grid img{height:330px}.story-image span{right:-10px}.story-metrics{gap:15px}.story-metrics strong{font-size:24px}.stay-section{padding:80px 0}.section-title{align-items:flex-start;gap:20px}.section-title a{font-size:12px}.experience-grid{padding:90px 0}.announcement-list{grid-template-columns:1fr}}

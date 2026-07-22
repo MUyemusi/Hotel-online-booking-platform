@@ -12,8 +12,8 @@ description = VALUES(description);
 
 INSERT INTO sys_user (id, username, password_hash, nickname, phone, email, status, consecutive_cancel_count) VALUES
 (1, 'admin', '$2a$10$wKCAh/ezG5qrfEIXGOQ2IOzDiSRRVWda74Q119PAe2WtxOKESD6FG', CONVERT(0xE7B3BBE7BB9FE7AEA1E79086E59198 USING utf8mb4), '13800000000', 'admin@zhisu.local', 'ENABLED', 0),
-(2, 'frontdesk', '$2a$10$K.o752hF4iWQbJPN6UpAhuC15psvkPtuAIc4zoeUxnojUQRQuGIa6', CONVERT(0xE5898DE58FB0E8B4A6E58FB7 USING utf8mb4), '13800000001', 'frontdesk@zhisu.local', 'ENABLED', 0),
-(3, 'guest', '$2a$10$jich6V.425NsNLThDTh0Tuqgfp9cIf/TT5R4xhZJ5Z8B3SpZUwoKi', CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'guest@zhisu.local', 'ENABLED', 0)
+(2, 'frontdesk', '$2a$10$af3SFLf8CU5z9Ve.LYFhA.XvXu3bnsV9wI03t1AFGFQ1Y2mMeY876', CONVERT(0xE5898DE58FB0E8B4A6E58FB7 USING utf8mb4), '13800000001', 'frontdesk@zhisu.local', 'ENABLED', 0),
+(3, 'guest', '$2a$10$hTOf3Jv.cutfEQMmN5a/3uDHLdPCEzcDJizKDaSMURDOodW8d2X7K', CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'guest@zhisu.local', 'ENABLED', 0)
 ON DUPLICATE KEY UPDATE
 password_hash = VALUES(password_hash),
 nickname = VALUES(nickname),
@@ -21,25 +21,6 @@ phone = VALUES(phone),
 email = VALUES(email),
 status = VALUES(status),
 consecutive_cancel_count = VALUES(consecutive_cancel_count);
-INSERT INTO sys_user (
-    id,
-    username,
-    password,
-    nickname,
-    phone,
-    email,
-    status
-) VALUES
-      (1, 'admin', '$2b$10$nC0SntNaEh79RQnY8MV0/.7oE8vQIPokvIkI0KWGxuWaFp8JQcsGC', CONVERT(0xE7B3BBE7BB9FE7AEA1E79086E59198 USING utf8mb4), '13800000000', 'admin@zhisu.local', 'ENABLED'),
-      (2, 'frontdesk', '$2b$10$ubAIaVcNp8vr1ZfmbV035OzVqdEgsKNsdgvaFsU5QdOaVEsiJ8rue', CONVERT(0xE5898DE58FB0E8B4A6E58FB7 USING utf8mb4), '13800000001', 'frontdesk@zhisu.local', 'ENABLED'),
-      (3, 'guest', '$2b$10$EfNervG0HGfD8a9rzdMcZOeTKFtnH/8aAq4Pcz7tbQZqq6ycsb4CS', CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'guest@zhisu.local', 'ENABLED')
-    ON DUPLICATE KEY UPDATE
-                         password = VALUES(password),
-                         nickname = VALUES(nickname),
-                         phone = VALUES(phone),
-                         email = VALUES(email),
-                         status = VALUES(status);
-
 INSERT INTO sys_user_role (user_id, role_id) VALUES
 (1, 3),
 (2, 2),
@@ -103,13 +84,4 @@ ON DUPLICATE KEY UPDATE policy_type = VALUES(policy_type), title = VALUES(title)
 INSERT INTO traffic_info (id, traffic_type, title, content, sort_order) VALUES
 (1, 'SUBWAY', CONVERT(0xE59CB0E99381 USING utf8mb4), CONVERT(0xE8B79DE7A6BBE4B8ADE5BF83E7AB99E6ADA5E8A18CE7BAA6203820E58886E9929FE38082 USING utf8mb4), 1),
 (2, 'AIRPORT', CONVERT(0xE69CBAE59CBA USING utf8mb4), CONVERT(0xE8B79DE69CBAE59CBAE7BAA620343020E58886E9929FE8BDA6E7A88BE38082 USING utf8mb4), 2)
-ON DUPLICATE KEY UPDATE traffic_type = VALUES(traffic_type), title = VALUES(title), content = VALUES(content), sort_order = VALUES(sort_order);
-
--- 默认演示账号已在文件开头以 BCrypt 密码初始化。
-INSERT INTO sys_user_role (user_id, role_id)
-SELECT u.id, r.id
-FROM sys_user u
-JOIN sys_role r ON r.role_code = 'ADMIN'
-WHERE u.username = 'admin'
-ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), role_id = VALUES(role_id);
 ON DUPLICATE KEY UPDATE traffic_type = VALUES(traffic_type), title = VALUES(title), content = VALUES(content), sort_order = VALUES(sort_order);

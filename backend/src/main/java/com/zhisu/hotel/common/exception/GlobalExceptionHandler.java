@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,10 +23,15 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<Void> handleBusinessException(BusinessException e) {
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
         log.warn("Business exception: {}", e.getMessage());
-        return ApiResponse.error(e.getCode(), e.getMessage());
+        HttpStatus status = switch (e.getCode()) {
+            case "BAD_CREDENTIALS", "REFRESH_TOKEN_INVALID", "UNAUTHORIZED" -> HttpStatus.UNAUTHORIZED;
+            case "FORBIDDEN" -> HttpStatus.FORBIDDEN;
+            case "INVALID_STAY_DATES", "INVALID_REQUEST" -> HttpStatus.BAD_REQUEST;
+            default -> HttpStatus.OK;
+        };
+        return ResponseEntity.status(status).body(ApiResponse.error(e.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

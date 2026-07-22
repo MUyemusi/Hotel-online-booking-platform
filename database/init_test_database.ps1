@@ -17,7 +17,8 @@ $files = @(
  "database/migrations/full_completion.sql",
  "database/03_indexes_constraints.sql",
  "database/04_initial_data.sql",
- "database/05_test_data.sql"
+ "database/05_test_data.sql",
+ "database/validate_schema.sql"
 )
 $temp = Join-Path ([IO.Path]::GetTempPath()) ("zhisu-init-" + [guid]::NewGuid().ToString("N") + ".sql")
 try {

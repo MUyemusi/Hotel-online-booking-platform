@@ -26,6 +26,7 @@ SOURCE database/migrations/full_completion.sql;
 SOURCE database/03_indexes_constraints.sql;
 SOURCE database/04_initial_data.sql;
 SOURCE database/05_test_data.sql;
+SOURCE database/validate_schema.sql;
 
 SELECT 'database' AS check_item, @@character_set_database AS character_set_database, @@collation_database AS collation_database;
 SELECT 'table_count' AS check_item, COUNT(*) AS table_count

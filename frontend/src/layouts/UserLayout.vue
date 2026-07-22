@@ -1,15 +1,4 @@
 <template>
-  <div class="shell">
-    <header class="nav">
-      <strong @click="router.push('/')">智宿酒店</strong>
-      <nav>
-        <el-button link @click="router.push('/rooms')">查找房型</el-button>
-        <el-button link @click="router.push('/orders')">我的订单</el-button>
-        <span>{{ user?.nickname || user?.username }}</span>
-        <el-button type="danger" plain @click="signOut">退出</el-button>
-      </nav>
-    </header>
-    <main><router-view /></main>
   <div class="user-layout" :class="{ 'is-scrolled': scrolled }">
     <!-- 顶部导航 -->
     <header class="top-nav" :class="{ 'nav-scrolled': scrolled || !immersiveHeader }">
@@ -83,36 +72,24 @@
     </footer>
   </div>
 </template>
+
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { logout } from '@/api/auth'
-import { clearAuthSession, getCurrentUser } from '@/utils/request'
-const router = useRouter()
-const user = ref(getCurrentUser())
-async function signOut() {
-  try { await logout() } finally { clearAuthSession(); await router.replace('/') }
-}
-</script>
-<style scoped>
-.shell{min-height:100vh;background:#f8fafc}.nav{height:68px;padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid #e2e8f0}.nav strong{cursor:pointer;font-size:21px;color:#0f766e}.nav nav{display:flex;align-items:center;gap:12px}main{max-width:1200px;margin:auto;padding:28px 20px}
-</style>
 import { computed, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { logout } from '@/api/auth'
-import { clearSession, getStoredUser, getToken, hasRole } from '@/utils/auth'
+import { clearAuthSession, getAccessToken, getCurrentUser, hasRole } from '@/utils/request'
 
 const router = useRouter()
 const route = useRoute()
 const scrolled = ref(false)
 const transitionName = ref('slide-left')
-const loggedIn = computed(() => Boolean(getToken()))
-const storedUser = computed(() => getStoredUser() || {})
+const loggedIn = computed(() => Boolean(getAccessToken()))
+const storedUser = computed(() => getCurrentUser() || {})
 const userName = computed(() => storedUser.value.nickname || storedUser.value.username || '我的账号')
 const userInitial = computed(() => userName.value.slice(0, 1))
 const isAdmin = computed(() => hasRole('ADMIN'))
-const isFrontdesk = computed(() => hasRole('FRONT_DESK', 'FRONTDESK') && !isAdmin.value)
+const isFrontdesk = computed(() => (hasRole('FRONT_DESK') || hasRole('FRONTDESK')) && !isAdmin.value)
 const isGuest = computed(() => loggedIn.value && !isAdmin.value && !isFrontdesk.value)
 const roleLabel = computed(() => isAdmin.value ? '系统管理员' : isFrontdesk.value ? '酒店前台' : '住客账号')
 const workspaceRoute = computed(() => isAdmin.value ? '/admin' : isFrontdesk.value ? '/frontdesk' : '')
@@ -127,9 +104,9 @@ async function handleCommand(command) {
   if (command === 'frontdesk') return router.push('/frontdesk')
   if (command === 'logout') {
     await ElMessageBox.confirm('确认退出当前账号吗？', '退出登录', { type: 'warning' })
-    try { await logout() } catch { /* JWT 无状态，服务异常时仍允许本地退出 */ }
-    clearSession()
-    router.replace('/login')
+    try { await logout() } catch { /* 服务异常时仍允许清除本地会话 */ }
+    clearAuthSession()
+    await router.replace('/login')
   }
 }
 
