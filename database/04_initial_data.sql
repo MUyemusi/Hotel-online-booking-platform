@@ -13,23 +13,21 @@ description = VALUES(description);
 INSERT INTO sys_user (
     id,
     username,
-    password_hash,
+    password,
     nickname,
     phone,
     email,
-    status,
-    consecutive_cancel_count
+    status
 ) VALUES
-      (1, 'admin', '$2b$10$nC0SntNaEh79RQnY8MV0/.7oE8vQIPokvIkI0KWGxuWaFp8JQcsGC', CONVERT(0xE7B3BBE7BB9FE7AEA1E79086E59198 USING utf8mb4), '13800000000', 'admin@zhisu.local', 'ENABLED', 0),
-      (2, 'frontdesk', '$2b$10$ubAIaVcNp8vr1ZfmbV035OzVqdEgsKNsdgvaFsU5QdOaVEsiJ8rue', CONVERT(0xE5898DE58FB0E8B4A6E58FB7 USING utf8mb4), '13800000001', 'frontdesk@zhisu.local', 'ENABLED', 0),
-      (3, 'guest', '$2b$10$EfNervG0HGfD8a9rzdMcZOeTKFtnH/8aAq4Pcz7tbQZqq6ycsb4CS', CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'guest@zhisu.local', 'ENABLED', 0)
+      (1, 'admin', '$2b$10$nC0SntNaEh79RQnY8MV0/.7oE8vQIPokvIkI0KWGxuWaFp8JQcsGC', CONVERT(0xE7B3BBE7BB9FE7AEA1E79086E59198 USING utf8mb4), '13800000000', 'admin@zhisu.local', 'ENABLED'),
+      (2, 'frontdesk', '$2b$10$ubAIaVcNp8vr1ZfmbV035OzVqdEgsKNsdgvaFsU5QdOaVEsiJ8rue', CONVERT(0xE5898DE58FB0E8B4A6E58FB7 USING utf8mb4), '13800000001', 'frontdesk@zhisu.local', 'ENABLED'),
+      (3, 'guest', '$2b$10$EfNervG0HGfD8a9rzdMcZOeTKFtnH/8aAq4Pcz7tbQZqq6ycsb4CS', CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'guest@zhisu.local', 'ENABLED')
     ON DUPLICATE KEY UPDATE
-                         password_hash = VALUES(password_hash),
+                         password = VALUES(password),
                          nickname = VALUES(nickname),
                          phone = VALUES(phone),
                          email = VALUES(email),
-                         status = VALUES(status),
-                         consecutive_cancel_count = VALUES(consecutive_cancel_count);
+                         status = VALUES(status);
 
 INSERT INTO sys_user_role (user_id, role_id) VALUES
 (1, 3),
