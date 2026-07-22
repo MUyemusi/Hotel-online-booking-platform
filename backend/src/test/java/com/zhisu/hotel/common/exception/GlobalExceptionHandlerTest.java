@@ -4,6 +4,8 @@ import com.zhisu.hotel.common.response.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -31,12 +33,14 @@ class GlobalExceptionHandlerTest {
         BusinessException exception =
                 new BusinessException("ROOM_NOT_FOUND", "Room not found");
 
-        ApiResponse<Void> response =
+        ResponseEntity<ApiResponse<Void>> response =
                 handler.handleBusinessException(exception);
 
-        assertThat(response.getCode()).isEqualTo("ROOM_NOT_FOUND");
-        assertThat(response.getMessage()).isEqualTo("Room not found");
-        assertThat(response.getTimestamp()).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getCode()).isEqualTo("ROOM_NOT_FOUND");
+        assertThat(response.getBody().getMessage()).isEqualTo("Room not found");
+        assertThat(response.getBody().getTimestamp()).isNotNull();
     }
 
     @Test
@@ -115,5 +119,23 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response.getCode()).isEqualTo(ErrorCode.CONFLICT);
         assertThat(response.getMessage()).isEqualTo("Data conflict");
+    }
+
+    @Test
+    void shouldReturnUnauthorizedForAuthenticationBusinessErrors() {
+        ResponseEntity<ApiResponse<Void>> response = handler.handleBusinessException(
+                new BusinessException("REFRESH_TOKEN_INVALID", "Session expired"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getCode()).isEqualTo("REFRESH_TOKEN_INVALID");
+    }
+
+    @Test
+    void shouldReturnForbiddenForPermissionBusinessErrors() {
+        ResponseEntity<ApiResponse<Void>> response = handler.handleBusinessException(
+                new BusinessException("FORBIDDEN", "Access denied"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 }

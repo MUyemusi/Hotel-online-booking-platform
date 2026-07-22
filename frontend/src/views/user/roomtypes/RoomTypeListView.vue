@@ -114,8 +114,8 @@
               <h3>{{ room.name }}</h3>
               <div class="card-price">
                 <span class="p-sym">¥</span>
-                <span class="p-val">{{ room.basePrice }}</span>
-                <span class="p-unit">/ 晚起</span>
+                <span class="p-val">{{ room.displayPrice }}</span>
+                <span class="p-unit">{{ room.priceUnit }}</span>
               </div>
             </div>
 
@@ -161,58 +161,65 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getPublicRoomTypes, getRoomTypeImages } from '@/api/roomtype'
+import { searchRoomTypes } from '@/api/roomTypes'
+import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
 
+const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
-const searchPerformed = ref(false)
+const initialHadDates = Boolean(route.query.checkInDate || route.query.checkIn || route.query.checkOutDate || route.query.checkOut)
+const searchPerformed = ref(initialHadDates)
 const rooms = ref([])
 const total = ref(0)
 
-const searchForm = reactive({ page: 1, size: 9, checkIn: '', checkOut: '', guests: 1, keyword: '' })
+function dateOffset(days) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10) }
+const initial = normalizeBookingQuery(route.query, { checkInDate: dateOffset(1), checkOutDate: dateOffset(2), roomCount: 1, guests: 1 })
+const searchForm = reactive({ page: 1, size: 9, checkIn: initial.checkInDate, checkOut: initial.checkOutDate, roomCount: initial.roomCount, guests: initial.guests, keyword: '' })
 
 function disablePastDates(time) {
-  const t = new Date(); t.setHours(0,0,0,0); return time.getTime() < t.getTime()
+  const t = new Date(); t.setHours(0, 0, 0, 0); return time.getTime() < t.getTime()
 }
 function disablePastCheckOut(time) {
   if (!searchForm.checkIn) return disablePastDates(time)
   const n = new Date(searchForm.checkIn); n.setDate(n.getDate() + 1)
   return time.getTime() < n.getTime()
 }
-
-function handleSearch() { searchForm.page = 1; searchPerformed.value = true; fetchRooms() }
-
+function currentQuery(roomTypeId) {
+  return toBookingQuery({ checkInDate: searchForm.checkIn, checkOutDate: searchForm.checkOut, roomCount: searchForm.roomCount, guests: searchForm.guests }, roomTypeId)
+}
+function handleSearch() {
+  if (!searchForm.checkIn || !searchForm.checkOut) return ElMessage.warning('请选择完整的入住和离店日期')
+  searchForm.page = 1
+  searchPerformed.value = true
+  router.replace({ path: '/rooms', query: currentQuery() })
+  fetchRooms()
+}
 async function fetchRooms() {
   loading.value = true
   try {
-    const res = await getPublicRoomTypes({
-      page: searchForm.page,
-      size: searchForm.size,
-      keyword: searchForm.keyword || undefined,
-      guests: searchForm.guests || undefined,
-      checkIn: searchForm.checkIn || undefined,
-      checkOut: searchForm.checkOut || undefined
-    })
-    if (res.code === 'SUCCESS' && res.data) {
-      const list = res.data.records || []
-      total.value = res.data.total || 0
-      for (const r of list) {
-        try {
-          const ir = await getRoomTypeImages(r.id)
-          if (ir.code === 'SUCCESS' && ir.data?.length) {
-            r.mainImage = (ir.data.find(i => i.imageType === 'MAIN') || ir.data[0]).imageUrl
-          }
-        } catch (e) { r.mainImage = null }
-      }
-      rooms.value = list
-    }
-  } catch (e) { ElMessage.error('加载房型失败') } finally { loading.value = false }
+    const res = await searchRoomTypes({ checkInDate: searchForm.checkIn, checkOutDate: searchForm.checkOut, roomCount: searchForm.roomCount, guests: searchForm.guests })
+    if (res.code !== 'SUCCESS') throw new Error(res.message || '加载房型失败')
+    const all = (res.data || []).map(room => ({
+      ...room,
+      mainImage: room.mainImageUrl,
+      hasWifi: room.facilities?.some(item => /wifi/i.test(item)),
+      hasAc: room.facilities?.some(item => item.includes('空调')),
+      displayPrice: searchPerformed.value ? room.totalAmount : room.basePrice,
+      priceUnit: searchPerformed.value ? ' / 本次入住' : ' / 晚起'
+    }))
+    total.value = all.length
+    const start = (searchForm.page - 1) * searchForm.size
+    rooms.value = all.slice(start, start + searchForm.size)
+  } catch (e) {
+    rooms.value = []
+    total.value = 0
+    ElMessage.error(e?.response?.data?.message || e.message || '加载房型失败')
+  } finally { loading.value = false }
 }
-
-function goDetail(id) { router.push(`/rooms/${id}`) }
-onMounted(() => fetchRooms())
+function goDetail(id) { router.push({ path: `/rooms/${id}`, query: currentQuery(id) }) }
+onMounted(fetchRooms)
 </script>
 
 <style scoped>

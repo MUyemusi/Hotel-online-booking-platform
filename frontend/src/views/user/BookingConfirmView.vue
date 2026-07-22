@@ -10,17 +10,68 @@
   </el-form></el-card>
 </section></template>
 <script setup>
-import { onMounted,reactive,ref } from 'vue'
-import { useRoute,useRouter } from 'vue-router'
+import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { searchRoomTypes } from '@/api/roomTypes'
 import { createOrder } from '@/api/orders'
-const route=useRoute(),router=useRouter(),formRef=ref(),room=ref(),loading=ref(false),submitting=ref(false)
-const roomTypeId=Number(route.query.roomTypeId),checkInDate=String(route.query.checkInDate),checkOutDate=String(route.query.checkOutDate),roomCount=Number(route.query.roomCount||1)
-const form=reactive({phone:'',guestCount:1,guestName:'',idNumber:'',remark:''})
-const rules={phone:[{required:true,message:'请输入手机号',trigger:'blur'},{pattern:/^1[3-9]\d{9}$/,message:'手机号格式不正确',trigger:'blur'}],guestName:[{required:true,message:'请输入入住人',trigger:'blur'}],guestCount:[{required:true,message:'请输入人数',trigger:'change'}]}
-async function load(){loading.value=true;try{const r=await searchRoomTypes({checkInDate,checkOutDate,roomCount});room.value=(r.data||[]).find(x=>x.id===roomTypeId);if(!room.value)throw new Error('房型库存或价格已变化，请重新选择')}catch(e){ElMessage.error(e.message);router.replace('/rooms')}finally{loading.value=false}}
-async function submit(){if(!await formRef.value.validate().catch(()=>false))return;submitting.value=true;try{const payload={roomTypeId,checkInDate,checkOutDate,roomCount,guestCount:form.guestCount,phone:form.phone,idempotencyKey:crypto.randomUUID(),remark:form.remark,guests:[{guestName:form.guestName,guestPhone:form.phone,idType:form.idNumber?'ID_CARD':null,idNumber:form.idNumber||null,isMain:true}]};const r=await createOrder(payload);if(r.code!=='SUCCESS')throw new Error(r.message);ElMessage.success('订单创建成功');router.replace('/orders/'+r.data.id+'/pay')}catch(e){ElMessage.error(e?.response?.data?.message||e.message||'下单失败')}finally{submitting.value=false}}
+import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
+
+const route = useRoute()
+const router = useRouter()
+const formRef = ref()
+const room = ref()
+const loading = ref(false)
+const submitting = ref(false)
+const booking = normalizeBookingQuery(route.query)
+const roomTypeId = booking.roomTypeId
+const checkInDate = booking.checkInDate
+const checkOutDate = booking.checkOutDate
+const roomCount = booking.roomCount
+const form = reactive({ phone: '', guestCount: booking.guests, guestName: '', idNumber: '', remark: '' })
+const rules = {
+  phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }, { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
+  guestName: [{ required: true, message: '请输入入住人', trigger: 'blur' }],
+  guestCount: [{ required: true, message: '请输入人数', trigger: 'change' }]
+}
+function returnToRooms() {
+  return router.replace({ path: '/rooms', query: toBookingQuery(booking) })
+}
+async function load() {
+  if (!roomTypeId || !checkInDate || !checkOutDate) {
+    ElMessage.error('预订参数不完整，请重新选择房型和日期')
+    return returnToRooms()
+  }
+  loading.value = true
+  try {
+    const response = await searchRoomTypes({ checkInDate, checkOutDate, roomCount, guests: form.guestCount })
+    if (response.code !== 'SUCCESS') throw new Error(response.message)
+    room.value = (response.data || []).find(item => item.id === roomTypeId)
+    if (!room.value) throw new Error('房型库存或价格已变化，请重新选择')
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || e.message || '报价失败')
+    returnToRooms()
+  } finally { loading.value = false }
+}
+async function submit() {
+  if (!await formRef.value.validate().catch(() => false)) return
+  submitting.value = true
+  try {
+    const latest = await searchRoomTypes({ checkInDate, checkOutDate, roomCount, guests: form.guestCount })
+    const latestRoom = (latest.data || []).find(item => item.id === roomTypeId)
+    if (!latestRoom) throw new Error('房型库存或价格已变化，请重新选择')
+    room.value = latestRoom
+    const payload = {
+      roomTypeId, checkInDate, checkOutDate, roomCount, guestCount: form.guestCount,
+      phone: form.phone, idempotencyKey: crypto.randomUUID(), remark: form.remark,
+      guests: [{ guestName: form.guestName, guestPhone: form.phone, idType: form.idNumber ? 'ID_CARD' : null, idNumber: form.idNumber || null, isMain: true }]
+    }
+    const response = await createOrder(payload)
+    if (response.code !== 'SUCCESS') throw new Error(response.message)
+    ElMessage.success('订单创建成功')
+    router.replace(`/orders/${response.data.id}/pay`)
+  } catch (e) { ElMessage.error(e?.response?.data?.message || e.message || '下单失败') } finally { submitting.value = false }
+}
 onMounted(load)
 </script>
 <style scoped>section{max-width:780px;margin:auto}.form-card{margin-top:18px}h3{color:#dc2626}</style>

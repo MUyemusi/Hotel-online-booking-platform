@@ -38,3 +38,20 @@ INSERT INTO system_config (config_key, config_value, config_name, value_type, co
 ('IMAGE_UPLOAD_MAX_MB','5','Image upload limit MB','INTEGER','CONTENT','Maximum image upload size','ENABLED'),
 ('DEFAULT_HOLIDAY_COEFFICIENT','1.20','Default holiday coefficient','DECIMAL','PRICING','Default holiday price coefficient','ENABLED')
 ON DUPLICATE KEY UPDATE config_name=VALUES(config_name), value_type=VALUES(value_type), config_group=VALUES(config_group), description=VALUES(description);
+-- Add demo main images only when a room type does not already have one.
+INSERT INTO room_type_image (room_type_id, image_url, image_type, sort_order)
+SELECT seed.room_type_id, seed.image_url, 'MAIN', 1
+FROM (
+    SELECT 1 AS room_type_id, '/images/room-types/single-main.jpg' AS image_url
+    UNION ALL SELECT 2, '/images/room-types/standard-main.jpg'
+    UNION ALL SELECT 3, '/images/room-types/superior-main.jpg'
+    UNION ALL SELECT 4, '/images/room-types/twin-main.jpg'
+    UNION ALL SELECT 5, '/images/room-types/deluxe-main.jpg'
+    UNION ALL SELECT 6, '/images/room-types/family-main.jpg'
+    UNION ALL SELECT 7, '/images/room-types/suite-main.jpg'
+) seed
+JOIN room_type rt ON rt.id = seed.room_type_id
+WHERE NOT EXISTS (
+    SELECT 1 FROM room_type_image existing
+    WHERE existing.room_type_id = seed.room_type_id AND existing.image_type = 'MAIN'
+);

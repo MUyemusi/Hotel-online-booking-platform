@@ -2,8 +2,8 @@
   <div class="home-page">
     <section class="hero">
       <picture>
-        <source media="(max-width: 720px)" srcset="/images/eco/zhisu-coastal-hero.png" />
-        <img class="hero-image" src="/images/eco/zhisu-coastal-hero.png" alt="智宿海滨生态酒店外景" fetchpriority="high" />
+        <source media="(max-width: 720px)" :srcset="heroImage" />
+        <img class="hero-image" :src="heroImage" :alt="hotelName + '外景'" fetchpriority="high" />
       </picture>
       <div class="hero-shade"></div>
       <div class="hero-copy">
@@ -24,9 +24,9 @@
 
     <section id="booking" class="booking-wrap">
       <div class="booking-card">
-        <div class="booking-intro"><span>RESERVATION</span><strong>开启你的海岸假日</strong></div>
-        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkIn" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast" /></div>
-        <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOut" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
+        <div class="booking-intro"><span>RESERVATION</span><strong>{{ hotelName }}</strong></div>
+        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkInDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast" /></div>
+        <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOutDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
         <div class="booking-field"><small>入住人数</small><el-select v-model="booking.guests"><el-option v-for="n in 6" :key="n" :label="`${n} 位宾客`" :value="n" /></el-select></div>
         <button class="booking-btn" @click="searchRooms">查询客房 <span>→</span></button>
       </div>
@@ -36,7 +36,7 @@
       <div class="story-copy">
         <p class="eyebrow dark">A SLOWER RHYTHM</p>
         <h2>住进海岸，<br />也住进自然的节奏</h2>
-        <p>浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。</p>
+        <p>{{ hotelIntroduction }}</p>
         <div class="story-metrics"><div><strong>7</strong><span>种特色房型</span></div><div><strong>海岸</strong><span>自然景观体验</span></div><div><strong>一站式</strong><span>预订与入住服务</span></div></div>
       </div>
       <div class="story-image"><img src="/images/eco/zhisu-courtyard.png" alt="酒店自然庭院" loading="lazy" /><span>石 · 木 · 水 · 光</span></div>
@@ -69,28 +69,54 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { checkHealth } from '@/api/health'
 import { getPublicAnnouncements } from '@/api/content/announcement'
+import { getPublicBanners } from '@/api/content/banner'
+import { getPublicHotelInfo } from '@/api/content/hotelInfo'
+import { toBookingQuery } from '@/utils/bookingQuery'
 
 const router = useRouter()
 const announcements = ref([])
+const banners = ref([])
+const bannerIndex = ref(0)
+const hotelName = ref('智宿海滨生态酒店')
+const hotelIntroduction = ref('浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。')
 const healthy = ref(false)
 const healthFailed = ref(false)
-const booking = reactive({ checkIn: '', checkOut: '', guests: 2 })
+const booking = reactive({ checkInDate: '', checkOutDate: '', roomCount: 1, guests: 2 })
+let bannerTimer
+const heroImage = computed(() => banners.value[bannerIndex.value]?.imageUrl || '/images/eco/zhisu-coastal-hero.png')
 function disablePast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
-function disableCheckOut(t) { if (!booking.checkIn) return disablePast(t); const d = new Date(booking.checkIn); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime() }
+function disableCheckOut(t) { if (!booking.checkInDate) return disablePast(t); const d = new Date(booking.checkInDate); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime() }
 function searchRooms() {
-  if ((booking.checkIn && !booking.checkOut) || (!booking.checkIn && booking.checkOut)) return ElMessage.warning('请选择完整的入住和离店日期')
-  router.push({ path: '/rooms', query: { checkIn: booking.checkIn || undefined, checkOut: booking.checkOut || undefined, guests: booking.guests } })
+  if ((booking.checkInDate && !booking.checkOutDate) || (!booking.checkInDate && booking.checkOutDate)) return ElMessage.warning('请选择完整的入住和离店日期')
+  router.push({ path: '/rooms', query: toBookingQuery(booking) })
 }
 function formatDate(v) { return v ? v.slice(0, 10).replaceAll('-', '.') : '' }
+function startBannerRotation() {
+  if (banners.value.length < 2) return
+  bannerTimer = window.setInterval(() => { bannerIndex.value = (bannerIndex.value + 1) % banners.value.length }, 6000)
+}
 onMounted(async () => {
   try { const r = await checkHealth(); healthy.value = r.code === 'SUCCESS'; healthFailed.value = !healthy.value } catch { healthFailed.value = true }
   try { const r = await getPublicAnnouncements(); if (r.code === 'SUCCESS') announcements.value = r.data || [] } catch { announcements.value = [] }
+  try {
+    const r = await getPublicHotelInfo()
+    if (r.code === 'SUCCESS' && r.data) {
+      hotelName.value = r.data.hotelName || hotelName.value
+      hotelIntroduction.value = r.data.introduction || hotelIntroduction.value
+    }
+  } catch { /* keep current visual fallback */ }
+  try {
+    const r = await getPublicBanners()
+    if (r.code === 'SUCCESS') banners.value = (r.data || []).filter(item => item.imageUrl)
+    startBannerRotation()
+  } catch { banners.value = [] }
 })
+onBeforeUnmount(() => { if (bannerTimer) window.clearInterval(bannerTimer) })
 </script>
 
 <style scoped>

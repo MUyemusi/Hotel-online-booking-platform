@@ -140,26 +140,48 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getRoomTypeDetail, getRoomTypeImages, getRoomTypeFacilities } from '@/api/roomtype'
+import { searchRoomTypes } from '@/api/roomTypes'
+import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
 
-const route = useRoute(); const router = useRouter()
+const route = useRoute()
+const router = useRouter()
 const loading = ref(true)
-const room = ref({}); const images = ref([]); const facilities = ref([])
+const room = ref({})
+const images = ref([])
+const facilities = ref([])
+const quote = ref(null)
 const activeIdx = ref(0)
+let quoteRequestId = 0
 
-const bk = reactive({ checkIn: '', checkOut: '', rooms: 1, guests: 1 })
-
+const initial = normalizeBookingQuery(route.query, { roomTypeId: Number(route.params.id), roomCount: 1, guests: 1 })
+const bk = reactive({ checkIn: initial.checkInDate, checkOut: initial.checkOutDate, rooms: initial.roomCount, guests: initial.guests })
 const nights = computed(() => {
   if (!bk.checkIn || !bk.checkOut) return 0
   return Math.max(0, Math.round((new Date(bk.checkOut) - new Date(bk.checkIn)) / 86400000))
 })
-const totalPrice = computed(() => room.value.basePrice ? room.value.basePrice * nights.value * bk.rooms : 0)
+const totalPrice = computed(() => quote.value?.totalAmount ?? (room.value.basePrice ? room.value.basePrice * nights.value * bk.rooms : 0))
 
-function noPast(t) { const d = new Date(); d.setHours(0,0,0,0); return t.getTime() < d.getTime() }
+function noPast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
 function noPastOut(t) {
   if (!bk.checkIn) return noPast(t)
   const n = new Date(bk.checkIn); n.setDate(n.getDate() + 1); return t.getTime() < n.getTime()
 }
-
+async function loadQuote(showError = false) {
+  if (!bk.checkIn || !bk.checkOut || !room.value.id) { quote.value = null; return null }
+  const requestId = ++quoteRequestId
+  try {
+    const response = await searchRoomTypes({ checkInDate: bk.checkIn, checkOutDate: bk.checkOut, roomCount: bk.rooms, guests: bk.guests })
+    if (requestId !== quoteRequestId) return quote.value
+    const matched = (response.data || []).find(item => item.id === room.value.id)
+    quote.value = matched || null
+    if (!matched && showError) ElMessage.error('所选日期库存不足或房型不可订，请调整日期或数量')
+    return matched
+  } catch (e) {
+    if (requestId === quoteRequestId) quote.value = null
+    if (showError) ElMessage.error(e?.response?.data?.message || e.message || '报价失败')
+    return null
+  }
+}
 async function load() {
   loading.value = true
   try {
@@ -168,14 +190,16 @@ async function load() {
     if (rr.code === 'SUCCESS') room.value = rr.data
     if (ir.code === 'SUCCESS') images.value = ir.data || []
     if (fr.code === 'SUCCESS') facilities.value = fr.data || []
+    await loadQuote()
   } catch (e) { ElMessage.error('加载失败') } finally { loading.value = false }
 }
-
-function doBook() {
+async function doBook() {
   if (!bk.checkIn || !bk.checkOut) { ElMessage.warning('请选择日期'); return }
-  router.push({ path: '/booking/confirm', query: { roomTypeId: room.value.id, checkIn: bk.checkIn, checkOut: bk.checkOut, rooms: bk.rooms, guests: bk.guests }})
+  const currentQuote = await loadQuote(true)
+  if (!currentQuote) return
+  router.push({ path: '/booking/confirm', query: toBookingQuery({ checkInDate: bk.checkIn, checkOutDate: bk.checkOut, roomCount: bk.rooms, guests: bk.guests }, room.value.id) })
 }
-
+watch(() => [bk.checkIn, bk.checkOut, bk.rooms, bk.guests], () => { loadQuote() })
 watch(() => route.params.id, id => { if (id) load() })
 onMounted(load)
 </script>
