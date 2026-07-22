@@ -61,10 +61,13 @@ async function handleRegister() {
   try {
     const { confirmPassword, ...payload } = form
     const res = await register({ ...payload, nickname: payload.nickname || null, email: payload.email || null })
-    if (res.code === 'SUCCESS') {
-      ElMessage.success('注册成功，请登录')
-      router.replace('/login')
+    if (res.code !== 'SUCCESS') {
+      ElMessage.error(res.message || '注册失败，请检查填写的信息')
+      return
     }
+
+    ElMessage.success('注册成功，请登录')
+    router.replace('/login')
   } catch (e) {
     ElMessage.error(e?.response?.data?.message || '注册失败，请稍后重试')
   } finally { loading.value = false }
