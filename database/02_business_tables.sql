@@ -152,28 +152,43 @@ CREATE TABLE IF NOT EXISTS order_daily_price (
     INDEX idx_order_daily_price_order_id (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='order_daily_price';
 
-CREATE TABLE IF NOT EXISTS order_cancel_record (
+CREATE TABLE IF NOT EXISTS cancellation_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     order_id BIGINT NOT NULL,
-    cancel_by BIGINT,
+    user_id BIGINT NOT NULL,
     cancel_type VARCHAR(20) NOT NULL,
     cancel_reason VARCHAR(500),
-    refund_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    cancel_time DATETIME NOT NULL,
+    order_status_before VARCHAR(30),
+    payment_status_before VARCHAR(30),
+    refund_amount DECIMAL(10,2),
+    refund_amount_fen INT,
+    refund_id VARCHAR(64),
+    operator_id BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_order_cancel_order_id (order_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='order_cancel_record';
+    INDEX idx_cancellation_order_id (order_id),
+    INDEX idx_cancellation_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='cancellation_record';
 
 CREATE TABLE IF NOT EXISTS payment_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     order_id BIGINT NOT NULL,
     payment_no VARCHAR(64) NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL,
     payment_method VARCHAR(20) NOT NULL,
     payment_status VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
     amount DECIMAL(10,2) NOT NULL,
+    amount_fen INT NOT NULL,
+    transaction_id VARCHAR(64),
     paid_at DATETIME,
+    refund_amount DECIMAL(10,2),
+    refund_amount_fen INT,
+    refund_transaction_id VARCHAR(64),
+    refunded_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_payment_order_id (order_id),
+    INDEX idx_payment_user_id (user_id),
     INDEX idx_payment_status (payment_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='payment_record';
 

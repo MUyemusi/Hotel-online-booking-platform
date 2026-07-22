@@ -60,6 +60,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
+                        .requestMatchers("/api/payments/admin/**")
+                        .hasRole("ADMIN")
                         .requestMatchers("/api/frontdesk/**")
                         .hasAnyRole("ADMIN", "FRONT_DESK")
                         .anyRequest()

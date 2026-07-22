@@ -1,6 +1,8 @@
 package com.zhisu.hotel.payment.controller;
 
 import com.zhisu.hotel.common.response.ApiResponse;
+import com.zhisu.hotel.common.context.UserContext;
+import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.payment.dto.PaymentRequest;
 import com.zhisu.hotel.payment.service.PaymentService;
 import com.zhisu.hotel.payment.vo.PaymentVO;
@@ -38,6 +40,10 @@ public class PaymentController {
     }
 
     private Long getCurrentUserId() {
-        return 1L; // TODO: 替换为JWT认证
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("UNAUTHORIZED", "请先登录");
+        }
+        return userId;
     }
 }
