@@ -80,7 +80,11 @@ public class OrderTimeoutTask {
                 .taskName("OrderTimeoutTask").executedAt(startTime)
                 .closedOrders(closed).releasedRooms(released)
                 .success(success ? 1 : 0).errorMessage(errorMsg).build();
-        scheduledTaskLogMapper.insert(taskLog);
+        try {
+            scheduledTaskLogMapper.insert(taskLog);
+        } catch (Exception logException) {
+            log.warn("定时任务日志表尚未初始化，跳过日志落库: {}", logException.getMessage());
+        }
         log.info("超时关单任务执行完毕: 关闭{}笔订单, 释放{}间夜库存, 成功={}", closed, released, success);
     }
 }

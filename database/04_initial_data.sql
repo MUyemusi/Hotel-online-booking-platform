@@ -10,6 +10,17 @@ role_code = VALUES(role_code),
 role_name = VALUES(role_name),
 description = VALUES(description);
 
+INSERT INTO sys_user (id, username, password_hash, nickname, phone, email, status, consecutive_cancel_count) VALUES
+(1, 'admin', '$2a$10$wKCAh/ezG5qrfEIXGOQ2IOzDiSRRVWda74Q119PAe2WtxOKESD6FG', CONVERT(0xE7B3BBE7BB9FE7AEA1E79086E59198 USING utf8mb4), '13800000000', 'admin@zhisu.local', 'ENABLED', 0),
+(2, 'frontdesk', '$2a$10$K.o752hF4iWQbJPN6UpAhuC15psvkPtuAIc4zoeUxnojUQRQuGIa6', CONVERT(0xE5898DE58FB0E8B4A6E58FB7 USING utf8mb4), '13800000001', 'frontdesk@zhisu.local', 'ENABLED', 0),
+(3, 'guest', '$2a$10$jich6V.425NsNLThDTh0Tuqgfp9cIf/TT5R4xhZJ5Z8B3SpZUwoKi', CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'guest@zhisu.local', 'ENABLED', 0)
+ON DUPLICATE KEY UPDATE
+password_hash = VALUES(password_hash),
+nickname = VALUES(nickname),
+phone = VALUES(phone),
+email = VALUES(email),
+status = VALUES(status),
+consecutive_cancel_count = VALUES(consecutive_cancel_count);
 INSERT INTO sys_user (
     id,
     username,
@@ -64,9 +75,9 @@ INSERT INTO room_type_image (room_type_id, image_url, image_type, sort_order) VA
 (6, '/images/room-types/family-main.jpg', 'MAIN', 1),
 (7, '/images/room-types/suite-main.jpg', 'MAIN', 1);
 
-INSERT INTO hotel_info (id, hotel_name, address, phone, email, description, check_in_time, check_out_time) VALUES
-(1, CONVERT(0xE699BAE5AEBFE98592E5BA97 USING utf8mb4), CONVERT(0xE59F8EE5B882E4B8ADE5BF83E7A4BAE88C83E8B7AF20383820E58FB7 USING utf8mb4), '400-800-2026', 'service@zhisu.local', CONVERT(0xE699BAE5AEBFE98592E5BA97E698AFE4B880E5AEB6E99DA2E59091E59586E58AA1E4B88EE4BC91E997B2E4BD8FE5AEA2E79A84E58D95E4BD93E98592E5BA97EFBC8CE68F90E4BE9BE59CA8E7BABFE9A284E8AEA2E38081E5898DE58FB0E585A5E4BD8FE5928CE8BF90E890A5E7AEA1E79086E69C8DE58AA1E38082 USING utf8mb4), '14:00', '12:00')
-ON DUPLICATE KEY UPDATE hotel_name = VALUES(hotel_name), address = VALUES(address), phone = VALUES(phone), email = VALUES(email), description = VALUES(description), check_in_time = VALUES(check_in_time), check_out_time = VALUES(check_out_time);
+INSERT INTO hotel_info (id, hotel_name, logo_url, introduction, address, contact_phone, facilities, checkin_notice, cancellation_policy, traffic_info, faq_content, status) VALUES
+(1, CONVERT(0xE699BAE5AEBFE98592E5BA97 USING utf8mb4), '/images/logo.png', CONVERT(0xE699BAE5AEBFE98592E5BA97E698AFE4B880E5AEB6E99DA2E59091E59586E58AA1E4B88EE4BC91E997B2E4BD8FE5AEA2E79A84E58D95E4BD93E98592E5BA97EFBC8CE68F90E4BE9BE59CA8E7BABFE9A284E8AEA2E38081E5898DE58FB0E585A5E4BD8FE5928CE8BF90E890A5E7AEA1E79086E69C8DE58AA1E38082 USING utf8mb4), CONVERT(0xE59F8EE5B882E4B8ADE5BF83E7A4BAE88C83E8B7AF20383820E58FB7 USING utf8mb4), '400-800-2026', CONVERT(0xE5858DE8B4B9576946946E5819CE8BDA6E38081E697A9E9A490E38081E8A18CE69D8EE5AF84E5AD98 USING utf8mb4), CONVERT(0xE585A5E4BD8FE697B6E8AFB7E690BAE5B8A6E69C89E69588E8BAABE4BBBDE8AF81E4BBB6 USING utf8mb4), CONVERT(0xE8AEA2E58D95E58F96E6B688E8A784E58899E8AFB7E58F82E88083E8AEA2E58D95E8AFA6E68385 USING utf8mb4), CONVERT(0xE4BD8DE4BA8EE59F8EE5B882E4B8ADE5BF83EFBC8CE4BAA4E9809AE4BEBFE588A9 USING utf8mb4), CONVERT(0xE69C80E697A9E585A5E4BD8FE697B6E997B4E4B8BA31343A3030EFBC8CE98080E688BFE697B6E997B4E4B8BA31323A3030 USING utf8mb4), 'PUBLISHED')
+ON DUPLICATE KEY UPDATE hotel_name = VALUES(hotel_name), logo_url = VALUES(logo_url), introduction = VALUES(introduction), address = VALUES(address), contact_phone = VALUES(contact_phone), facilities = VALUES(facilities), checkin_notice = VALUES(checkin_notice), cancellation_policy = VALUES(cancellation_policy), traffic_info = VALUES(traffic_info), faq_content = VALUES(faq_content), status = VALUES(status);
 
 INSERT INTO hotel_notice (id, title, content, status, sort_order) VALUES
 (1, CONVERT(0xE585A5E4BD8FE68F90E98692 USING utf8mb4), CONVERT(0xE58A9EE79086E585A5E4BD8FE697B6E8AFB7E587BAE7A4BAE69CACE4BABAE69C89E69588E8BAABE4BBBDE8AF81E4BBB6E38082 USING utf8mb4), 'PUBLISHED', 1),
@@ -92,4 +103,13 @@ ON DUPLICATE KEY UPDATE policy_type = VALUES(policy_type), title = VALUES(title)
 INSERT INTO traffic_info (id, traffic_type, title, content, sort_order) VALUES
 (1, 'SUBWAY', CONVERT(0xE59CB0E99381 USING utf8mb4), CONVERT(0xE8B79DE7A6BBE4B8ADE5BF83E7AB99E6ADA5E8A18CE7BAA6203820E58886E9929FE38082 USING utf8mb4), 1),
 (2, 'AIRPORT', CONVERT(0xE69CBAE59CBA USING utf8mb4), CONVERT(0xE8B79DE69CBAE59CBAE7BAA620343020E58886E9929FE8BDA6E7A88BE38082 USING utf8mb4), 2)
+ON DUPLICATE KEY UPDATE traffic_type = VALUES(traffic_type), title = VALUES(title), content = VALUES(content), sort_order = VALUES(sort_order);
+
+-- 默认演示账号已在文件开头以 BCrypt 密码初始化。
+INSERT INTO sys_user_role (user_id, role_id)
+SELECT u.id, r.id
+FROM sys_user u
+JOIN sys_role r ON r.role_code = 'ADMIN'
+WHERE u.username = 'admin'
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), role_id = VALUES(role_id);
 ON DUPLICATE KEY UPDATE traffic_type = VALUES(traffic_type), title = VALUES(title), content = VALUES(content), sort_order = VALUES(sort_order);

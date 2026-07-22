@@ -26,10 +26,12 @@ import com.zhisu.hotel.payment.mapper.CancellationRecordMapper;
 import com.zhisu.hotel.payment.mapper.PaymentRecordMapper;
 import com.zhisu.hotel.payment.vo.CancellationVO;
 import com.zhisu.hotel.payment.vo.PaymentVO;
+import com.zhisu.hotel.pricing.entity.DailyPrice;
 import com.zhisu.hotel.pricing.service.PriceService;
 import com.zhisu.hotel.roomtype.entity.RoomType;
 import com.zhisu.hotel.roomtype.mapper.RoomTypeMapper;
 import com.zhisu.hotel.user.service.CreditService;
+import com.zhisu.hotel.systemconfig.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
     private final InventoryService inventoryService;
     private final CreditService creditService;
     private final PriceService priceService;
+    private final SystemConfigService systemConfigService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -103,7 +106,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
                 .totalAmount(totalAmount).totalAmountFen(totalAmount.multiply(BigDecimal.valueOf(100)).intValue())
                 .idempotencyKey(request.getIdempotencyKey()).phone(request.getPhone())
                 .orderStatus(OrderStatus.PENDING_PAYMENT.name()).paymentStatus(PaymentStatus.UNPAID.name())
-                .paymentTimeout(now.plusMinutes(15)).remark(request.getRemark())
+                .paymentTimeout(now.plusMinutes(systemConfigService.getInteger("PAYMENT_TIMEOUT_MINUTES"))).remark(request.getRemark())
                 .build();
         bookingOrderMapper.insert(order);
 
@@ -115,7 +118,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         for (OrderGuest guest : guests) {
             orderGuestMapper.insert(guest);
         }
-        saveDailyPriceSnapshot(order.getId(), request.getCheckInDate(), request.getCheckOutDate(), roomType.getBasePrice());
+        saveDailyPriceSnapshot(order.getId(), roomType.getId(), request.getCheckInDate(), request.getCheckOutDate(), roomType.getBasePrice());
         try {
             inventoryService.lockInventory(order.getId(), request.getRoomTypeId(),
                     request.getCheckInDate(), request.getCheckOutDate(), request.getRoomCount());
@@ -396,10 +399,18 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         if (ChronoUnit.DAYS.between(checkIn, checkOut) > 30) throw new BusinessException("INVALID_DATE", "最多连续入住30天");
     }
 
-    private void saveDailyPriceSnapshot(Long orderId, LocalDate checkIn, LocalDate checkOut, BigDecimal basePrice) {
+    private void saveDailyPriceSnapshot(Long orderId, Long roomTypeId, LocalDate checkIn, LocalDate checkOut, BigDecimal fallbackPrice) {
+        List<DailyPrice> prices = priceService.listDailyPrices(roomTypeId, checkIn, checkOut);
+        if (prices != null && !prices.isEmpty()) {
+            for (DailyPrice price : prices) {
+                orderDailyPriceMapper.insert(OrderDailyPrice.builder()
+                        .orderId(orderId).priceDate(price.getBusinessDate()).dailyPrice(price.getFinalPrice()).build());
+            }
+            return;
+        }
         LocalDate date = checkIn;
         while (date.isBefore(checkOut)) {
-            orderDailyPriceMapper.insert(OrderDailyPrice.builder().orderId(orderId).priceDate(date).dailyPrice(basePrice).build());
+            orderDailyPriceMapper.insert(OrderDailyPrice.builder().orderId(orderId).priceDate(date).dailyPrice(fallbackPrice).build());
             date = date.plusDays(1);
         }
     }

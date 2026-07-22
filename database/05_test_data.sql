@@ -174,6 +174,8 @@ VALUES (
            1
        );
 
+INSERT INTO payment_record (id, order_id, payment_no, user_id, payment_method, payment_status, amount, amount_fen, transaction_id, idempotency_key, paid_at) VALUES
+(1, 1, 'PAY202607150001', 3, 'MOCK', 'PAID', 228.00, 22800, 'MOCK-INIT-1', 'INIT-PAYMENT-1', NOW());
 INSERT INTO payment_record (
     id,
     order_id,

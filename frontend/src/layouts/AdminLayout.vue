@@ -5,6 +5,30 @@
         <h1>智宿酒店</h1>
         <p>后台管理</p>
       </div>
+
+      <el-menu :default-active="$route.path" class="sidebar-menu" router unique-opened>
+        <el-sub-menu index="dashboard-admin">
+          <template #title>运营看板</template>
+          <el-menu-item index="/admin/dashboard/overview">数据总览</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="hotel-ops">
+          <template #title>酒店运营</template>
+          <el-menu-item index="/admin/content/hotel-info">酒店信息管理</el-menu-item>
+          <el-menu-item index="/admin/content/banners">首页轮播图管理</el-menu-item>
+          <el-menu-item index="/admin/content/announcements">酒店公告管理</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="pricing-admin">
+          <template #title>价格管理</template>
+          <el-menu-item index="/admin/pricing/base-prices">基础价格管理</el-menu-item>
+          <el-menu-item index="/admin/pricing/holiday-calendar">节假日日历管理</el-menu-item>
+          <el-menu-item index="/admin/pricing/rules">价格规则管理</el-menu-item>
+          <el-menu-item index="/admin/pricing/daily-prices">每日价格日历</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="system-admin">
+          <template #title>系统管理</template>
+          <el-menu-item index="/admin/system-config">系统参数管理</el-menu-item>
+        </el-sub-menu>
+      </el-menu>
     </aside>
 
     <div class="admin-main">
@@ -13,6 +37,7 @@
           <span class="admin-role">ADMIN CONSOLE · 管理员专属</span>
           <h2>管理员控制台</h2>
         </div>
+        <el-button type="danger" plain @click="logout">退出登录</el-button>
 
         <el-dropdown @command="handleCommand">
           <button class="admin-user">
@@ -37,6 +62,14 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+import { logout as logoutApi } from '@/api/auth'
+import { clearAuthSession } from '@/utils/request'
+const router = useRouter()
+async function logout() {
+  try { await logoutApi() } finally {
+    clearAuthSession()
+    await router.replace('/login')
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
@@ -99,6 +132,8 @@ async function handleCommand(command) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
   padding: 20px 24px;
   border-radius: 24px;
   background: rgba(255, 253, 248, 0.88);

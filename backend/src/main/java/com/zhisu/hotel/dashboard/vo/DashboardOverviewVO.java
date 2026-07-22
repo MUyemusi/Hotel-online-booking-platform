@@ -12,22 +12,18 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardOverviewVO {
-
     private long todayOrderCount;
-
+    private long todayPaidOrderCount;
     private BigDecimal todayRevenue;
-
     private long todayCheckInCount;
-
     private long todayCheckOutCount;
-
+    private long todayUserCancellationCount;
     private int availableRoomCount;
-
+    private long occupiedRoomCount;
+    private long dirtyRoomCount;
+    private BigDecimal occupancyRate;
     private long inventoryWarningCount;
-
     private long publishedAnnouncementCount;
-
     private long onlineBannerCount;
-
     private long enabledSystemConfigCount;
 }

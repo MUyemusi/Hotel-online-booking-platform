@@ -22,4 +22,6 @@ public interface HolidayCalendarService {
     void deleteHolidayCalendar(Long id);
 
     DatePriceRule resolveDateRule(LocalDate date);
+
+    DatePriceRule resolveDateRule(LocalDate date, Long roomTypeId);
 }

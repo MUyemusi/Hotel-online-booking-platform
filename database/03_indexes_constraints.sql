@@ -137,6 +137,49 @@ SET @sql = IF(
           AND constraint_name = 'fk_room_type'
     ),
     'ALTER TABLE room ADD CONSTRAINT fk_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_user'),
+    'ALTER TABLE booking_order ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES sys_user(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_order_room_type'),
+    'ALTER TABLE booking_order ADD CONSTRAINT fk_order_room_type FOREIGN KEY (room_type_id) REFERENCES room_type(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_credit_record_order'),
+    'ALTER TABLE credit_record ADD CONSTRAINT fk_credit_record_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_cancellation_order'),
+    'ALTER TABLE cancellation_record ADD CONSTRAINT fk_cancellation_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_payment_order'),
+    'ALTER TABLE payment_record ADD CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_payment_user'),
+    'ALTER TABLE payment_record ADD CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES sys_user(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_cancellation_user'),
+    'ALTER TABLE cancellation_record ADD CONSTRAINT fk_cancellation_user FOREIGN KEY (user_id) REFERENCES sys_user(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_refresh_token_user'),
+    'ALTER TABLE auth_refresh_token ADD CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_status_log_room'),
     'SELECT 1'
 );
 PREPARE stmt FROM @sql;
@@ -255,6 +298,10 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @sql = IF(NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = @db_name AND constraint_name = 'fk_room_assignment_order'),
+    'ALTER TABLE room_assignment ADD CONSTRAINT fk_room_assignment_order FOREIGN KEY (order_id) REFERENCES booking_order(id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql = IF(
     NOT EXISTS (
         SELECT 1

@@ -156,6 +156,13 @@ CREATE TABLE IF NOT EXISTS cancellation_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     order_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
+    cancel_type VARCHAR(30) NOT NULL,
+    cancel_reason VARCHAR(500),
+    cancel_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    order_status_before VARCHAR(30),
+    payment_status_before VARCHAR(30),
+    refund_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    refund_amount_fen INT NOT NULL DEFAULT 0,
     cancel_type VARCHAR(20) NOT NULL,
     cancel_reason VARCHAR(500),
     cancel_time DATETIME NOT NULL,
@@ -167,16 +174,27 @@ CREATE TABLE IF NOT EXISTS cancellation_record (
     operator_id BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_cancellation_order_id (order_id),
+    INDEX idx_cancellation_user_id (user_id),
+    INDEX idx_cancellation_time (cancel_time)
     INDEX idx_cancellation_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='cancellation_record';
 
 CREATE TABLE IF NOT EXISTS payment_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    order_id BIGINT NOT NULL,
     payment_no VARCHAR(64) NOT NULL UNIQUE,
+    order_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    amount_fen INT NOT NULL,
     user_id BIGINT NOT NULL,
     payment_method VARCHAR(20) NOT NULL,
+    transaction_id VARCHAR(100),
     payment_status VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
+    idempotency_key VARCHAR(128),
+    paid_at DATETIME,
+    refund_amount DECIMAL(10,2),
+    refund_amount_fen INT,
+    refund_transaction_id VARCHAR(100),
     amount DECIMAL(10,2) NOT NULL,
     amount_fen INT NOT NULL,
     transaction_id VARCHAR(64),
@@ -187,11 +205,35 @@ CREATE TABLE IF NOT EXISTS payment_record (
     refunded_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_payment_user_idempotency (user_id, idempotency_key),
     INDEX idx_payment_order_id (order_id),
     INDEX idx_payment_user_id (user_id),
     INDEX idx_payment_status (payment_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='payment_record';
 
+CREATE TABLE IF NOT EXISTS scheduled_task_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    task_name VARCHAR(100) NOT NULL,
+    executed_at DATETIME NOT NULL,
+    closed_orders INT NOT NULL DEFAULT 0,
+    released_rooms INT NOT NULL DEFAULT 0,
+    success TINYINT NOT NULL DEFAULT 1,
+    error_message VARCHAR(1000),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_scheduled_task_name_time (task_name, executed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='scheduled_task_log';
+
+CREATE TABLE IF NOT EXISTS auth_refresh_token (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    revoked_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_refresh_token_hash (token_hash),
+    INDEX idx_refresh_token_user (user_id),
+    INDEX idx_refresh_token_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='auth_refresh_token';
 CREATE TABLE IF NOT EXISTS room_status_log (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     room_id BIGINT NOT NULL,
@@ -245,12 +287,16 @@ CREATE TABLE IF NOT EXISTS checkin_qr_token (
 CREATE TABLE IF NOT EXISTS hotel_info (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     hotel_name VARCHAR(100) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    phone VARCHAR(30) NOT NULL,
-    email VARCHAR(100),
-    description TEXT,
-    check_in_time VARCHAR(20) NOT NULL DEFAULT '14:00',
-    check_out_time VARCHAR(20) NOT NULL DEFAULT '12:00',
+    logo_url VARCHAR(500) DEFAULT NULL,
+    introduction TEXT,
+    address VARCHAR(255) DEFAULT NULL,
+    contact_phone VARCHAR(30) DEFAULT NULL,
+    facilities TEXT,
+    checkin_notice TEXT,
+    cancellation_policy TEXT,
+    traffic_info TEXT,
+    faq_content TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='hotel_info';

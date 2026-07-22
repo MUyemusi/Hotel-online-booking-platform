@@ -68,8 +68,8 @@ public class AdminHolidayCalendarController {
     }
 
     @GetMapping("/preview")
-    public ApiResponse<Map<String, Object>> previewDateRule(@RequestParam LocalDate date) {
-        DatePriceRule rule = holidayCalendarService.resolveDateRule(date);
+    public ApiResponse<Map<String, Object>> previewDateRule(@RequestParam LocalDate date, @RequestParam(required = false) Long roomTypeId) {
+        DatePriceRule rule = holidayCalendarService.resolveDateRule(date, roomTypeId);
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("date", date);
         payload.put("coefficient", rule.coefficient());

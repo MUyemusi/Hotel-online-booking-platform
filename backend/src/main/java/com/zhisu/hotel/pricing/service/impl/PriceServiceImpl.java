@@ -52,6 +52,12 @@ public class PriceServiceImpl implements PriceService {
     }
 
     @Override
+    public List<DailyPrice> listDailyPrices(Long roomTypeId, LocalDate checkIn, LocalDate checkOut) {
+        LocalDate lastStayDate = checkOut.minusDays(1);
+        dailyPriceService.ensurePricesExist(roomTypeId, checkIn, lastStayDate);
+        return dailyPriceService.listDailyPrices(roomTypeId, checkIn, lastStayDate);
+    }
+    @Override
     public BigDecimal calculateDailyPrice(BigDecimal basePrice, LocalDate date) {
         return basePrice.multiply(resolveDateRule(date).coefficient()).setScale(2, RoundingMode.HALF_UP);
     }

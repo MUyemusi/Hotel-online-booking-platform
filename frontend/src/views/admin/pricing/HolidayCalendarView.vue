@@ -163,6 +163,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getSystemConfig } from '@/api/systemconfig/systemConfig'
 import {
   createHolidayCalendar,
   deleteHolidayCalendar,
@@ -273,9 +274,15 @@ async function handlePreview() {
   }
 }
 
-function openCreateDialog() {
+async function openCreateDialog() {
   dialogMode.value = 'create'
   resetForm()
+  try {
+    const result = await getSystemConfig('DEFAULT_HOLIDAY_COEFFICIENT')
+    if (result.code === 'SUCCESS') form.coefficient = Number(result.data.configValue)
+  } catch (error) {
+    // 保留页面默认值，避免配置暂不可用时阻断新增
+  }
   dialogVisible.value = true
 }
 

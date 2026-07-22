@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.pricing.dto.HolidayCalendarSaveRequest;
 import com.zhisu.hotel.pricing.entity.HolidayCalendar;
+import com.zhisu.hotel.pricing.entity.PriceRule;
 import com.zhisu.hotel.pricing.mapper.HolidayCalendarMapper;
 import com.zhisu.hotel.pricing.service.HolidayCalendarService;
+import com.zhisu.hotel.pricing.service.PriceRuleService;
 import com.zhisu.hotel.pricing.vo.DatePriceRule;
 import com.zhisu.hotel.systemconfig.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
 
     private final HolidayCalendarMapper holidayCalendarMapper;
     private final SystemConfigService systemConfigService;
+    private final PriceRuleService priceRuleService;
 
     @Override
     public Page<HolidayCalendar> pageHolidayCalendar(int page, int size, Integer holidayYear, String dayType, String sourceStatus, String status) {
@@ -95,6 +98,22 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
 
     @Override
     public DatePriceRule resolveDateRule(LocalDate date) {
+        return resolveDateRule(date, null);
+    }
+
+    @Override
+    public DatePriceRule resolveDateRule(LocalDate date, Long roomTypeId) {
+        PriceRule priceRule = priceRuleService.resolveRule(date, roomTypeId);
+        if (priceRule != null) {
+            return new DatePriceRule(
+                    priceRule.getCoefficient().setScale(2, RoundingMode.HALF_UP),
+                    "PRICE_RULE",
+                    priceRule.getRuleName(),
+                    "CUSTOM",
+                    null
+            );
+        }
+
         HolidayCalendar specialDate = holidayCalendarMapper.selectOne(
                 new LambdaQueryWrapper<HolidayCalendar>()
                         .eq(HolidayCalendar::getBusinessDate, date)

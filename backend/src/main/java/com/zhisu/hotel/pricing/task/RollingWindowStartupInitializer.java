@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class RollingWindowStartupInitializer {
-
     private final DailyPriceService dailyPriceService;
     private final InventoryService inventoryService;
 

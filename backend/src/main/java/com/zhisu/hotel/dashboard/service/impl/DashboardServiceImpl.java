@@ -1,15 +1,13 @@
 package com.zhisu.hotel.dashboard.service.impl;
 
 import com.zhisu.hotel.dashboard.service.DashboardService;
-import com.zhisu.hotel.dashboard.vo.DashboardOverviewVO;
-import com.zhisu.hotel.dashboard.vo.DashboardTrendPointVO;
-import com.zhisu.hotel.dashboard.vo.InventoryWarningVO;
-import com.zhisu.hotel.dashboard.vo.RoomTypeStatisticVO;
+import com.zhisu.hotel.dashboard.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,9 +21,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
-
     private static final ZoneId HOTEL_ZONE = ZoneId.of("Asia/Shanghai");
-
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -33,76 +29,38 @@ public class DashboardServiceImpl implements DashboardService {
         LocalDate today = LocalDate.now(HOTEL_ZONE);
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.plusDays(1).atStartOfDay();
-
-        long todayOrderCount = 0L;
-        BigDecimal todayRevenue = BigDecimal.ZERO.setScale(2);
-        long todayCheckInCount = 0L;
-        long todayCheckOutCount = 0L;
-
+        long todayOrderCount = 0, todayPaidOrderCount = 0, pendingCheckInCount = 0, todayCheckOutCount = 0, userCancellationCount = 0;
+        BigDecimal todayRevenue = money(BigDecimal.ZERO);
         if (tableExists("booking_order")) {
-            todayOrderCount = queryForLong(
-                    "SELECT COUNT(*) FROM booking_order WHERE created_at >= ? AND created_at < ?",
-                    Timestamp.valueOf(start), Timestamp.valueOf(end)
-            );
-            todayRevenue = queryForDecimal(
-                    "SELECT COALESCE(SUM(total_amount), 0) FROM booking_order WHERE created_at >= ? AND created_at < ?",
-                    Timestamp.valueOf(start), Timestamp.valueOf(end)
-            );
-            if (columnExists("booking_order", "check_in_date")) {
-                todayCheckInCount = queryForLong(
-                        "SELECT COUNT(*) FROM booking_order WHERE check_in_date = ?",
-                        Date.valueOf(today)
-                );
-            }
-            if (columnExists("booking_order", "check_out_date")) {
-                todayCheckOutCount = queryForLong(
-                        "SELECT COUNT(*) FROM booking_order WHERE check_out_date = ?",
-                        Date.valueOf(today)
-                );
-            }
+            todayOrderCount = queryForLong("SELECT COUNT(*) FROM booking_order WHERE created_at >= ? AND created_at < ?", Timestamp.valueOf(start), Timestamp.valueOf(end));
+            pendingCheckInCount = queryForLong("SELECT COUNT(*) FROM booking_order WHERE check_in_date = ? AND order_status = 'PENDING_CHECK_IN'", Date.valueOf(today));
+            todayCheckOutCount = queryForLong("SELECT COUNT(*) FROM booking_order WHERE updated_at >= ? AND updated_at < ? AND order_status = 'COMPLETED'", Timestamp.valueOf(start), Timestamp.valueOf(end));
+            userCancellationCount = queryForLong("SELECT COUNT(*) FROM booking_order WHERE cancelled_at >= ? AND cancelled_at < ? AND cancel_type = 'USER_CANCEL'", Timestamp.valueOf(start), Timestamp.valueOf(end));
+        }
+        if (tableExists("payment_record")) {
+            todayPaidOrderCount = queryForLong("SELECT COUNT(DISTINCT order_id) FROM payment_record WHERE paid_at >= ? AND paid_at < ? AND payment_status = 'PAID'", Timestamp.valueOf(start), Timestamp.valueOf(end));
+            todayRevenue = queryForDecimal("SELECT COALESCE(SUM(amount), 0) FROM payment_record WHERE paid_at >= ? AND paid_at < ? AND payment_status = 'PAID'", Timestamp.valueOf(start), Timestamp.valueOf(end));
         }
 
-        int availableRoomCount = queryForInt(
-                "SELECT COALESCE(SUM(available_rooms), 0) FROM daily_inventory WHERE inventory_date = ? AND status = 'ACTIVE'",
-                Date.valueOf(today)
-        );
-
-        int warningThreshold = 2;
-        if (tableExists("system_config")) {
-            Integer value = jdbcTemplate.query(
-                    "SELECT CAST(config_value AS SIGNED) FROM system_config WHERE config_key = 'INVENTORY_WARNING_VALUE' LIMIT 1",
-                    rs -> rs.next() ? rs.getInt(1) : null
-            );
-            if (value != null) {
-                warningThreshold = value;
-            }
+        long occupied = 0, dirty = 0, usableRooms = 0;
+        if (tableExists("room")) {
+            occupied = queryForLong("SELECT COUNT(*) FROM room WHERE is_deleted = 0 AND room_status = 'OCCUPIED'");
+            dirty = queryForLong("SELECT COUNT(*) FROM room WHERE is_deleted = 0 AND room_status = 'DIRTY'");
+            usableRooms = queryForLong("SELECT COUNT(*) FROM room WHERE is_deleted = 0 AND room_status NOT IN ('DISABLED','MAINTENANCE')");
         }
-
-        long inventoryWarningCount = queryForLong(
-                "SELECT COUNT(DISTINCT room_type_id) FROM daily_inventory WHERE inventory_date = ? AND status = 'ACTIVE' AND available_rooms <= ?",
-                Date.valueOf(today), warningThreshold
-        );
-
-        long publishedAnnouncementCount = queryForLong(
-                "SELECT COUNT(*) FROM announcement WHERE status = 'PUBLISHED'"
-        );
-        long onlineBannerCount = queryForLong(
-                "SELECT COUNT(*) FROM hotel_banner WHERE status = 'PUBLISHED'"
-        );
-        long enabledSystemConfigCount = queryForLong(
-                "SELECT COUNT(*) FROM system_config WHERE status = 'ENABLED'"
-        );
+        BigDecimal occupancyRate = usableRooms == 0 ? money(BigDecimal.ZERO) : BigDecimal.valueOf(occupied * 100.0 / usableRooms).setScale(2, RoundingMode.HALF_UP);
+        int availableRoomCount = tableExists("daily_inventory") ? queryForInt("SELECT COALESCE(SUM(available_rooms), 0) FROM daily_inventory WHERE inventory_date = ? AND status = 'ACTIVE'", Date.valueOf(today)) : 0;
+        int warningThreshold = systemInteger("INVENTORY_WARNING_VALUE", 2);
+        long inventoryWarningCount = tableExists("daily_inventory") ? queryForLong("SELECT COUNT(DISTINCT room_type_id) FROM daily_inventory WHERE inventory_date = ? AND status = 'ACTIVE' AND available_rooms <= ?", Date.valueOf(today), warningThreshold) : 0;
 
         return DashboardOverviewVO.builder()
-                .todayOrderCount(todayOrderCount)
-                .todayRevenue(todayRevenue)
-                .todayCheckInCount(todayCheckInCount)
-                .todayCheckOutCount(todayCheckOutCount)
-                .availableRoomCount(availableRoomCount)
+                .todayOrderCount(todayOrderCount).todayPaidOrderCount(todayPaidOrderCount).todayRevenue(todayRevenue)
+                .todayCheckInCount(pendingCheckInCount).todayCheckOutCount(todayCheckOutCount).todayUserCancellationCount(userCancellationCount)
+                .availableRoomCount(availableRoomCount).occupiedRoomCount(occupied).dirtyRoomCount(dirty).occupancyRate(occupancyRate)
                 .inventoryWarningCount(inventoryWarningCount)
-                .publishedAnnouncementCount(publishedAnnouncementCount)
-                .onlineBannerCount(onlineBannerCount)
-                .enabledSystemConfigCount(enabledSystemConfigCount)
+                .publishedAnnouncementCount(tableExists("announcement") ? queryForLong("SELECT COUNT(*) FROM announcement WHERE status = 'PUBLISHED'") : 0)
+                .onlineBannerCount(tableExists("hotel_banner") ? queryForLong("SELECT COUNT(*) FROM hotel_banner WHERE status = 'PUBLISHED'") : 0)
+                .enabledSystemConfigCount(tableExists("system_config") ? queryForLong("SELECT COUNT(*) FROM system_config WHERE status = 'ENABLED'") : 0)
                 .build();
     }
 
@@ -113,128 +71,43 @@ public class DashboardServiceImpl implements DashboardService {
         List<DashboardTrendPointVO> points = new ArrayList<>();
         for (int i = normalizedDays - 1; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
-            long orderCount = 0L;
-            BigDecimal revenue = BigDecimal.ZERO.setScale(2);
-            if (tableExists("booking_order")) {
-                LocalDateTime start = date.atStartOfDay();
-                LocalDateTime end = date.plusDays(1).atStartOfDay();
-                orderCount = queryForLong(
-                        "SELECT COUNT(*) FROM booking_order WHERE created_at >= ? AND created_at < ?",
-                        Timestamp.valueOf(start), Timestamp.valueOf(end)
-                );
-                revenue = queryForDecimal(
-                        "SELECT COALESCE(SUM(total_amount), 0) FROM booking_order WHERE created_at >= ? AND created_at < ?",
-                        Timestamp.valueOf(start), Timestamp.valueOf(end)
-                );
-            }
-            points.add(DashboardTrendPointVO.builder()
-                    .date(date)
-                    .orderCount(orderCount)
-                    .revenue(revenue)
-                    .build());
+            LocalDateTime start = date.atStartOfDay(), end = date.plusDays(1).atStartOfDay();
+            long orders = tableExists("booking_order") ? queryForLong("SELECT COUNT(*) FROM booking_order WHERE created_at >= ? AND created_at < ?", Timestamp.valueOf(start), Timestamp.valueOf(end)) : 0;
+            BigDecimal revenue = tableExists("payment_record") ? queryForDecimal("SELECT COALESCE(SUM(amount),0) FROM payment_record WHERE paid_at >= ? AND paid_at < ? AND payment_status='PAID'", Timestamp.valueOf(start), Timestamp.valueOf(end)) : money(BigDecimal.ZERO);
+            points.add(DashboardTrendPointVO.builder().date(date).orderCount(orders).revenue(revenue).build());
         }
         return points;
     }
 
     @Override
     public List<RoomTypeStatisticVO> getRoomTypeStatistics() {
-        if (tableExists("order_daily_price")) {
-            return jdbcTemplate.query(
-                    "SELECT odp.room_type_id, COALESCE(rt.name, CONCAT('房型', odp.room_type_id)) AS room_type_name, COUNT(*) AS booking_count, COALESCE(SUM(odp.daily_amount), 0) AS revenue " +
-                            "FROM order_daily_price odp " +
-                            "LEFT JOIN room_type rt ON rt.id = odp.room_type_id " +
-                            "GROUP BY odp.room_type_id, rt.name " +
-                            "ORDER BY revenue DESC, booking_count DESC",
-                    (rs, rowNum) -> mapRoomTypeStatistic(rs)
-            );
+        if (tableExists("booking_order")) {
+            return jdbcTemplate.query("SELECT bo.room_type_id, COALESCE(rt.name, bo.room_type_name, CONCAT('房型', bo.room_type_id)) room_type_name, COUNT(*) booking_count, COALESCE(SUM(bo.total_amount),0) revenue FROM booking_order bo LEFT JOIN room_type rt ON rt.id=bo.room_type_id WHERE bo.payment_status='PAID' AND bo.order_status NOT IN ('CANCELLED','CLOSED') GROUP BY bo.room_type_id, rt.name, bo.room_type_name ORDER BY revenue DESC, booking_count DESC", this::mapRoomTypeStatistic);
         }
-
-        return jdbcTemplate.query(
-                "SELECT id, name FROM room_type WHERE is_deleted = 0 ORDER BY id",
-                (rs, rowNum) -> RoomTypeStatisticVO.builder()
-                        .roomTypeId(rs.getLong("id"))
-                        .roomTypeName(rs.getString("name"))
-                        .bookingCount(0L)
-                        .revenue(BigDecimal.ZERO.setScale(2))
-                        .build()
-        );
+        return List.of();
     }
 
     @Override
     public List<InventoryWarningVO> getInventoryWarnings() {
+        if (!tableExists("daily_inventory")) return List.of();
         LocalDate today = LocalDate.now(HOTEL_ZONE);
-        int warningThreshold = 2;
-        if (tableExists("system_config")) {
-            Integer value = jdbcTemplate.query(
-                    "SELECT CAST(config_value AS SIGNED) FROM system_config WHERE config_key = 'INVENTORY_WARNING_VALUE' LIMIT 1",
-                    rs -> rs.next() ? rs.getInt(1) : null
-            );
-            if (value != null) {
-                warningThreshold = value;
-            }
-        }
-
-        return jdbcTemplate.query(
-                "SELECT di.room_type_id, rt.name AS room_type_name, di.inventory_date, di.available_rooms, di.total_rooms, di.status " +
-                        "FROM daily_inventory di " +
-                        "LEFT JOIN room_type rt ON rt.id = di.room_type_id " +
-                        "WHERE di.inventory_date >= ? AND di.status = 'ACTIVE' AND di.available_rooms <= ? " +
-                        "ORDER BY di.inventory_date ASC, di.available_rooms ASC, di.room_type_id ASC LIMIT 20",
-                (rs, rowNum) -> InventoryWarningVO.builder()
-                        .roomTypeId(rs.getLong("room_type_id"))
-                        .roomTypeName(rs.getString("room_type_name"))
-                        .inventoryDate(rs.getDate("inventory_date").toLocalDate())
-                        .availableRooms(rs.getInt("available_rooms"))
-                        .totalRooms(rs.getInt("total_rooms"))
-                        .status(rs.getString("status"))
-                        .build(),
-                Date.valueOf(today), warningThreshold
-        );
+        int threshold = systemInteger("INVENTORY_WARNING_VALUE", 2);
+        return jdbcTemplate.query("SELECT di.room_type_id, rt.name room_type_name, di.inventory_date, di.available_rooms, di.total_rooms, di.status FROM daily_inventory di LEFT JOIN room_type rt ON rt.id=di.room_type_id WHERE di.inventory_date>=? AND di.inventory_date<? AND di.status='ACTIVE' AND di.available_rooms<=? ORDER BY di.inventory_date, di.available_rooms LIMIT 100",
+                (rs, n) -> InventoryWarningVO.builder().roomTypeId(rs.getLong("room_type_id")).roomTypeName(rs.getString("room_type_name")).inventoryDate(rs.getDate("inventory_date").toLocalDate()).availableRooms(rs.getInt("available_rooms")).totalRooms(rs.getInt("total_rooms")).status(rs.getString("status")).build(),
+                Date.valueOf(today), Date.valueOf(today.plusDays(7)), threshold);
     }
 
-    private RoomTypeStatisticVO mapRoomTypeStatistic(ResultSet rs) throws SQLException {
-        return RoomTypeStatisticVO.builder()
-                .roomTypeId(rs.getLong("room_type_id"))
-                .roomTypeName(rs.getString("room_type_name"))
-                .bookingCount(rs.getLong("booking_count"))
-                .revenue(scale(rs.getBigDecimal("revenue")))
-                .build();
+    private RoomTypeStatisticVO mapRoomTypeStatistic(ResultSet rs, int rowNum) throws SQLException {
+        return RoomTypeStatisticVO.builder().roomTypeId(rs.getLong("room_type_id")).roomTypeName(rs.getString("room_type_name")).bookingCount(rs.getLong("booking_count")).revenue(money(rs.getBigDecimal("revenue"))).build();
     }
-
-    private long queryForLong(String sql, Object... args) {
-        Long value = jdbcTemplate.query(sql, rs -> rs.next() ? rs.getLong(1) : 0L, args);
-        return value == null ? 0L : value;
+    protected int systemInteger(String key, int fallback) {
+        if (!tableExists("system_config")) return fallback;
+        Integer value = jdbcTemplate.query("SELECT CAST(config_value AS SIGNED) FROM system_config WHERE config_key=? AND status='ENABLED' LIMIT 1", rs -> rs.next() ? rs.getInt(1) : null, key);
+        return value == null ? fallback : value;
     }
-
-    private int queryForInt(String sql, Object... args) {
-        Integer value = jdbcTemplate.query(sql, rs -> rs.next() ? rs.getInt(1) : 0, args);
-        return value == null ? 0 : value;
-    }
-
-    private BigDecimal queryForDecimal(String sql, Object... args) {
-        BigDecimal value = jdbcTemplate.query(sql, rs -> rs.next() ? rs.getBigDecimal(1) : BigDecimal.ZERO, args);
-        return scale(value);
-    }
-
-    private BigDecimal scale(BigDecimal value) {
-        return value == null ? BigDecimal.ZERO.setScale(2) : value.setScale(2, java.math.RoundingMode.HALF_UP);
-    }
-
-    private boolean tableExists(String tableName) {
-        Integer count = jdbcTemplate.query(
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?",
-                rs -> rs.next() ? rs.getInt(1) : 0,
-                tableName
-        );
-        return count != null && count > 0;
-    }
-
-    private boolean columnExists(String tableName, String columnName) {
-        Integer count = jdbcTemplate.query(
-                "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?",
-                rs -> rs.next() ? rs.getInt(1) : 0,
-                tableName, columnName
-        );
-        return count != null && count > 0;
-    }
+    protected long queryForLong(String sql, Object... args) { Long v=jdbcTemplate.query(sql, rs->rs.next()?rs.getLong(1):0L,args); return v==null?0:v; }
+    protected int queryForInt(String sql, Object... args) { Integer v=jdbcTemplate.query(sql, rs->rs.next()?rs.getInt(1):0,args); return v==null?0:v; }
+    protected BigDecimal queryForDecimal(String sql, Object... args) { BigDecimal v=jdbcTemplate.query(sql, rs->rs.next()?rs.getBigDecimal(1):BigDecimal.ZERO,args); return money(v); }
+    protected BigDecimal money(BigDecimal value) { return (value==null?BigDecimal.ZERO:value).setScale(2,RoundingMode.HALF_UP); }
+    protected boolean tableExists(String name) { Integer c=jdbcTemplate.query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?",rs->rs.next()?rs.getInt(1):0,name); return c!=null&&c>0; }
 }

@@ -23,11 +23,12 @@ public class JdbcUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         AuthUserRecord user = jdbcTemplate.query(
+                "SELECT id, username, password_hash, status FROM sys_user WHERE username = ? LIMIT 1",
                 "SELECT id, username, password_hash AS password, status FROM sys_user WHERE username = ? LIMIT 1",
                 rs -> rs.next() ? new AuthUserRecord(
                         rs.getLong("id"),
                         rs.getString("username"),
-                        rs.getString("password"),
+                        rs.getString("password_hash"),
                         rs.getString("status")
                 ) : null,
                 username

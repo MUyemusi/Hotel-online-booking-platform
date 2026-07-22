@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="hotel-info-view">
     <div class="page-header">
       <div>
@@ -28,6 +28,7 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="Logo地址" prop="logoUrl">
               <el-input v-model="form.logoUrl" maxlength="500" show-word-limit />
+              <el-upload :show-file-list="false" accept="image/jpeg,image/png,image/gif,image/webp" :http-request="handleLogoUpload"><el-button :loading="uploading">上传Logo</el-button></el-upload>
             </el-form-item>
           </el-col>
         </el-row>
@@ -77,10 +78,12 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getAdminHotelInfo, updateHotelInfo } from '@/api/content/hotelInfo'
+import { uploadImage } from '@/api/content/upload'
 
 const formRef = ref()
 const loading = ref(false)
 const saving = ref(false)
+const uploading = ref(false)
 
 const createDefaultForm = () => ({
   hotelName: '',
@@ -113,6 +116,20 @@ const rules = {
   ]
 }
 
+
+async function handleLogoUpload(options) {
+  uploading.value = true
+  try {
+    const result = await uploadImage(options.file)
+    if (result.code !== 'SUCCESS') throw new Error(result.message || '上传失败')
+    form.logoUrl = result.data.url
+    ElMessage.success('Logo上传成功')
+  } catch (error) {
+    ElMessage.error(error?.response?.data?.message || error?.message || 'Logo上传失败')
+  } finally {
+    uploading.value = false
+  }
+}
 function patchForm(data = {}) {
   Object.assign(form, createDefaultForm(), {
     hotelName: data.hotelName ?? '',
