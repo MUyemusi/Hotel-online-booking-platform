@@ -69,19 +69,21 @@ async function handleLogin() {
   loading.value = true
   try {
     const res = await login({ username: form.username, password: form.password })
-    if (res.code === 'SUCCESS') {
-      const data = res.data
-      saveSession(data)
+    if (res.code !== 'SUCCESS') {
+      ElMessage.error(res.message || '登录失败，请检查用户名和密码')
+      return
+    }
 
-      ElMessage.success(`欢迎，${data.nickname || data.username}`)
+    const data = res.data
+    saveSession(data)
 
-      // 根据角色跳转
-      const redirect = route.query.redirect
-      if (redirect) {
-        router.push(redirect)
-      } else {
-        router.push(defaultRouteForCurrentUser())
-      }
+    ElMessage.success(`欢迎，${data.nickname || data.username}`)
+
+    const redirect = route.query.redirect
+    if (redirect) {
+      router.push(redirect)
+    } else {
+      router.push(defaultRouteForCurrentUser())
     }
   } catch (e) {
     ElMessage.error(e?.response?.data?.message || '登录失败，请检查用户名和密码')
