@@ -1,6 +1,7 @@
 package com.zhisu.hotel.payment.controller;
 
 import com.zhisu.hotel.common.response.ApiResponse;
+import com.zhisu.hotel.auth.security.CurrentUserProvider;
 import com.zhisu.hotel.payment.dto.PaymentRequest;
 import com.zhisu.hotel.payment.service.PaymentService;
 import com.zhisu.hotel.payment.vo.PaymentVO;
@@ -19,14 +20,14 @@ public class PaymentController {
 
     @PostMapping("/pay")
     public ApiResponse<PaymentVO> pay(@Valid @RequestBody PaymentRequest request) {
-        Long userId = getCurrentUserId();
+        Long userId = CurrentUserProvider.requireUserId();
         PaymentVO vo = paymentService.processPayment(request, userId);
         return ApiResponse.success(vo);
     }
 
     @GetMapping("/{orderId}")
     public ApiResponse<List<PaymentVO>> getPayments(@PathVariable Long orderId) {
-        Long userId = getCurrentUserId();
+        Long userId = CurrentUserProvider.requireUserId();
         List<PaymentVO> records = paymentService.getPaymentRecords(orderId, userId);
         return ApiResponse.success(records);
     }
@@ -35,9 +36,5 @@ public class PaymentController {
     public ApiResponse<List<PaymentVO>> getAdminPayments(@PathVariable Long orderId) {
         List<PaymentVO> records = paymentService.getPaymentRecordsByOrderId(orderId);
         return ApiResponse.success(records);
-    }
-
-    private Long getCurrentUserId() {
-        return 1L; // TODO: 替换为JWT认证
     }
 }

@@ -5,6 +5,7 @@ import com.zhisu.hotel.booking.dto.CreateOrderRequest;
 import com.zhisu.hotel.booking.service.BookingOrderService;
 import com.zhisu.hotel.booking.vo.OrderDetailVO;
 import com.zhisu.hotel.booking.vo.OrderVO;
+import com.zhisu.hotel.auth.security.CurrentUserProvider;
 import com.zhisu.hotel.common.response.ApiResponse;
 import com.zhisu.hotel.common.response.PageResponse;
 import com.zhisu.hotel.payment.vo.CancellationVO;
@@ -21,7 +22,7 @@ public class BookingController {
 
     @PostMapping
     public ApiResponse<OrderDetailVO> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        Long userId = getCurrentUserId();
+        Long userId = CurrentUserProvider.requireUserId();
         OrderDetailVO vo = bookingOrderService.createOrder(request, userId);
         return ApiResponse.success(vo);
     }
@@ -31,14 +32,14 @@ public class BookingController {
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Long userId = getCurrentUserId();
+        Long userId = CurrentUserProvider.requireUserId();
         PageResponse<OrderVO> result = bookingOrderService.getMyOrders(userId, status, page, size);
         return ApiResponse.success(result);
     }
 
     @GetMapping("/{id}")
     public ApiResponse<OrderDetailVO> getOrderDetail(@PathVariable Long id) {
-        Long userId = getCurrentUserId();
+        Long userId = CurrentUserProvider.requireUserId();
         OrderDetailVO vo = bookingOrderService.getOrderDetail(id, userId);
         return ApiResponse.success(vo);
     }
@@ -46,12 +47,8 @@ public class BookingController {
     @PostMapping("/{id}/cancel")
     public ApiResponse<CancellationVO> cancelOrder(@PathVariable Long id,
                                                     @Valid @RequestBody CancelOrderRequest request) {
-        Long userId = getCurrentUserId();
+        Long userId = CurrentUserProvider.requireUserId();
         CancellationVO vo = bookingOrderService.cancelOrder(id, request, userId);
         return ApiResponse.success(vo);
-    }
-
-    private Long getCurrentUserId() {
-        return 1L; // TODO: 替换为JWT认证
     }
 }

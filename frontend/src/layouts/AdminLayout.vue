@@ -21,6 +21,7 @@
           <template #title>价格管理</template>
           <el-menu-item index="/admin/pricing/base-prices">基础价格管理</el-menu-item>
           <el-menu-item index="/admin/pricing/holiday-calendar">节假日日历管理</el-menu-item>
+          <el-menu-item index="/admin/pricing/rules">价格规则管理</el-menu-item>
           <el-menu-item index="/admin/pricing/daily-prices">每日价格日历</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="system-admin">
@@ -36,6 +37,7 @@
           <h2>管理员控制台</h2>
           <p>管理酒店内容、价格策略、库存观察与系统基础配置。</p>
         </div>
+        <el-button type="danger" plain @click="logout">退出登录</el-button>
       </header>
       <main class="admin-content">
         <router-view />
@@ -45,6 +47,16 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+import { logout as logoutApi } from '@/api/auth'
+import { clearAuthSession } from '@/utils/request'
+const router = useRouter()
+async function logout() {
+  try { await logoutApi() } finally {
+    clearAuthSession()
+    await router.replace('/login')
+  }
+}
 </script>
 
 <style scoped>
@@ -108,6 +120,10 @@
 }
 
 .admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 20px;
   padding: 20px 24px;
   border-radius: 24px;

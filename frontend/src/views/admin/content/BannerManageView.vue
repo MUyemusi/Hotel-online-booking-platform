@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="banner-manage-view">
     <div class="page-header">
       <div>
@@ -87,6 +87,7 @@
 
         <el-form-item label="图片地址" prop="imageUrl">
           <el-input v-model="form.imageUrl" maxlength="500" show-word-limit placeholder="请输入可访问的图片URL" />
+          <el-upload :show-file-list="false" accept="image/jpeg,image/png,image/gif,image/webp" :http-request="handleImageUpload"><el-button :loading="uploading">上传图片</el-button></el-upload>
         </el-form-item>
 
         <el-form-item label="跳转地址" prop="linkUrl">
@@ -127,6 +128,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { uploadImage } from '@/api/content/upload'
 import {
   createBanner,
   deleteBanner,
@@ -138,6 +140,7 @@ import {
 
 const loading = ref(false)
 const submitting = ref(false)
+const uploading = ref(false)
 const dialogVisible = ref(false)
 const dialogMode = ref('create')
 const formRef = ref()
@@ -171,6 +174,20 @@ const rules = {
   ]
 }
 
+
+async function handleImageUpload(options) {
+  uploading.value = true
+  try {
+    const result = await uploadImage(options.file)
+    if (result.code !== 'SUCCESS') throw new Error(result.message || '上传失败')
+    form.imageUrl = result.data.url
+    ElMessage.success('图片上传成功')
+  } catch (error) {
+    ElMessage.error(error?.response?.data?.message || error?.message || '图片上传失败')
+  } finally {
+    uploading.value = false
+  }
+}
 function resetForm() {
   Object.assign(form, createDefaultForm())
   editingId.value = null

@@ -63,6 +63,23 @@ CREATE TABLE IF NOT EXISTS holiday_calendar (
     INDEX idx_holiday_type_status (day_type, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='holiday_calendar';
 
+
+CREATE TABLE IF NOT EXISTS price_rule (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    rule_name VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    room_type_id BIGINT DEFAULT NULL COMMENT 'NULL means all room types',
+    coefficient DECIMAL(5,2) NOT NULL,
+    priority INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED',
+    remark VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_price_rule_dates_status (start_date, end_date, status),
+    INDEX idx_price_rule_room_priority (room_type_id, priority)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='price_rule';
+
 CREATE TABLE IF NOT EXISTS daily_price (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     room_type_id BIGINT NOT NULL,
@@ -101,6 +118,9 @@ CREATE TABLE IF NOT EXISTS price_operation_log (
 
 INSERT INTO system_config (config_key, config_value, config_name, value_type, config_group, description) VALUES
 ('MAX_BOOKING_DAYS', '7', 'Maximum booking days', 'INTEGER', 'BOOKING', 'Maximum number of days allowed in a single booking'),
+('INVENTORY_WARNING_VALUE', '2', 'Inventory warning value', 'INTEGER', 'INVENTORY', 'Warn when available inventory is at or below this value'),
+('IMAGE_UPLOAD_MAX_MB', '5', 'Image upload limit MB', 'INTEGER', 'CONTENT', 'Maximum image upload size in MB'),
+('DEFAULT_HOLIDAY_COEFFICIENT', '1.20', 'Default holiday coefficient', 'DECIMAL', 'PRICING', 'Default coefficient for a newly created holiday rule'),
 ('PAYMENT_TIMEOUT_MINUTES', '15', 'Payment timeout minutes', 'INTEGER', 'ORDER', 'Minutes before an unpaid order times out'),
 ('CANCEL_THRESHOLD', '3', 'Cancel threshold', 'INTEGER', 'CREDIT', 'Consecutive cancellation threshold before a booking ban'),
 ('BAN_DAYS', '7', 'Booking ban days', 'INTEGER', 'CREDIT', 'Default booking ban length in days'),
@@ -145,21 +165,3 @@ remark = VALUES(remark);
 -- =========================================================
 -- 成员5：基础价格操作日志
 -- 记录房型基础价格调整历史
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS price_operation_log (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '价格操作日志ID',
-    room_type_id BIGINT NOT NULL COMMENT '房型ID',
-    room_type_name VARCHAR(100) NOT NULL COMMENT '房型名称',
-    old_price DECIMAL(10,2) NOT NULL COMMENT '调整前基础价格',
-    new_price DECIMAL(10,2) NOT NULL COMMENT '调整后基础价格',
-    change_reason VARCHAR(200) NOT NULL COMMENT '调整原因',
-    operator_id BIGINT DEFAULT NULL COMMENT '操作人ID',
-    operator_name VARCHAR(100) DEFAULT NULL COMMENT '操作人名称',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    INDEX idx_price_log_room_type (room_type_id),
-    INDEX idx_price_log_created_at (created_at)
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci
-  COMMENT='基础价格操作日志表';

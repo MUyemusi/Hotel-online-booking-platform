@@ -2,55 +2,55 @@
   <div class="base-price-view">
     <div class="page-header">
       <div>
-        <h1>»ù´¡¼Û¸ñ¹ÜÀí</h1>
-        <p>Í³Ò»Î¬»¤¸÷·¿ĞÍµÄ»ù´¡¼Û¸ñ£¬²¢¼ÇÂ¼Ã¿Ò»´ÎÓĞĞ§µ÷¼ÛÀúÊ·¡£</p>
+        <h1>åŸºç¡€ä»·æ ¼ç®¡ç†</h1>
+        <p>ç»Ÿä¸€ç»´æŠ¤å„æˆ¿å‹çš„åŸºç¡€ä»·æ ¼ï¼Œå¹¶è®°å½•æ¯ä¸€æ¬¡æœ‰æ•ˆè°ƒä»·å†å²ã€‚</p>
       </div>
       <div class="header-actions">
         <el-input
           v-model="keyword"
-          placeholder="ËÑË÷·¿ĞÍÃû³Æ"
+          placeholder="æœç´¢æˆ¿å‹åç§°"
           clearable
           class="filter-input"
           @keyup.enter="handleSearch"
           @clear="handleSearch"
         />
-        <el-select v-model="statusFilter" placeholder="È«²¿×´Ì¬" class="filter-select" @change="handleSearch">
-          <el-option label="È«²¿×´Ì¬" value="" />
-          <el-option label="ÉÏÏß ONLINE" value="ONLINE" />
-          <el-option label="ÏÂÏß OFFLINE" value="OFFLINE" />
+        <el-select v-model="statusFilter" placeholder="å…¨éƒ¨çŠ¶æ€" class="filter-select" @change="handleSearch">
+          <el-option label="å…¨éƒ¨çŠ¶æ€" value="" />
+          <el-option label="ä¸Šçº¿ ONLINE" value="ONLINE" />
+          <el-option label="ä¸‹çº¿ OFFLINE" value="OFFLINE" />
         </el-select>
-        <el-button @click="handleSearch">²éÑ¯</el-button>
-        <el-button :loading="loading" @click="loadBasePrices">ÖØĞÂ¼ÓÔØ</el-button>
+        <el-button @click="handleSearch">æŸ¥è¯¢</el-button>
+        <el-button :loading="loading" @click="loadBasePrices">é‡æ–°åŠ è½½</el-button>
       </div>
     </div>
 
     <el-card shadow="never" class="table-card">
       <el-table :data="roomTypes" v-loading="loading" stripe>
-        <el-table-column prop="name" label="·¿ĞÍÃû³Æ" min-width="180" />
-        <el-table-column prop="category" label="·¿ĞÍÀà±ğ" min-width="140" />
-        <el-table-column label="µ±Ç°»ù´¡¼Û¸ñ" width="150">
+        <el-table-column prop="name" label="æˆ¿å‹åç§°" min-width="180" />
+        <el-table-column prop="category" label="æˆ¿å‹ç±»åˆ«" min-width="140" />
+        <el-table-column label="å½“å‰åŸºç¡€ä»·æ ¼" width="150">
           <template #default="scope">
-            <span class="price-text">£¤{{ formatPrice(scope.row.basePrice) }}</span>
+            <span class="price-text">ï¿¥{{ formatPrice(scope.row.basePrice) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="×´Ì¬" width="110">
+        <el-table-column label="çŠ¶æ€" width="110">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'ONLINE' ? 'success' : 'info'">
-              {{ scope.row.status === 'ONLINE' ? 'ÒÑÉÏÏß' : 'ÒÑÏÂÏß' }}
+              {{ scope.row.status === 'ONLINE' ? 'å·²ä¸Šçº¿' : 'å·²ä¸‹çº¿' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="¿É×¡ÈËÊı" width="100">
+        <el-table-column label="å¯ä½äººæ•°" width="100">
           <template #default="scope">
-            {{ scope.row.maxGuests || '-' }} ÈË
+            {{ scope.row.maxGuests || '-' }} äºº
           </template>
         </el-table-column>
-        <el-table-column prop="bedType" label="´²ĞÍ" min-width="120" />
-        <el-table-column label="²Ù×÷" width="180" fixed="right">
+        <el-table-column prop="bedType" label="åºŠå‹" min-width="120" />
+        <el-table-column label="æ“ä½œ" width="180" fixed="right">
           <template #default="scope">
             <div class="table-actions">
-              <el-button link type="primary" @click="openEditDialog(scope.row)">ĞŞ¸Ä¼Û¸ñ</el-button>
-              <el-button link type="info" @click="openLogDrawer(scope.row)">²é¿´ÈÕÖ¾</el-button>
+              <el-button link type="primary" @click="openEditDialog(scope.row)">ä¿®æ”¹ä»·æ ¼</el-button>
+              <el-button link type="info" @click="openLogDrawer(scope.row)">æŸ¥çœ‹æ—¥å¿—</el-button>
             </div>
           </template>
         </el-table-column>
@@ -68,17 +68,17 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" title="ĞŞ¸Ä»ù´¡¼Û¸ñ" width="560px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" title="ä¿®æ”¹åŸºç¡€ä»·æ ¼" width="560px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="·¿ĞÍÃû³Æ">
+        <el-form-item label="æˆ¿å‹åç§°">
           <el-input :model-value="currentRoomType?.name || ''" disabled />
         </el-form-item>
 
-        <el-form-item label="µ±Ç°»ù´¡¼Û¸ñ">
-          <el-input :model-value="currentRoomType ? `£¤${formatPrice(currentRoomType.basePrice)}` : ''" disabled />
+        <el-form-item label="å½“å‰åŸºç¡€ä»·æ ¼">
+          <el-input :model-value="currentRoomType ? `ï¿¥${formatPrice(currentRoomType.basePrice)}` : ''" disabled />
         </el-form-item>
 
-        <el-form-item label="ĞÂ»ù´¡¼Û¸ñ" prop="basePrice">
+        <el-form-item label="æ–°åŸºç¡€ä»·æ ¼" prop="basePrice">
           <el-input-number
             v-model="form.basePrice"
             :min="0.01"
@@ -88,22 +88,22 @@
           />
         </el-form-item>
 
-        <el-form-item label="ĞŞ¸ÄÔ­Òò" prop="reason">
+        <el-form-item label="ä¿®æ”¹åŸå› " prop="reason">
           <el-input
             v-model="form.reason"
             type="textarea"
             :rows="4"
             maxlength="200"
             show-word-limit
-            placeholder="ÇëÊäÈë±¾´Îµ÷¼ÛÔ­Òò"
+            placeholder="è¯·è¾“å…¥æœ¬æ¬¡è°ƒä»·åŸå› "
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-actions">
-          <el-button @click="dialogVisible = false">È¡Ïû</el-button>
-          <el-button type="primary" :loading="submitting" @click="handleSubmit">±£´æ</el-button>
+          <el-button @click="dialogVisible = false">å–æ¶ˆ</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">ä¿å­˜</el-button>
         </div>
       </template>
     </el-dialog>
@@ -111,31 +111,31 @@
     <el-drawer v-model="logDrawerVisible" size="760px" destroy-on-close>
       <template #header>
         <div>
-          <h3 class="drawer-title">¼Û¸ñ²Ù×÷ÈÕÖ¾</h3>
+          <h3 class="drawer-title">ä»·æ ¼æ“ä½œæ—¥å¿—</h3>
           <p class="drawer-subtitle">
-            {{ currentRoomType?.name ? `${currentRoomType.name} µÄµ÷¼Û¼ÇÂ¼` : 'È«²¿·¿ĞÍµÄµ÷¼Û¼ÇÂ¼' }}
+            {{ currentRoomType?.name ? `${currentRoomType.name} çš„è°ƒä»·è®°å½•` : 'å…¨éƒ¨æˆ¿å‹çš„è°ƒä»·è®°å½•' }}
           </p>
         </div>
       </template>
 
       <div class="drawer-actions">
-        <el-button :loading="logLoading" @click="loadLogs">ÖØĞÂ¼ÓÔØ</el-button>
+        <el-button :loading="logLoading" @click="loadLogs">é‡æ–°åŠ è½½</el-button>
       </div>
 
       <el-table :data="logs" v-loading="logLoading" stripe>
-        <el-table-column prop="roomTypeName" label="·¿ĞÍÃû³Æ" min-width="150" />
-        <el-table-column label="¼Û¸ñ±ä»¯" min-width="180">
+        <el-table-column prop="roomTypeName" label="æˆ¿å‹åç§°" min-width="150" />
+        <el-table-column label="ä»·æ ¼å˜åŒ–" min-width="180">
           <template #default="scope">
-            <span>£¤{{ formatPrice(scope.row.oldPrice) }} ¡ú £¤{{ formatPrice(scope.row.newPrice) }}</span>
+            <span>ï¿¥{{ formatPrice(scope.row.oldPrice) }} â†’ ï¿¥{{ formatPrice(scope.row.newPrice) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="changeReason" label="ĞŞ¸ÄÔ­Òò" min-width="220" show-overflow-tooltip />
-        <el-table-column label="²Ù×÷ÈË" width="140">
+        <el-table-column prop="changeReason" label="ä¿®æ”¹åŸå› " min-width="220" show-overflow-tooltip />
+        <el-table-column label="æ“ä½œäºº" width="140">
           <template #default="scope">
-            {{ scope.row.operatorName || '´ı½ÓÈëµÇÂ¼ÓÃ»§' }}
+            {{ scope.row.operatorName || 'å¾…æ¥å…¥ç™»å½•ç”¨æˆ·' }}
           </template>
         </el-table-column>
-        <el-table-column label="²Ù×÷Ê±¼ä" min-width="180">
+        <el-table-column label="æ“ä½œæ—¶é—´" min-width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.createdAt) }}
           </template>
@@ -196,11 +196,11 @@ const form = reactive({
 
 const rules = {
   basePrice: [
-    { required: true, message: 'ÇëÊäÈëĞÂµÄ»ù´¡¼Û¸ñ', trigger: 'change' }
+    { required: true, message: 'è¯·è¾“å…¥æ–°çš„åŸºç¡€ä»·æ ¼', trigger: 'change' }
   ],
   reason: [
-    { required: true, message: 'ÇëÊäÈëĞŞ¸ÄÔ­Òò', trigger: 'blur' },
-    { max: 200, message: 'ĞŞ¸ÄÔ­Òò²»ÄÜ³¬¹ı200¸ö×Ö·û', trigger: 'blur' }
+    { required: true, message: 'è¯·è¾“å…¥ä¿®æ”¹åŸå› ', trigger: 'blur' },
+    { max: 200, message: 'ä¿®æ”¹åŸå› ä¸èƒ½è¶…è¿‡200ä¸ªå­—ç¬¦', trigger: 'blur' }
   ]
 }
 
@@ -225,11 +225,11 @@ async function loadBasePrices() {
       keyword: keyword.value || undefined,
       status: statusFilter.value || undefined
     })
-    const data = extractResult(result, '¼ÓÔØ»ù´¡¼Û¸ñÊ§°Ü')
+    const data = extractResult(result, 'åŠ è½½åŸºç¡€ä»·æ ¼å¤±è´¥')
     roomTypes.value = data.records || []
     pagination.total = data.total || 0
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || '¼ÓÔØ»ù´¡¼Û¸ñÊ§°Ü')
+    ElMessage.error(error?.response?.data?.message || error?.message || 'åŠ è½½åŸºç¡€ä»·æ ¼å¤±è´¥')
   } finally {
     loading.value = false
   }
@@ -264,8 +264,8 @@ async function handleSubmit() {
       basePrice: Number(form.basePrice).toFixed(2),
       reason: form.reason.trim()
     })
-    const updated = extractResult(result, '±£´æ»ù´¡¼Û¸ñÊ§°Ü')
-    ElMessage.success('»ù´¡¼Û¸ñ±£´æ³É¹¦')
+    const updated = extractResult(result, 'ä¿å­˜åŸºç¡€ä»·æ ¼å¤±è´¥')
+    ElMessage.success('åŸºç¡€ä»·æ ¼ä¿å­˜æˆåŠŸ')
     dialogVisible.value = false
     currentRoomType.value = updated
     await loadBasePrices()
@@ -273,7 +273,7 @@ async function handleSubmit() {
       await loadLogs()
     }
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || '±£´æ»ù´¡¼Û¸ñÊ§°Ü')
+    ElMessage.error(error?.response?.data?.message || error?.message || 'ä¿å­˜åŸºç¡€ä»·æ ¼å¤±è´¥')
   } finally {
     submitting.value = false
   }
@@ -294,11 +294,11 @@ async function loadLogs() {
       size: logPagination.size,
       roomTypeId: currentRoomType.value?.id
     })
-    const data = extractResult(result, '¼ÓÔØ¼Û¸ñÈÕÖ¾Ê§°Ü')
+    const data = extractResult(result, 'åŠ è½½ä»·æ ¼æ—¥å¿—å¤±è´¥')
     logs.value = data.records || []
     logPagination.total = data.total || 0
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || '¼ÓÔØ¼Û¸ñÈÕÖ¾Ê§°Ü')
+    ElMessage.error(error?.response?.data?.message || error?.message || 'åŠ è½½ä»·æ ¼æ—¥å¿—å¤±è´¥')
   } finally {
     logLoading.value = false
   }

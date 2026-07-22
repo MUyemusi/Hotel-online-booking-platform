@@ -64,5 +64,5 @@ INSERT INTO booking_order (id, order_no, user_id, room_type_id, room_type_name, 
 INSERT INTO order_guest (order_id, guest_name, guest_phone, id_type, id_number, is_main) VALUES
 (1, CONVERT(0xE6B58BE8AF95E4BD8FE5AEA2 USING utf8mb4), '13800000002', 'ID_CARD', '110101199001010011', 1);
 
-INSERT INTO payment_record (id, order_id, payment_no, payment_method, payment_status, amount, paid_at) VALUES
-(1, 1, 'PAY202607150001', 'MOCK', 'PAID', 228.00, NOW());
+INSERT INTO payment_record (id, order_id, payment_no, user_id, payment_method, payment_status, amount, amount_fen, transaction_id, idempotency_key, paid_at) VALUES
+(1, 1, 'PAY202607150001', 3, 'MOCK', 'PAID', 228.00, 22800, 'MOCK-INIT-1', 'INIT-PAYMENT-1', NOW());

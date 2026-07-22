@@ -1,15 +1,21 @@
-﻿<template>
+<template>
   <div class="home-page">
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Zhisu Hotel</p>
+        <div class="hotel-brand"><img v-if="hotelInfo.logoUrl" :src="hotelInfo.logoUrl" alt="酒店Logo" /><p class="eyebrow">{{ hotelInfo.hotelName || 'Zhisu Hotel' }}</p></div>
         <h1>住得舒适，也住得有仪式感</h1>
         <p class="hero-text">
           首页轮播图与酒店公告都只展示已发布内容，方便前台页面与后台运营状态保持实时同步。
         </p>
+        <div class="booking-search">
+          <el-date-picker v-model="searchDates" type="daterange" value-format="YYYY-MM-DD" range-separator="至"
+            start-placeholder="入住日期" end-placeholder="离店日期" :disabled-date="disablePast" />
+          <el-input-number v-model="searchRoomCount" :min="1" :max="5" />
+        </div>
         <div class="hero-actions">
-          <el-button type="primary" size="large">立即预订</el-button>
-          <el-button size="large" plain>查看房型</el-button>
+          <el-button type="primary" size="large" @click="goRooms">立即预订</el-button>
+          <el-button size="large" plain @click="goRooms">查看房型</el-button>
+          <el-button size="large" link @click="scrollToHotelInfo">了解酒店</el-button>
         </div>
       </div>
 
@@ -44,7 +50,18 @@
       </div>
     </section>
 
-    <section class="announcement-section">
+
+    <section id="hotel-info" class="hotel-info-section">
+      <div class="section-heading"><div><p class="eyebrow">Hotel Information</p><h2>{{ hotelInfo.hotelName || '酒店信息' }}</h2></div></div>
+      <div class="info-grid">
+        <el-card shadow="never"><h3>酒店介绍</h3><p>{{ hotelInfo.introduction || '暂无介绍' }}</p></el-card>
+        <el-card shadow="never"><h3>联系方式</h3><p>{{ hotelInfo.address || '-' }}</p><p>{{ hotelInfo.contactPhone || '-' }}</p><p>{{ hotelInfo.trafficInfo || '' }}</p></el-card>
+        <el-card shadow="never"><h3>酒店设施</h3><p>{{ hotelInfo.facilities || '暂无设施说明' }}</p></el-card>
+        <el-card shadow="never"><h3>入住须知</h3><p>{{ hotelInfo.checkinNotice || '暂无入住须知' }}</p></el-card>
+        <el-card shadow="never"><h3>取消规则</h3><p>{{ hotelInfo.cancellationPolicy || '暂无取消规则' }}</p></el-card>
+        <el-card shadow="never"><h3>常见问题</h3><p>{{ hotelInfo.faqContent || '暂无常见问题' }}</p></el-card>
+      </div>
+    </section>    <section class="announcement-section">
       <div class="section-heading">
         <div>
           <p class="eyebrow">Announcement</p>
@@ -96,16 +113,23 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { CircleCheck, CircleClose } from '@element-plus/icons-vue'
 import { checkHealth as fetchHealth } from '@/api/health'
 import { getPublicBanners } from '@/api/content/banner'
 import { getPublicAnnouncements } from '@/api/content/announcement'
+import { getPublicHotelInfo } from '@/api/content/hotelInfo'
 
+const router = useRouter()
 const loadingHealth = ref(true)
 const healthStatus = ref('')
 const banners = ref([])
 const announcements = ref([])
+const hotelInfo = ref({})
+const dateText = offset => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0, 10) }
+const searchDates = ref([dateText(1), dateText(2)])
+const searchRoomCount = ref(1)
 
 function extractResult(result, fallbackMessage) {
   if (result.code !== 'SUCCESS') {
@@ -152,6 +176,27 @@ async function loadAnnouncements() {
   }
 }
 
+
+async function loadHotelInfo() {
+  try {
+    const result = await getPublicHotelInfo()
+    hotelInfo.value = extractResult(result, '加载酒店信息失败') || {}
+  } catch (error) {
+    hotelInfo.value = {}
+    ElMessage.error(error?.response?.data?.message || error?.message || '加载酒店信息失败')
+  }
+}
+
+function disablePast(date) {
+  return date < new Date(new Date().toDateString())
+}
+function goRooms() {
+  if (!searchDates.value?.[0]) return ElMessage.warning('请选择入住和离店日期')
+  router.push({ path: '/rooms', query: { checkInDate: searchDates.value[0], checkOutDate: searchDates.value[1], roomCount: searchRoomCount.value } })
+}
+function scrollToHotelInfo() {
+  document.getElementById('hotel-info')?.scrollIntoView({ behavior: 'smooth' })
+}
 function handleBannerClick(banner) {
   if (banner.linkUrl) {
     window.open(banner.linkUrl, '_blank', 'noopener,noreferrer')
@@ -167,6 +212,7 @@ function formatDateTime(value) {
 
 onMounted(() => {
   loadHealthStatus()
+  loadHotelInfo()
   loadBanners()
   loadAnnouncements()
 })
@@ -209,6 +255,13 @@ onMounted(() => {
   font-size: 16px;
   line-height: 1.7;
   color: #475569;
+}
+
+.booking-search {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0 14px;
 }
 
 .hero-actions {
@@ -359,8 +412,22 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .hero-actions {
+  .booking-search {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0 14px;
+}
+
+.hero-actions {
     flex-direction: column;
   }
 }
-</style>
+
+.hotel-brand { display: flex; align-items: center; gap: 12px; }
+.hotel-brand img { width: 44px; height: 44px; border-radius: 12px; object-fit: contain; }
+.hotel-info-section { margin-top: 36px; }
+.info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 16px; }
+.info-grid h3 { margin: 0 0 10px; color: #0f172a; }
+.info-grid p { margin: 6px 0; color: #475569; line-height: 1.7; white-space: pre-wrap; }
+@media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } }</style>

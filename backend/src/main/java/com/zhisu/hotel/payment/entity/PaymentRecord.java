@@ -26,6 +26,7 @@ public class PaymentRecord {
     private String paymentMethod;
     private String transactionId;
     private String paymentStatus;
+    private String idempotencyKey;
     private LocalDateTime paidAt;
     private BigDecimal refundAmount;
     private Integer refundAmountFen;

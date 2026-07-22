@@ -73,7 +73,7 @@
         <template #header>
           <div class="panel-header">
             <span>房型销售统计</span>
-            <span class="panel-subtitle">订单模块未接入前，展示 0 值基础视图</span>
+            <span class="panel-subtitle">按已支付订单汇总房型销量与营业收入</span>
           </div>
         </template>
         <el-table :data="roomTypeStatistics" stripe>
@@ -130,10 +130,15 @@ const roomTypeStatistics = ref([])
 
 const overview = reactive({
   todayOrderCount: 0,
+  todayPaidOrderCount: 0,
   todayRevenue: 0,
   todayCheckInCount: 0,
   todayCheckOutCount: 0,
+  todayUserCancellationCount: 0,
   availableRoomCount: 0,
+  occupiedRoomCount: 0,
+  dirtyRoomCount: 0,
+  occupancyRate: 0,
   inventoryWarningCount: 0,
   publishedAnnouncementCount: 0,
   onlineBannerCount: 0,
@@ -148,12 +153,17 @@ function extractResult(result, fallbackMessage) {
 }
 
 const overviewCards = computed(() => [
-  { key: 'todayOrderCount', label: '今日新增订单数', value: overview.todayOrderCount },
-  { key: 'todayRevenue', label: '今日营业额', value: `￥${formatMoney(overview.todayRevenue)}` },
-  { key: 'todayCheckInCount', label: '今日入住数', value: overview.todayCheckInCount },
-  { key: 'todayCheckOutCount', label: '今日退房数', value: overview.todayCheckOutCount },
-  { key: 'availableRoomCount', label: '当前可售房间数', value: overview.availableRoomCount },
-  { key: 'inventoryWarningCount', label: '库存预警房型数', value: overview.inventoryWarningCount }
+  { key: 'todayOrderCount', label: '今日新增订单', value: overview.todayOrderCount },
+  { key: 'todayPaidOrderCount', label: '今日支付订单', value: overview.todayPaidOrderCount },
+  { key: 'todayRevenue', label: '今日支付金额', value: `￥${formatMoney(overview.todayRevenue)}` },
+  { key: 'todayCheckInCount', label: '今日待入住', value: overview.todayCheckInCount },
+  { key: 'todayCheckOutCount', label: '今日已退房', value: overview.todayCheckOutCount },
+  { key: 'todayUserCancellationCount', label: '今日用户取消', value: overview.todayUserCancellationCount },
+  { key: 'availableRoomCount', label: '今日可售房量', value: overview.availableRoomCount },
+  { key: 'occupiedRoomCount', label: '当前在住房间', value: overview.occupiedRoomCount },
+  { key: 'dirtyRoomCount', label: '当前待清洁房间', value: overview.dirtyRoomCount },
+  { key: 'occupancyRate', label: '当前入住率', value: `${Number(overview.occupancyRate || 0).toFixed(2)}%` },
+  { key: 'inventoryWarningCount', label: '库存预警房型', value: overview.inventoryWarningCount }
 ])
 
 const maxOrderCount = computed(() => Math.max(...trends.value.map(item => Number(item.orderCount || 0)), 1))

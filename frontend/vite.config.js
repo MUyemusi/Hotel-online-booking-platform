@@ -10,6 +10,9 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173
-  }
+    port: 5173,
+    proxy: { '/api': 'http://localhost:8080', '/uploads': 'http://localhost:8080' }
+  },
+  test: { environment: 'jsdom', globals: true },
+  build: { chunkSizeWarningLimit: 1000, rollupOptions: { output: { manualChunks: { vue: ['vue','vue-router','pinia'], element: ['element-plus'] } } } }
 })

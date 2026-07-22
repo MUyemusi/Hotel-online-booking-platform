@@ -146,7 +146,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
         int processedCount = 0;
         LocalDate currentDate = startDate;
         while (!currentDate.isAfter(endDate)) {
-            DatePriceRule rule = holidayCalendarService.resolveDateRule(currentDate);
+            DatePriceRule rule = holidayCalendarService.resolveDateRule(currentDate, roomTypeId);
             BigDecimal finalPrice = basePrice.multiply(rule.coefficient()).setScale(2, RoundingMode.HALF_UP);
             DailyPrice existing = findExistingPrice(roomTypeId, currentDate);
             if (existing == null) {
@@ -199,7 +199,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
         existing.setManualPrice(null);
         existing.setManualOverride(0);
         existing.setOverrideReason(null);
-        DatePriceRule rule = holidayCalendarService.resolveDateRule(existing.getBusinessDate());
+        DatePriceRule rule = holidayCalendarService.resolveDateRule(existing.getBusinessDate(), existing.getRoomTypeId());
         BigDecimal recalculatedFinalPrice = existing.getBasePrice()
                 .multiply(rule.coefficient())
                 .setScale(2, RoundingMode.HALF_UP);
