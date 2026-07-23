@@ -55,10 +55,20 @@ INSERT INTO system_config (config_key, config_value, config_name, value_type, co
 ('MAX_STAY_NIGHTS','30','最长连续入住晚数','INTEGER','BOOKING','单笔订单允许的最长入住晚数','ENABLED')
 ON DUPLICATE KEY UPDATE config_name=VALUES(config_name), value_type=VALUES(value_type), config_group=VALUES(config_group), description=VALUES(description);
 
+-- Repair official seed rows by stable codes/dates; old text may already be mojibake.
 UPDATE holiday_calendar SET
-holiday_name = CASE holiday_code WHEN 'MID_AUTUMN' THEN '中秋节假期' WHEN 'NATIONAL_DAY' THEN IF(day_type='MAKEUP_WORKDAY','国庆节调休工作日','国庆节假期') ELSE holiday_name END,
-remark = CASE WHEN day_type='MAKEUP_WORKDAY' THEN '官方放假安排中的调休工作日' ELSE remark END
-WHERE holiday_name LIKE '%holiday%' OR holiday_name LIKE '%makeup workday%';
+holiday_name = CASE
+    WHEN holiday_code='MID_AUTUMN' THEN '中秋节假期'
+    WHEN holiday_code='NATIONAL_DAY' AND day_type='MAKEUP_WORKDAY' THEN '国庆节调休工作日'
+    WHEN holiday_code='NATIONAL_DAY' THEN '国庆节假期'
+    ELSE holiday_name END,
+remark = CASE
+    WHEN day_type='MAKEUP_WORKDAY' THEN '官方放假安排中的调休工作日'
+    WHEN holiday_code='MID_AUTUMN' THEN CONCAT('假期第', DAY(business_date) - 24, '天')
+    WHEN holiday_code='NATIONAL_DAY' THEN CONCAT('假期第', DAY(business_date), '天')
+    ELSE remark END
+WHERE holiday_year=2026 AND source_status='OFFICIAL'
+  AND holiday_code IN ('MID_AUTUMN','NATIONAL_DAY');
 
 -- Add demo main images only when a room type does not already have one.
 INSERT INTO room_type_image (room_type_id, image_url, image_type, sort_order)

@@ -39,7 +39,7 @@
         <el-date-picker v-model="previewDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期预览" />
         <el-button @click="handlePreview">预览规则</el-button>
         <span v-if="previewResult" class="preview-result">
-          {{ previewResult.date }} / {{ previewResult.priceSource }} / {{ previewResult.coefficient }} / {{ previewResult.description }}
+          {{ previewResult.date }} / {{ displayValue('priceSource', previewResult.priceSource) }} / {{ previewResult.coefficient }} / {{ previewResult.description }}
         </span>
       </div>
 

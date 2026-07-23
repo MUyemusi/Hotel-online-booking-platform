@@ -23,8 +23,8 @@
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleLogin">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" size="large" />
+        <el-form-item label="用户名或手机号" prop="username">
+          <el-input v-model.trim="form.username" placeholder="请输入用户名或手机号" size="large" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password size="large" />
@@ -57,7 +57,7 @@ const loading = ref(false)
 const formRef = ref()
 const form = reactive({ username: '', password: '' })
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入用户名或手机号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
@@ -84,7 +84,7 @@ async function handleLogin() {
     await router.replace(redirect)
   } catch (error) {
     clearAuthSession()
-    ElMessage.error(error?.response?.data?.message || error.message || '登录失败，请检查用户名和密码')
+    ElMessage.error(error?.response?.data?.message || error.message || '登录失败，请检查用户名、手机号或密码')
   } finally {
     loading.value = false
   }
