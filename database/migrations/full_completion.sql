@@ -50,3 +50,18 @@ SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_s
 
 SET @has_old_cancel=EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema=@db_name AND table_name='order_cancel_record');
 SET @sql=IF(@has_old_cancel,'INSERT INTO cancellation_record(order_id,user_id,cancel_type,cancel_reason,cancel_time,refund_amount,refund_amount_fen,operator_id,created_at) SELECT o.order_id,bo.user_id,o.cancel_type,o.cancel_reason,o.created_at,o.refund_amount,ROUND(o.refund_amount*100),o.cancel_by,o.created_at FROM order_cancel_record o JOIN booking_order bo ON bo.id=o.order_id WHERE NOT EXISTS(SELECT 1 FROM cancellation_record c WHERE c.order_id=o.order_id AND c.cancel_type=o.cancel_type AND c.created_at=o.created_at)','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 房型评价表
+CREATE TABLE IF NOT EXISTS room_type_review (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  room_type_id BIGINT NOT NULL,
+  user_id BIGINT DEFAULT NULL,
+  nickname VARCHAR(50) NOT NULL,
+  avatar VARCHAR(100) DEFAULT NULL,
+  content TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'APPROVED',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_review_room_type (room_type_id, status, created_at),
+  INDEX idx_review_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

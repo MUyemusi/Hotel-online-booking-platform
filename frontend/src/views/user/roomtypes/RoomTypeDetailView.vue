@@ -173,6 +173,7 @@ import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
 import { getReviews, createReview } from '@/api/review'
 import { getAccessToken } from '@/utils/request'
 import { hotelToday, isEarlyMorningAvailable, nextDate } from '@/utils/bookingStay'
+import { getMockReviews } from '@/data/mockReviews'
 
 const route = useRoute()
 const router = useRouter()
@@ -232,10 +233,17 @@ const posting = ref(false)
 const loggedIn = computed(() => Boolean(getAccessToken()))
 
 async function loadReviews() {
+  const mock = getMockReviews(Number(route.params.id))
   try {
     const res = await getReviews(route.params.id)
-    if (res.code === 'SUCCESS') { reviews.value = res.data.records || []; reviewTotal.value = res.data.total || 0 }
-  } catch { /* ignore */ }
+    if (res.code === 'SUCCESS') {
+      const real = (res.data.records || []).map(r => ({ ...r, _mock: false }))
+      reviews.value = [...real, ...mock]  // 真实在前，虚拟在后
+    } else {
+      reviews.value = mock
+    }
+  } catch { reviews.value = mock }
+  reviewTotal.value = reviews.value.length
 }
 
 async function postReview() {
