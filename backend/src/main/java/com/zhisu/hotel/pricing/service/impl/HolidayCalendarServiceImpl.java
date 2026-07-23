@@ -1,3 +1,5 @@
+
+
 package com.zhisu.hotel.pricing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -53,7 +55,7 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
     public HolidayCalendar getHolidayCalendar(Long id) {
         HolidayCalendar entity = holidayCalendarMapper.selectById(id);
         if (entity == null) {
-            throw new BusinessException("HOLIDAY_CALENDAR_NOT_FOUND", "Holiday calendar record not found");
+            throw new BusinessException("HOLIDAY_CALENDAR_NOT_FOUND", "节假日日历记录不存在");
         }
         return entity;
     }
@@ -82,7 +84,7 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
         HolidayCalendar entity = getHolidayCalendar(id);
         String normalized = normalizeEnum(status);
         if (!"ENABLED".equals(normalized) && !"DISABLED".equals(normalized)) {
-            throw new BusinessException("HOLIDAY_CALENDAR_STATUS_INVALID", "Holiday calendar status is invalid");
+            throw new BusinessException("HOLIDAY_CALENDAR_STATUS_INVALID", "节假日日历状态无效");
         }
         entity.setStatus(normalized);
         holidayCalendarMapper.updateById(entity);
@@ -143,16 +145,16 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
 
         DayOfWeek dayOfWeek = date.getDayOfWeek();
         if (dayOfWeek == DayOfWeek.FRIDAY) {
-            return new DatePriceRule(systemConfigService.getDecimal("FRIDAY_PRICE_COEFFICIENT").setScale(2, RoundingMode.HALF_UP), "FRIDAY", "Friday", "SYSTEM", null);
+            return new DatePriceRule(systemConfigService.getDecimal("FRIDAY_PRICE_COEFFICIENT").setScale(2, RoundingMode.HALF_UP), "FRIDAY", "周五价格", "SYSTEM", null);
         }
         if (dayOfWeek == DayOfWeek.SATURDAY) {
-            return new DatePriceRule(systemConfigService.getDecimal("SATURDAY_PRICE_COEFFICIENT").setScale(2, RoundingMode.HALF_UP), "SATURDAY", "Saturday", "SYSTEM", null);
+            return new DatePriceRule(systemConfigService.getDecimal("SATURDAY_PRICE_COEFFICIENT").setScale(2, RoundingMode.HALF_UP), "SATURDAY", "周六价格", "SYSTEM", null);
         }
         if (dayOfWeek == DayOfWeek.SUNDAY) {
-            return new DatePriceRule(systemConfigService.getDecimal("SUNDAY_PRICE_COEFFICIENT").setScale(2, RoundingMode.HALF_UP), "SUNDAY", "Sunday", "SYSTEM", null);
+            return new DatePriceRule(systemConfigService.getDecimal("SUNDAY_PRICE_COEFFICIENT").setScale(2, RoundingMode.HALF_UP), "SUNDAY", "周日价格", "SYSTEM", null);
         }
 
-        return new DatePriceRule(BigDecimal.ONE.setScale(2, RoundingMode.HALF_UP), "NORMAL_DAY", "Normal day", "SYSTEM", null);
+        return new DatePriceRule(BigDecimal.ONE.setScale(2, RoundingMode.HALF_UP), "NORMAL_DAY", "普通日期", "SYSTEM", null);
     }
 
     private HolidayCalendar toEntity(HolidayCalendarSaveRequest request, HolidayCalendar entity) {
@@ -171,21 +173,21 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
     private void validateRequest(HolidayCalendarSaveRequest request, Long currentId) {
         String dayType = normalizeEnum(request.getDayType());
         if (!"HOLIDAY".equals(dayType) && !"MAKEUP_WORKDAY".equals(dayType)) {
-            throw new BusinessException("HOLIDAY_CALENDAR_DAY_TYPE_INVALID", "Holiday calendar day type is invalid");
+            throw new BusinessException("HOLIDAY_CALENDAR_DAY_TYPE_INVALID", "节假日日期类型无效");
         }
 
         String sourceStatus = normalizeEnum(request.getSourceStatus());
         if (!"OFFICIAL".equals(sourceStatus) && !"PROVISIONAL".equals(sourceStatus)) {
-            throw new BusinessException("HOLIDAY_CALENDAR_SOURCE_STATUS_INVALID", "Holiday calendar source status is invalid");
+            throw new BusinessException("HOLIDAY_CALENDAR_SOURCE_STATUS_INVALID", "节假日数据来源状态无效");
         }
 
         String status = normalizeEnum(request.getStatus());
         if (!"ENABLED".equals(status) && !"DISABLED".equals(status)) {
-            throw new BusinessException("HOLIDAY_CALENDAR_STATUS_INVALID", "Holiday calendar status is invalid");
+            throw new BusinessException("HOLIDAY_CALENDAR_STATUS_INVALID", "节假日日历状态无效");
         }
 
         if (request.getBusinessDate().getYear() != request.getHolidayYear()) {
-            throw new BusinessException("HOLIDAY_CALENDAR_YEAR_MISMATCH", "Business date year and holiday year do not match");
+            throw new BusinessException("HOLIDAY_CALENDAR_YEAR_MISMATCH", "营业日期年份与节假日年份不一致");
         }
 
         HolidayCalendar duplicate = holidayCalendarMapper.selectOne(
@@ -194,7 +196,7 @@ public class HolidayCalendarServiceImpl implements HolidayCalendarService {
                         .ne(currentId != null, HolidayCalendar::getId, currentId)
         );
         if (duplicate != null) {
-            throw new BusinessException("HOLIDAY_CALENDAR_DATE_DUPLICATE", "Business date already exists in holiday calendar");
+            throw new BusinessException("HOLIDAY_CALENDAR_DATE_DUPLICATE", "该营业日期已存在于节假日日历");
         }
     }
 

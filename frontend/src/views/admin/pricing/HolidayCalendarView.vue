@@ -1,33 +1,34 @@
+
 <template>
   <div class="holiday-calendar-view">
     <div class="page-header">
       <div>
-        <h1>Holiday Calendar</h1>
-        <p>Manage holiday dates, makeup workdays, and pricing rule previews.</p>
+        <h1>节假日日历管理</h1>
+        <p>维护法定节假日、调休工作日及价格规则预览。</p>
       </div>
       <div class="header-actions">
-        <el-select v-model="filters.holidayYear" placeholder="All years" class="filter-select" @change="handleSearch">
-          <el-option label="All years" :value="null" />
+        <el-select v-model="filters.holidayYear" placeholder="全部年份" class="filter-select" @change="handleSearch">
+          <el-option label="全部年份" :value="null" />
           <el-option label="2026" :value="2026" />
           <el-option label="2027" :value="2027" />
         </el-select>
-        <el-select v-model="filters.dayType" placeholder="All types" class="filter-select" @change="handleSearch">
-          <el-option label="All types" value="" />
-          <el-option label="HOLIDAY" value="HOLIDAY" />
-          <el-option label="MAKEUP_WORKDAY" value="MAKEUP_WORKDAY" />
+        <el-select v-model="filters.dayType" placeholder="全部类型" class="filter-select" @change="handleSearch">
+          <el-option label="全部类型" value="" />
+          <el-option :label="displayValue('dayType', 'HOLIDAY')" value="HOLIDAY" />
+          <el-option :label="displayValue('dayType', 'MAKEUP_WORKDAY')" value="MAKEUP_WORKDAY" />
         </el-select>
-        <el-select v-model="filters.sourceStatus" placeholder="All sources" class="filter-select" @change="handleSearch">
-          <el-option label="All sources" value="" />
-          <el-option label="OFFICIAL" value="OFFICIAL" />
-          <el-option label="PROVISIONAL" value="PROVISIONAL" />
+        <el-select v-model="filters.sourceStatus" placeholder="全部来源" class="filter-select" @change="handleSearch">
+          <el-option label="全部来源" value="" />
+          <el-option :label="displayValue('sourceStatus', 'OFFICIAL')" value="OFFICIAL" />
+          <el-option :label="displayValue('sourceStatus', 'PROVISIONAL')" value="PROVISIONAL" />
         </el-select>
-        <el-button :loading="loading" @click="loadData">Reload</el-button>
-        <el-button type="primary" @click="openCreateDialog">Add Date</el-button>
+        <el-button :loading="loading" @click="loadData">重新加载</el-button>
+        <el-button type="primary" @click="openCreateDialog">新增日期</el-button>
       </div>
     </div>
 
     <el-alert
-      title="Some 2027 records are provisional core statutory dates only and should be updated after official holiday notices are released."
+      title="部分未来节假日数据为暂定日期，请在官方放假通知发布后及时更新。"
       type="warning"
       :closable="false"
       show-icon
@@ -35,50 +36,50 @@
 
     <el-card shadow="never" class="table-card">
       <div class="preview-bar">
-        <el-date-picker v-model="previewDate" type="date" value-format="YYYY-MM-DD" placeholder="Select a date to preview" />
-        <el-button @click="handlePreview">Preview Rule</el-button>
+        <el-date-picker v-model="previewDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期预览" />
+        <el-button @click="handlePreview">预览规则</el-button>
         <span v-if="previewResult" class="preview-result">
-          {{ previewResult.date }} / {{ previewResult.priceSource }} / {{ previewResult.coefficient }} / {{ previewResult.description }}
+          {{ previewResult.date }} / {{ displayValue('priceSource', previewResult.priceSource) }} / {{ previewResult.coefficient }} / {{ previewResult.description }}
         </span>
       </div>
 
       <el-table :data="rows" v-loading="loading" stripe>
-        <el-table-column prop="businessDate" label="Date" width="120" />
-        <el-table-column label="Weekday" width="120">
+        <el-table-column prop="businessDate" label="日期" width="120" />
+        <el-table-column label="星期" width="120">
           <template #default="scope">{{ getWeekday(scope.row.businessDate) }}</template>
         </el-table-column>
-        <el-table-column prop="holidayName" label="Name" min-width="220" />
-        <el-table-column label="Type" width="170">
+        <el-table-column prop="holidayName" label="节假日名称" min-width="220" />
+        <el-table-column label="日期类型" width="170">
           <template #default="scope">
             <el-tag :type="scope.row.dayType === 'HOLIDAY' ? 'danger' : 'primary'">
-              {{ scope.row.dayType }}
+              {{ displayValue('dayType', scope.row.dayType) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="coefficient" label="Coef." width="100" />
-        <el-table-column label="Source" width="120">
+        <el-table-column prop="coefficient" label="价格系数" width="100" />
+        <el-table-column label="数据来源" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.sourceStatus === 'OFFICIAL' ? 'success' : 'warning'">
-              {{ scope.row.sourceStatus }}
+              {{ displayValue('sourceStatus', scope.row.sourceStatus) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Status" width="120">
+        <el-table-column label="状态" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">
-              {{ scope.row.status }}
+              {{ displayValue('status', scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="Remark" min-width="220" show-overflow-tooltip />
-        <el-table-column label="Actions" width="220" fixed="right">
+        <el-table-column prop="remark" label="备注" min-width="220" show-overflow-tooltip />
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="scope">
             <div class="table-actions">
-              <el-button link type="primary" @click="openEditDialog(scope.row)">Edit</el-button>
+              <el-button link type="primary" @click="openEditDialog(scope.row)">编辑</el-button>
               <el-button link :type="scope.row.status === 'ENABLED' ? 'warning' : 'success'" @click="handleToggleStatus(scope.row)">
-                {{ scope.row.status === 'ENABLED' ? 'Disable' : 'Enable' }}
+                {{ scope.row.status === 'ENABLED' ? '停用' : '启用' }}
               </el-button>
-              <el-button link type="danger" @click="handleDelete(scope.row)">Delete</el-button>
+              <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
@@ -96,64 +97,64 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="dialogMode === 'create' ? 'Add Holiday Date' : 'Edit Holiday Date'" width="640px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="dialogMode === 'create' ? '新增节假日日期' : '编辑节假日日期'" width="640px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="Date" prop="businessDate">
+        <el-form-item label="日期" prop="businessDate">
           <el-date-picker v-model="form.businessDate" type="date" value-format="YYYY-MM-DD" class="full-width" />
         </el-form-item>
-        <el-form-item label="Name" prop="holidayName">
+        <el-form-item label="节假日名称" prop="holidayName">
           <el-input v-model="form.holidayName" maxlength="100" show-word-limit />
         </el-form-item>
         <div class="form-grid">
-          <el-form-item label="Holiday Code" prop="holidayCode">
+          <el-form-item label="节假日类型" prop="holidayCode">
             <el-select v-model="form.holidayCode" class="full-width">
-              <el-option label="MID_AUTUMN" value="MID_AUTUMN" />
-              <el-option label="NATIONAL_DAY" value="NATIONAL_DAY" />
-              <el-option label="NEW_YEAR" value="NEW_YEAR" />
-              <el-option label="SPRING_FESTIVAL" value="SPRING_FESTIVAL" />
-              <el-option label="QINGMING" value="QINGMING" />
-              <el-option label="LABOR_DAY" value="LABOR_DAY" />
-              <el-option label="DRAGON_BOAT" value="DRAGON_BOAT" />
-              <el-option label="CUSTOM" value="CUSTOM" />
+              <el-option :label="displayValue('holidayCode', 'MID_AUTUMN')" value="MID_AUTUMN" />
+              <el-option :label="displayValue('holidayCode', 'NATIONAL_DAY')" value="NATIONAL_DAY" />
+              <el-option :label="displayValue('holidayCode', 'NEW_YEAR')" value="NEW_YEAR" />
+              <el-option :label="displayValue('holidayCode', 'SPRING_FESTIVAL')" value="SPRING_FESTIVAL" />
+              <el-option :label="displayValue('holidayCode', 'QINGMING')" value="QINGMING" />
+              <el-option :label="displayValue('holidayCode', 'LABOR_DAY')" value="LABOR_DAY" />
+              <el-option :label="displayValue('holidayCode', 'DRAGON_BOAT')" value="DRAGON_BOAT" />
+              <el-option :label="displayValue('holidayCode', 'CUSTOM')" value="CUSTOM" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Day Type" prop="dayType">
+          <el-form-item label="日期类型" prop="dayType">
             <el-select v-model="form.dayType" class="full-width">
-              <el-option label="HOLIDAY" value="HOLIDAY" />
-              <el-option label="MAKEUP_WORKDAY" value="MAKEUP_WORKDAY" />
+              <el-option :label="displayValue('dayType', 'HOLIDAY')" value="HOLIDAY" />
+              <el-option :label="displayValue('dayType', 'MAKEUP_WORKDAY')" value="MAKEUP_WORKDAY" />
             </el-select>
           </el-form-item>
         </div>
         <div class="form-grid">
-          <el-form-item label="Coefficient" prop="coefficient">
+          <el-form-item label="价格系数" prop="coefficient">
             <el-input-number v-model="form.coefficient" :min="1" :step="0.05" :precision="2" class="full-width" />
           </el-form-item>
-          <el-form-item label="Year" prop="holidayYear">
+          <el-form-item label="年份" prop="holidayYear">
             <el-input-number v-model="form.holidayYear" :min="2026" :max="2035" :step="1" class="full-width" />
           </el-form-item>
         </div>
         <div class="form-grid">
-          <el-form-item label="Source Status" prop="sourceStatus">
+          <el-form-item label="数据来源" prop="sourceStatus">
             <el-select v-model="form.sourceStatus" class="full-width">
-              <el-option label="OFFICIAL" value="OFFICIAL" />
-              <el-option label="PROVISIONAL" value="PROVISIONAL" />
+              <el-option :label="displayValue('sourceStatus', 'OFFICIAL')" value="OFFICIAL" />
+              <el-option :label="displayValue('sourceStatus', 'PROVISIONAL')" value="PROVISIONAL" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Status" prop="status">
+          <el-form-item label="状态" prop="status">
             <el-select v-model="form.status" class="full-width">
-              <el-option label="ENABLED" value="ENABLED" />
-              <el-option label="DISABLED" value="DISABLED" />
+              <el-option :label="displayValue('status', 'ENABLED')" value="ENABLED" />
+              <el-option :label="displayValue('status', 'DISABLED')" value="DISABLED" />
             </el-select>
           </el-form-item>
         </div>
-        <el-form-item label="Remark" prop="remark">
+        <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="255" show-word-limit />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-actions">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button type="primary" :loading="submitting" @click="handleSubmit">Save</el-button>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">保存</el-button>
         </div>
       </template>
     </el-dialog>
@@ -164,6 +165,7 @@
 import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getSystemConfig } from '@/api/systemconfig/systemConfig'
+import { displayValue, weekdayName } from '@/utils/adminDisplay'
 import {
   createHolidayCalendar,
   deleteHolidayCalendar,
@@ -210,14 +212,14 @@ const createDefaultForm = () => ({
 const form = reactive(createDefaultForm())
 
 const rules = {
-  businessDate: [{ required: true, message: 'Date is required', trigger: 'change' }],
-  holidayName: [{ required: true, message: 'Name is required', trigger: 'blur' }],
-  holidayCode: [{ required: true, message: 'Holiday code is required', trigger: 'change' }],
-  dayType: [{ required: true, message: 'Day type is required', trigger: 'change' }],
-  coefficient: [{ required: true, message: 'Coefficient is required', trigger: 'change' }],
-  holidayYear: [{ required: true, message: 'Year is required', trigger: 'change' }],
-  sourceStatus: [{ required: true, message: 'Source status is required', trigger: 'change' }],
-  status: [{ required: true, message: 'Status is required', trigger: 'change' }]
+  businessDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
+  holidayName: [{ required: true, message: '请输入节假日名称', trigger: 'blur' }],
+  holidayCode: [{ required: true, message: '请选择节假日类型', trigger: 'change' }],
+  dayType: [{ required: true, message: '请选择日期类型', trigger: 'change' }],
+  coefficient: [{ required: true, message: '请输入价格系数', trigger: 'change' }],
+  holidayYear: [{ required: true, message: '请选择年份', trigger: 'change' }],
+  sourceStatus: [{ required: true, message: '请选择数据来源', trigger: 'change' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
 }
 
 function extractResult(result, fallbackMessage) {
@@ -242,11 +244,11 @@ async function loadData() {
       dayType: filters.dayType || undefined,
       sourceStatus: filters.sourceStatus || undefined
     })
-    const data = extractResult(result, 'Failed to load holiday calendar')
+    const data = extractResult(result, '加载节假日日历失败')
     rows.value = data.records || []
     pagination.total = data.total || 0
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to load holiday calendar')
+    ElMessage.error(error?.response?.data?.message || error?.message || '加载节假日日历失败')
   } finally {
     loading.value = false
   }
@@ -264,13 +266,13 @@ function handlePageChange(page) {
 
 async function handlePreview() {
   if (!previewDate.value) {
-    ElMessage.warning('Please choose a date first')
+    ElMessage.warning('请先选择预览日期')
     return
   }
   try {
-    previewResult.value = extractResult(await previewHolidayRule(previewDate.value), 'Failed to preview rule')
+    previewResult.value = extractResult(await previewHolidayRule(previewDate.value), '预览价格规则失败')
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to preview rule')
+    ElMessage.error(error?.response?.data?.message || error?.message || '预览价格规则失败')
   }
 }
 
@@ -315,17 +317,17 @@ async function handleSubmit() {
       coefficient: Number(form.coefficient).toFixed(2)
     }
     if (dialogMode.value === 'create') {
-      extractResult(await createHolidayCalendar(payload), 'Failed to create holiday date')
-      ElMessage.success('Holiday date created')
+      extractResult(await createHolidayCalendar(payload), '新增节假日日期失败')
+      ElMessage.success('节假日日期已新增')
     } else {
-      extractResult(await updateHolidayCalendar(editingId.value, payload), 'Failed to update holiday date')
-      ElMessage.success('Holiday date updated')
+      extractResult(await updateHolidayCalendar(editingId.value, payload), '更新节假日日期失败')
+      ElMessage.success('节假日日期已更新')
     }
     dialogVisible.value = false
     await loadData()
     await handlePreview()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to save')
+    ElMessage.error(error?.response?.data?.message || error?.message || '保存失败')
   } finally {
     submitting.value = false
   }
@@ -334,36 +336,36 @@ async function handleSubmit() {
 async function handleToggleStatus(row) {
   try {
     const nextStatus = row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED'
-    extractResult(await updateHolidayCalendarStatus(row.id, nextStatus), 'Failed to update status')
-    ElMessage.success(nextStatus === 'ENABLED' ? 'Record enabled' : 'Record disabled')
+    extractResult(await updateHolidayCalendarStatus(row.id, nextStatus), '更新状态失败')
+    ElMessage.success(nextStatus === 'ENABLED' ? '记录已启用' : '记录已停用')
     await loadData()
     await handlePreview()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to update status')
+    ElMessage.error(error?.response?.data?.message || error?.message || '更新状态失败')
   }
 }
 
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(`Delete ${row.businessDate}?`, 'Delete confirmation', { type: 'warning' })
+    await ElMessageBox.confirm(`确定删除 ${row.businessDate} 吗？`, '删除确认', { type: 'warning' })
     const result = await deleteHolidayCalendar(row.id)
     if (result.code !== 'SUCCESS') {
-      throw new Error(result.message || 'Failed to delete holiday date')
+      throw new Error(result.message || '删除节假日日期失败')
     }
-    ElMessage.success('Holiday date deleted')
+    ElMessage.success('节假日日期已删除')
     await loadData()
     await handlePreview()
   } catch (error) {
     if (error === 'cancel') {
       return
     }
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to delete holiday date')
+    ElMessage.error(error?.response?.data?.message || error?.message || '删除节假日日期失败')
   }
 }
 
 function getWeekday(dateString) {
   const date = new Date(dateString)
-  return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()]
+  return weekdayName(dateString)
 }
 
 loadData()

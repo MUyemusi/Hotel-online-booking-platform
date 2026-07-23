@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.frontdesk.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -177,9 +178,10 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
                 failureCode = ErrorCode.CHECKIN_TOO_EARLY;
                 failureMessage = dateMessage;
             }
-        } else if (!today.isBefore(order.getCheckOutDate())) {
+        } else if (("EARLY_MORNING".equals(order.getStayType()) && today.isAfter(order.getCheckInDate()))
+                || (!"EARLY_MORNING".equals(order.getStayType()) && !today.isBefore(order.getCheckOutDate()))) {
             datePassed = false;
-            dateMessage = "Order has passed its valid check-in period";
+            dateMessage = "订单已超过有效入住日期";
             if (failureCode == null) {
                 failureCode = ErrorCode.CHECKIN_EXPIRED;
                 failureMessage = dateMessage;

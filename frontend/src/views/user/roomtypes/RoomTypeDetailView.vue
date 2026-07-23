@@ -1,3 +1,4 @@
+
 <template>
   <div class="detail-page">
     <!-- 返回栏 -->
@@ -95,9 +96,10 @@
             </div>
 
             <div class="bg-form">
+              <el-checkbox v-if="earlyMorningAvailable" v-model="earlyMode">凌晨入住（当日中午退房）</el-checkbox>
               <div class="bf">
                 <label>入住日期</label>
-                <el-date-picker v-model="bk.checkIn" type="date" placeholder="选择" :disabled-date="noPast" format="MM/DD" value-format="YYYY-MM-DD" />
+                <el-date-picker v-model="bk.checkIn" type="date" placeholder="选择" :disabled-date="noPast" format="MM/DD" value-format="YYYY-MM-DD"><template #default="cell"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker>
               </div>
               <div class="bf">
                 <label>离店日期</label>
@@ -142,6 +144,7 @@ import { ElMessage } from 'element-plus'
 import { getRoomTypeDetail, getRoomTypeImages, getRoomTypeFacilities } from '@/api/roomtype'
 import { searchRoomTypes } from '@/api/roomTypes'
 import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
+import { hotelToday, isEarlyMorningAvailable, nextDate } from '@/utils/bookingStay'
 
 const route = useRoute()
 const router = useRouter()
@@ -154,15 +157,26 @@ const activeIdx = ref(0)
 let quoteRequestId = 0
 
 const initial = normalizeBookingQuery(route.query, { roomTypeId: Number(route.params.id), roomCount: 1, guests: 1 })
-const bk = reactive({ checkIn: initial.checkInDate, checkOut: initial.checkOutDate, rooms: initial.roomCount, guests: initial.guests })
+const bk = reactive({ checkIn: initial.checkInDate, checkOut: initial.checkOutDate, rooms: initial.roomCount, guests: initial.guests, stayType: initial.stayType })
+const earlyMorningAvailable = isEarlyMorningAvailable()
+const earlyMode = computed({
+  get: () => bk.stayType === 'EARLY_MORNING',
+  set: enabled => {
+    bk.stayType = enabled ? 'EARLY_MORNING' : 'STANDARD'
+    if (enabled) bk.checkIn = bk.checkOut = hotelToday()
+    else if (bk.checkIn) bk.checkOut = nextDate(bk.checkIn)
+  }
+})
 const nights = computed(() => {
   if (!bk.checkIn || !bk.checkOut) return 0
+  if (bk.stayType === 'EARLY_MORNING') return 1
   return Math.max(0, Math.round((new Date(bk.checkOut) - new Date(bk.checkIn)) / 86400000))
 })
 const totalPrice = computed(() => quote.value?.totalAmount ?? (room.value.basePrice ? room.value.basePrice * nights.value * bk.rooms : 0))
 
-function noPast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
+function noPast(t) { if (earlyMode.value) return t.toLocaleDateString('sv-SE') !== hotelToday(); const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
 function noPastOut(t) {
+  if (earlyMode.value) return t.toLocaleDateString('sv-SE') !== hotelToday()
   if (!bk.checkIn) return noPast(t)
   const n = new Date(bk.checkIn + 'T00:00:00'); n.setDate(n.getDate() + 1); return t.getTime() < n.getTime()
 }
@@ -170,7 +184,7 @@ async function loadQuote(showError = false) {
   if (!bk.checkIn || !bk.checkOut || !room.value.id) { quote.value = null; return null }
   const requestId = ++quoteRequestId
   try {
-    const response = await searchRoomTypes({ checkInDate: bk.checkIn, checkOutDate: bk.checkOut, roomCount: bk.rooms, guests: bk.guests })
+    const response = await searchRoomTypes({ checkInDate: bk.checkIn, checkOutDate: bk.checkOut, roomCount: bk.rooms, guests: bk.guests, stayType: bk.stayType })
     if (requestId !== quoteRequestId) return quote.value
     const matched = (response.data || []).find(item => item.id === room.value.id)
     quote.value = matched || null
@@ -197,9 +211,13 @@ async function doBook() {
   if (!bk.checkIn || !bk.checkOut) { ElMessage.warning('请选择日期'); return }
   const currentQuote = await loadQuote(true)
   if (!currentQuote) return
-  router.push({ path: '/booking/confirm', query: toBookingQuery({ checkInDate: bk.checkIn, checkOutDate: bk.checkOut, roomCount: bk.rooms, guests: bk.guests }, room.value.id) })
+  router.push({ path: '/booking/confirm', query: toBookingQuery({ checkInDate: bk.checkIn, checkOutDate: bk.checkOut, roomCount: bk.rooms, guests: bk.guests, stayType: bk.stayType }, room.value.id) })
 }
-watch(() => [bk.checkIn, bk.checkOut, bk.rooms, bk.guests], () => { loadQuote() })
+function isEarlyCell(cell) { return earlyMorningAvailable && cell?.dayjs?.format?.('YYYY-MM-DD') === hotelToday() }
+watch(() => bk.checkIn, value => {
+  if (bk.stayType === 'STANDARD' && value && (!bk.checkOut || bk.checkOut <= value)) bk.checkOut = nextDate(value)
+})
+watch(() => [bk.checkIn, bk.checkOut, bk.rooms, bk.guests, bk.stayType], () => { loadQuote() })
 watch(() => route.params.id, id => { if (id) load() })
 onMounted(load)
 </script>

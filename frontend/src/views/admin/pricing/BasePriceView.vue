@@ -1,3 +1,4 @@
+
 <template>
   <div class="base-price-view">
     <div class="page-header">
@@ -16,8 +17,8 @@
         />
         <el-select v-model="statusFilter" placeholder="全部状态" class="filter-select" @change="handleSearch">
           <el-option label="全部状态" value="" />
-          <el-option label="上线 ONLINE" value="ONLINE" />
-          <el-option label="下线 OFFLINE" value="OFFLINE" />
+          <el-option label="已上线" value="ONLINE" />
+          <el-option label="已下线" value="OFFLINE" />
         </el-select>
         <el-button @click="handleSearch">查询</el-button>
         <el-button :loading="loading" @click="loadBasePrices">重新加载</el-button>

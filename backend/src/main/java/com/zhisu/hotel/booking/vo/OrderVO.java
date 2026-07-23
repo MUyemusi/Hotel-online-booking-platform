@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.booking.vo;
 
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class OrderVO {
     private Integer roomCount;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
+    private String stayType;
     private Integer totalNights;
     private Integer guestCount;
     private BigDecimal totalAmount;

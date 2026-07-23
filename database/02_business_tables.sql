@@ -1,3 +1,4 @@
+
 USE zhisu_hotel;
 SET NAMES utf8mb4;
 
@@ -107,6 +108,7 @@ CREATE TABLE IF NOT EXISTS booking_order (
     room_count INT NOT NULL DEFAULT 1,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
+    stay_type VARCHAR(30) NOT NULL DEFAULT 'STANDARD',
     total_nights INT NOT NULL DEFAULT 1,
     guest_count INT NOT NULL DEFAULT 1,
     total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,

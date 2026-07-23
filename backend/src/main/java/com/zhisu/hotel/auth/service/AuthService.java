@@ -36,8 +36,8 @@ public class AuthService {
 
     @Transactional
     public CurrentUserVO register(RegisterRequest request) {
-        if (exists("username", request.getUsername())) throw new BusinessException("USERNAME_EXISTS", "账号已存在");
-        if (exists("phone", request.getPhone())) throw new BusinessException("PHONE_EXISTS", "手机号已注册");
+        if (loginIdentifierExists(request.getUsername())) throw new BusinessException("USERNAME_EXISTS", "用户名已存在或与已注册手机号重复");
+        if (loginIdentifierExists(request.getPhone())) throw new BusinessException("PHONE_EXISTS", "手机号已注册或与已有用户名重复");
         if (request.getEmail() != null && !request.getEmail().isBlank() && exists("email", request.getEmail())) {
             throw new BusinessException("EMAIL_EXISTS", "邮箱已注册");
         }
@@ -58,9 +58,10 @@ public class AuthService {
 
     @Transactional
     public AuthSession login(LoginRequest request) {
-        UserRow user = findByUsername(request.getUsername());
+        String identifier = request.getUsername().trim();
+        UserRow user = findByUsernameOrPhone(identifier);
         if (user == null || !"ENABLED".equalsIgnoreCase(user.status()) || !passwordEncoder.matches(request.getPassword(), user.passwordHash())) {
-            throw new BusinessException("BAD_CREDENTIALS", "账号或密码错误");
+            throw new BusinessException("BAD_CREDENTIALS", "用户名、手机号或密码错误");
         }
         jdbcTemplate.update("UPDATE sys_user SET last_login_at=NOW() WHERE id=?", user.id());
         return issueSession(user.id(), user.username());
@@ -126,16 +127,23 @@ public class AuthService {
         );
     }
 
-    private UserRow findByUsername(String username) {
+    private UserRow findByUsernameOrPhone(String identifier) {
         return jdbcTemplate.query(
-                "SELECT id,username,password_hash,status FROM sys_user WHERE username=? LIMIT 1",
+                "SELECT id,username,password_hash,status FROM sys_user WHERE username=? OR phone=? " +
+                        "ORDER BY CASE WHEN username=? THEN 0 ELSE 1 END LIMIT 1",
                 rs -> rs.next() ? new UserRow(rs.getLong("id"), rs.getString("username"), rs.getString("password_hash"), rs.getString("status")) : null,
-                username
+                identifier, identifier, identifier
         );
     }
 
     private boolean exists(String column, String value) {
         Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_user WHERE " + column + "=?", Integer.class, value);
+        return count != null && count > 0;
+    }
+
+    private boolean loginIdentifierExists(String value) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sys_user WHERE username=? OR phone=?", Integer.class, value, value);
         return count != null && count > 0;
     }
 

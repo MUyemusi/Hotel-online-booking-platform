@@ -21,8 +21,9 @@ public class CreateOrderRequest {
     private LocalDate checkInDate;
 
     @NotNull(message = "离店日期不能为空")
-    @Future(message = "离店日期必须在未来")
     private LocalDate checkOutDate;
+
+    private String stayType = "STANDARD";
 
     @NotNull(message = "房间数量不能为空")
     @Min(value = 1, message = "至少预订1间")

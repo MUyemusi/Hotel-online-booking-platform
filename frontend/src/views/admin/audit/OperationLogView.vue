@@ -1,3 +1,4 @@
+
 <template>
   <section class="audit-page">
     <div class="page-title"><div><h1>操作日志</h1><p>追踪重要写操作的执行人、结果、来源与耗时。</p></div><el-button @click="load">刷新</el-button></div>
@@ -26,7 +27,7 @@
     <el-dialog v-model="detail.visible" title="操作日志详情" width="650px">
       <el-descriptions v-if="detail.data" :column="2" border>
         <el-descriptions-item label="日志 ID">{{ detail.data.id }}</el-descriptions-item><el-descriptions-item label="操作人">{{ detail.data.operatorId || '访客/未登录' }}</el-descriptions-item>
-        <el-descriptions-item label="模块/动作">{{ moduleName(detail.data.module) }} / {{ actionName(detail.data.action) }}</el-descriptions-item><el-descriptions-item label="结果">{{ detail.data.result }}</el-descriptions-item>
+        <el-descriptions-item label="模块/动作">{{ moduleName(detail.data.module) }} / {{ actionName(detail.data.action) }}</el-descriptions-item><el-descriptions-item label="结果">{{ detail.data.result === 'SUCCESS' ? '成功' : '失败' }}</el-descriptions-item>
         <el-descriptions-item label="请求方式">{{ detail.data.requestMethod }}</el-descriptions-item><el-descriptions-item label="IP 地址">{{ detail.data.ipAddress }}</el-descriptions-item>
         <el-descriptions-item label="请求地址" :span="2">{{ detail.data.requestUri }}</el-descriptions-item><el-descriptions-item label="记录时间" :span="2">{{ formatTime(detail.data.createdAt) }}</el-descriptions-item>
         <el-descriptions-item label="执行详情" :span="2"><pre>{{ detail.data.detail || '-' }}</pre></el-descriptions-item>

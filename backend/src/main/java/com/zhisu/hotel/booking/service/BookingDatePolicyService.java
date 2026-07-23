@@ -9,4 +9,8 @@ public interface BookingDatePolicyService {
     LocalDate getLatestCheckInDate();
 
     void validateBookingDates(LocalDate checkInDate, LocalDate checkOutDate);
+
+    StayDateRange resolveStay(LocalDate checkInDate, LocalDate checkOutDate, String stayType);
+
+    boolean isEarlyMorningWindow();
 }

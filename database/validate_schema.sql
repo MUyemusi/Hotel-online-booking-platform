@@ -1,3 +1,4 @@
+
 USE zhisu_hotel;
 SET NAMES utf8mb4;
 
@@ -16,19 +17,19 @@ BEGIN
       AND table_name IN ('sys_user','booking_order','payment_record','cancellation_record','scheduled_task_log',
                          'auth_refresh_token','hotel_info','room_type_image','price_rule','system_config');
 
-    SELECT 12 - COUNT(*) INTO missing_columns
+    SELECT 13 - COUNT(*) INTO missing_columns
     FROM information_schema.columns
     WHERE table_schema = DATABASE()
       AND CONCAT(table_name, '.', column_name) IN (
-          'sys_user.password_hash','booking_order.payment_status','payment_record.idempotency_key',
+          'sys_user.password_hash','booking_order.payment_status','booking_order.stay_type','payment_record.idempotency_key',
           'hotel_info.logo_url','hotel_info.contact_phone','hotel_info.facilities','hotel_info.checkin_notice',
           'hotel_info.cancellation_policy','hotel_info.traffic_info','hotel_info.faq_content',
           'price_rule.priority','auth_refresh_token.token_hash'
       );
 
-    SELECT 3 - COUNT(*) INTO missing_configs
+    SELECT 4 - COUNT(*) INTO missing_configs
     FROM system_config
-    WHERE config_key IN ('INVENTORY_WARNING_VALUE','IMAGE_UPLOAD_MAX_MB','DEFAULT_HOLIDAY_COEFFICIENT');
+    WHERE config_key IN ('INVENTORY_WARNING_VALUE','IMAGE_UPLOAD_MAX_MB','DEFAULT_HOLIDAY_COEFFICIENT','EARLY_MORNING_END_TIME');
 
     SELECT COUNT(*) INTO legacy_foreign_keys
     FROM information_schema.key_column_usage

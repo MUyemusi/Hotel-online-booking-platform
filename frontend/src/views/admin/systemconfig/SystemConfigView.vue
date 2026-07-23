@@ -1,4 +1,5 @@
-﻿<template>
+
+<template>
   <div class="system-config-view">
     <div class="page-header">
       <div>
@@ -8,13 +9,13 @@
       <div class="header-actions">
         <el-select v-model="groupFilter" placeholder="全部分组" class="filter-select" @change="loadConfigs">
           <el-option label="全部" value="" />
-          <el-option label="预订 BOOKING" value="BOOKING" />
-          <el-option label="订单 ORDER" value="ORDER" />
-          <el-option label="信用 CREDIT" value="CREDIT" />
-          <el-option label="前台 FRONTDESK" value="FRONTDESK" />
-          <el-option label="库存 INVENTORY" value="INVENTORY" />
-          <el-option label="内容 CONTENT" value="CONTENT" />
-          <el-option label="价格 PRICING" value="PRICING" />
+          <el-option label="预订" value="BOOKING" />
+          <el-option label="订单" value="ORDER" />
+          <el-option label="信用" value="CREDIT" />
+          <el-option label="前台" value="FRONTDESK" />
+          <el-option label="库存" value="INVENTORY" />
+          <el-option label="内容" value="CONTENT" />
+          <el-option label="价格" value="PRICING" />
         </el-select>
         <el-button :loading="loading" @click="loadConfigs">重新加载</el-button>
       </div>
@@ -29,8 +30,8 @@
             <span>{{ scope.row.configValue }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="valueType" label="参数类型" width="110" />
-        <el-table-column prop="configGroup" label="参数分组" width="120" />
+        <el-table-column label="参数类型" width="110"><template #default="{ row }">{{ displayValue('valueType', row.valueType) }}</template></el-table-column>
+        <el-table-column label="参数分组" width="120"><template #default="{ row }">{{ displayValue('configGroup', row.configGroup) }}</template></el-table-column>
         <el-table-column prop="description" label="参数说明" min-width="240" />
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="scope">
@@ -100,6 +101,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { displayValue } from '@/utils/adminDisplay'
 import {
   getSystemConfig,
   getSystemConfigs,

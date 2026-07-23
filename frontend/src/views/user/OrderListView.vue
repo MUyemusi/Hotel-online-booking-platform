@@ -1,7 +1,8 @@
+
 <template><section><div class="title"><h1>我的订单</h1><el-select v-model="status" clearable placeholder="全部状态" @change="load"><el-option v-for="s in statuses" :key="s" :label="statusText(s)" :value="s"/></el-select></div>
 <el-empty v-if="!loading&&!records.length" description="暂无订单" />
 <el-card v-for="order in records" :key="order.id" class="order" @click="router.push('/orders/'+order.id)">
-  <div><strong>{{ order.roomTypeName }}</strong><p>{{ order.checkInDate }} 至 {{ order.checkOutDate }} · {{ order.roomCount }}间</p></div>
+  <div><strong>{{ order.roomTypeName }}</strong><p v-if="order.stayType === 'EARLY_MORNING'">{{ order.checkInDate }} 凌晨入住 · 当日中午退房 · {{ order.roomCount }}间</p><p v-else>{{ order.checkInDate }} 至 {{ order.checkOutDate }} · {{ order.roomCount }}间</p></div>
   <div><el-tag>{{ statusText(order.orderStatus) }}</el-tag><h3>￥{{ order.totalAmount }}</h3></div>
 </el-card>
 <el-pagination v-if="total>size" v-model:current-page="page" :page-size="size" :total="total" @current-change="load"/>
