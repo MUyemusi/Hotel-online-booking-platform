@@ -30,6 +30,22 @@ public class RoomDetailVO {
 
     private String maintenanceReason;
 
+    private Boolean nearElevator;
+
+    private Boolean headRoom;
+
+    private Boolean tailRoom;
+
+    private String cadImageUrl;
+
+    private Long currentOrderId;
+
+    private String currentOrderNo;
+
+    private String currentGuestName;
+
+    private String currentGuestPhone;
+
     private String remark;
 
     private LocalDateTime createdAt;

@@ -87,7 +87,14 @@
 
         <el-form-item label="图片地址" prop="imageUrl">
           <el-input v-model="form.imageUrl" maxlength="500" show-word-limit placeholder="请输入可访问的图片URL" />
-          <el-upload :show-file-list="false" accept="image/jpeg,image/png,image/gif,image/webp" :http-request="handleImageUpload"><el-button :loading="uploading">上传图片</el-button></el-upload>
+          <el-upload
+            :show-file-list="false"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            :before-upload="beforeImageUpload"
+            :http-request="handleImageUpload"
+          >
+            <el-button :loading="uploading">上传图片</el-button>
+          </el-upload>
         </el-form-item>
 
         <el-form-item label="跳转地址" prop="linkUrl">
@@ -155,6 +162,7 @@ const createDefaultForm = () => ({
 })
 
 const form = reactive(createDefaultForm())
+const maxImageUploadMb = 5
 
 const rules = {
   title: [
@@ -174,6 +182,19 @@ const rules = {
   ]
 }
 
+
+function beforeImageUpload(file) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.error('仅支持 JPG、PNG、GIF、WEBP 图片')
+    return false
+  }
+  if (file.size > maxImageUploadMb * 1024 * 1024) {
+    ElMessage.error(`图片不能超过 ${maxImageUploadMb}MB`)
+    return false
+  }
+  return true
+}
 
 async function handleImageUpload(options) {
   uploading.value = true

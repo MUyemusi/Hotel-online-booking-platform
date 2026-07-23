@@ -3,9 +3,21 @@ spring:
     name: zhisu-hotel
   profiles:
     active: dev
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
 
 auth:
   jwt-secret: ${JWT_SECRET:zhisu-hotel-development-jwt-secret-key-2026}
   access-token-minutes: ${ACCESS_TOKEN_MINUTES:15}
   refresh-token-days: ${REFRESH_TOKEN_DAYS:7}
   cookie-secure: ${COOKIE_SECURE:false}
+
+assistant:
+  deepseek:
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    api-key: ${DEEPSEEK_API_KEY:sk-7b22b97771574ff98d84441ce94ccde3}
+    model: ${DEEPSEEK_MODEL:deepseek-chat}
+    connect-timeout-seconds: ${DEEPSEEK_CONNECT_TIMEOUT_SECONDS:10}
+    read-timeout-seconds: ${DEEPSEEK_READ_TIMEOUT_SECONDS:45}

@@ -23,6 +23,7 @@
         </el-sub-menu>
         <el-sub-menu index="hotel-ops">
           <template #title>酒店运营</template>
+          <el-menu-item index="/admin/room-map">楼层房态地图</el-menu-item>
           <el-menu-item index="/admin/content/hotel-info">酒店信息管理</el-menu-item>
           <el-menu-item index="/admin/content/banners">首页轮播图管理</el-menu-item>
           <el-menu-item index="/admin/content/announcements">酒店公告管理</el-menu-item>

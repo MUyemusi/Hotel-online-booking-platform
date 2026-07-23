@@ -1,10 +1,13 @@
 package com.zhisu.hotel.room.service.impl;
 
+import com.zhisu.hotel.booking.mapper.BookingOrderMapper;
+import com.zhisu.hotel.booking.mapper.OrderGuestMapper;
 import com.zhisu.hotel.common.enums.RoomStatus;
 import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.room.dto.RoomCreateRequest;
 import com.zhisu.hotel.room.dto.RoomStatusChangeRequest;
 import com.zhisu.hotel.room.entity.Room;
+import com.zhisu.hotel.room.mapper.RoomAssignmentMapper;
 import com.zhisu.hotel.room.entity.RoomStatusLog;
 import com.zhisu.hotel.room.mapper.RoomMapper;
 import com.zhisu.hotel.room.mapper.RoomStatusLogMapper;
@@ -23,7 +26,17 @@ class RoomServiceImplTest {
     private final RoomMapper roomMapper = mock(RoomMapper.class);
     private final RoomStatusLogMapper roomStatusLogMapper = mock(RoomStatusLogMapper.class);
     private final RoomTypeMapper roomTypeMapper = mock(RoomTypeMapper.class);
-    private final RoomServiceImpl roomService = new RoomServiceImpl(roomMapper, roomStatusLogMapper, roomTypeMapper);
+    private final RoomAssignmentMapper roomAssignmentMapper = mock(RoomAssignmentMapper.class);
+    private final OrderGuestMapper orderGuestMapper = mock(OrderGuestMapper.class);
+    private final BookingOrderMapper bookingOrderMapper = mock(BookingOrderMapper.class);
+    private final RoomServiceImpl roomService = new RoomServiceImpl(
+            roomMapper,
+            roomStatusLogMapper,
+            roomTypeMapper,
+            roomAssignmentMapper,
+            orderGuestMapper,
+            bookingOrderMapper
+    );
 
     @Test
     void validateRoomNoAndFloorAcceptsValidRoomNumber() {

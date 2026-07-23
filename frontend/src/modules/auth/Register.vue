@@ -3,7 +3,7 @@
     <router-link to="/login" class="back-home">← 返回登录</router-link>
     <div class="register-card">
       <span class="brand">智宿</span>
-      <p class="brand-en">ACCOUNT REGISTRATION</p>
+      <p class="brand-en">住客账号注册</p>
       <h2>创建住客账号</h2>
       <p class="hint">注册账号默认为住客角色，员工和管理员角色由系统管理员分配</p>
 

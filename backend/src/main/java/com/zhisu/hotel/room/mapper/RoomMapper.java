@@ -36,6 +36,25 @@ public interface RoomMapper extends BaseMapper<Room> {
             @Param("version") Integer version
     );
 
+    @Update("UPDATE room " +
+            "SET room_type_id = #{roomTypeId}, " +
+            "    near_elevator = #{nearElevator}, " +
+            "    head_room = #{headRoom}, " +
+            "    tail_room = #{tailRoom}, " +
+            "    cad_image_url = #{cadImageUrl}, " +
+            "    remark = #{remark}, " +
+            "    updated_at = #{updatedAt} " +
+            "WHERE id = #{roomId} " +
+            "  AND is_deleted = 0")
+    int updateRoomProfile(@Param("roomId") Long roomId,
+                          @Param("roomTypeId") Long roomTypeId,
+                          @Param("nearElevator") Boolean nearElevator,
+                          @Param("headRoom") Boolean headRoom,
+                          @Param("tailRoom") Boolean tailRoom,
+                          @Param("cadImageUrl") String cadImageUrl,
+                          @Param("remark") String remark,
+                          @Param("updatedAt") LocalDateTime updatedAt);
+
     @Select({
             "<script>",
             "SELECT * FROM room",

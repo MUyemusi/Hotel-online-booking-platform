@@ -2,7 +2,7 @@
   <section class="nearby-section section-shell">
     <div class="section-heading">
       <div>
-        <p class="eyebrow">EXPLORE SANYA</p>
+        <p class="eyebrow">探索三亚</p>
         <h2>周边游玩推荐</h2>
         <p class="subtitle">
           从亚龙湾出发，发现三亚值得体验的自然风光与特色景点
@@ -337,7 +337,7 @@ function handleImageError(event) {
           font-family="Arial"
           letter-spacing="8"
         >
-          EXPLORE SANYA
+          探索三亚
         </text>
 
         <text
@@ -349,7 +349,7 @@ function handleImageError(event) {
           font-family="Arial"
           opacity="0.82"
         >
-          Tropical Coast · Island Holiday
+          热带海岸 · 海岛假期
         </text>
       </svg>
     `)

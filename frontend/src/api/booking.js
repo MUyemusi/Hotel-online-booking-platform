@@ -38,3 +38,26 @@ export function cancelOrder(id, data) {
     data
   })
 }
+
+/** 住客自助退房 */
+export function checkoutOrder(id, data) {
+  return request({
+    url: `/api/orders/${id}/check-out`,
+    method: 'post',
+    data
+  })
+}
+
+export function generateCheckinQr(orderId) {
+  return request({
+    url: `/api/orders/${orderId}/checkin-qr`,
+    method: 'post'
+  })
+}
+
+export function getCheckinQrStatus(orderId) {
+  return request({
+    url: `/api/orders/${orderId}/checkin-qr/status`,
+    method: 'get'
+  })
+}

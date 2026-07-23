@@ -1,8 +1,10 @@
 <template>
   <router-view />
+  <XiaoZhiAssistant />
 </template>
 
 <script setup>
+import XiaoZhiAssistant from '@/components/XiaoZhiAssistant.vue'
 </script>
 
 <style>

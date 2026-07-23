@@ -15,5 +15,13 @@ public class RoomUpdateRequest {
     @NotNull(message = "Room type ID must not be null")
     private Long roomTypeId;
 
+    private Boolean nearElevator;
+
+    private Boolean headRoom;
+
+    private Boolean tailRoom;
+
+    private String cadImageUrl;
+
     private String remark;
 }

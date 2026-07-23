@@ -11,6 +11,7 @@ application-dev.yml
 
 # Backend build
 backend/target/
+backend/uploads/
 
 # Frontend
 /node_modules/

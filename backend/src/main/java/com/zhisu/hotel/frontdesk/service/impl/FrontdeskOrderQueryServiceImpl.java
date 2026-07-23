@@ -151,15 +151,15 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
 
         boolean paymentPassed = PaymentStatus.PAID.name().equals(order.getPaymentStatus());
         items.add(checkItem("PAYMENT_STATUS", paymentPassed,
-                paymentPassed ? "Order is paid" : "Order is not paid"));
+                paymentPassed ? "订单已支付" : "订单未支付"));
         if (!paymentPassed) {
             failureCode = ErrorCode.ORDER_NOT_PAID;
-            failureMessage = "Order is not paid";
+            failureMessage = "订单未支付";
         }
 
         boolean statusPassed = OrderStatus.PENDING_CHECK_IN.name().equals(order.getOrderStatus());
         items.add(checkItem("ORDER_STATUS", statusPassed,
-                statusPassed ? "Order is pending check-in" : orderStatusFailureMessage(order.getOrderStatus())));
+                statusPassed ? "订单处于待入住状态" : orderStatusFailureMessage(order.getOrderStatus())));
         if (failureCode == null && !statusPassed) {
             failureCode = ErrorCode.ORDER_NOT_PENDING_CHECKIN;
             failureMessage = orderStatusFailureMessage(order.getOrderStatus());
@@ -167,13 +167,13 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
 
         LocalDate today = LocalDate.now(clock);
         boolean datePassed = true;
-        String dateMessage = "Current business date matches check-in date";
+        String dateMessage = "当前营业日期符合入住日期";
         if (order.getCheckInDate() == null || order.getCheckOutDate() == null) {
             datePassed = false;
-            dateMessage = "Order check-in or check-out date is missing";
+            dateMessage = "订单入住或离店日期缺失";
         } else if (today.isBefore(order.getCheckInDate())) {
             datePassed = false;
-            dateMessage = "Check-in date has not arrived";
+            dateMessage = "入住日期尚未到达";
             if (failureCode == null) {
                 failureCode = ErrorCode.CHECKIN_TOO_EARLY;
                 failureMessage = dateMessage;
@@ -192,33 +192,33 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
         RoomType roomType = order.getRoomTypeId() == null ? null : roomTypeMapper.selectById(order.getRoomTypeId());
         boolean roomTypePassed = roomType != null;
         items.add(checkItem("ROOM_TYPE", roomTypePassed,
-                roomTypePassed ? "Order room type is valid" : "Order room type is invalid"));
+                roomTypePassed ? "订单房型有效" : "订单房型无效"));
         if (failureCode == null && !roomTypePassed) {
             failureCode = ErrorCode.ORDER_ROOM_TYPE_INVALID;
-            failureMessage = "Order room type is invalid";
+            failureMessage = "订单房型无效";
         }
 
         int requiredRoomCount = order.getRoomCount() == null ? 0 : order.getRoomCount();
         boolean roomCountPassed = requiredRoomCount > 0;
         items.add(checkItem("ROOM_COUNT", roomCountPassed,
-                roomCountPassed ? "Order room count is valid" : "Order room count is invalid"));
+                roomCountPassed ? "订单房间数量有效" : "订单房间数量无效"));
         if (failureCode == null && !roomCountPassed) {
             failureCode = ErrorCode.ORDER_ROOM_COUNT_INVALID;
-            failureMessage = "Order room count is invalid";
+            failureMessage = "订单房间数量无效";
         }
 
         int assignedCount = countActiveAssignments(order.getId());
         int remainingRoomCount = Math.max(requiredRoomCount - assignedCount, 0);
         boolean assignmentPassed = assignedCount == 0;
-        String assignmentMessage = "Order has no active room assignment";
+        String assignmentMessage = "订单暂无有效房间分配";
         if (assignedCount >= requiredRoomCount && requiredRoomCount > 0) {
-            assignmentMessage = "Order has completed room assignment";
+            assignmentMessage = "订单已完成房间分配";
             if (failureCode == null) {
                 failureCode = ErrorCode.ORDER_ALREADY_ASSIGNED;
                 failureMessage = assignmentMessage;
             }
         } else if (assignedCount > 0) {
-            assignmentMessage = "Order has partial room assignment, remaining rooms: " + remainingRoomCount;
+            assignmentMessage = "订单存在部分房间分配，剩余需分配房间数：" + remainingRoomCount;
             if (failureCode == null) {
                 failureCode = ErrorCode.ORDER_PARTIALLY_ASSIGNED;
                 failureMessage = assignmentMessage;
@@ -234,8 +234,8 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
                 && roomCountPassed
                 && availableRoomCount >= remainingRoomCount
                 && remainingRoomCount > 0;
-        String availabilityMessage = "Required rooms: " + remainingRoomCount
-                + ", allocatable rooms: " + availableRoomCount;
+        String availabilityMessage = "需分配房间数：" + remainingRoomCount
+                + "，可分配房间数：" + availableRoomCount;
         items.add(checkItem("ROOM_AVAILABILITY", roomAvailabilityPassed, availabilityMessage));
         if (failureCode == null && !roomAvailabilityPassed) {
             failureCode = ErrorCode.ALLOCATABLE_ROOM_NOT_ENOUGH;
@@ -480,12 +480,12 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
             return null;
         }
         Map<String, String> texts = Map.of(
-                OrderStatus.PENDING_PAYMENT.name(), "Pending payment",
-                OrderStatus.PENDING_CHECK_IN.name(), "Pending check-in",
-                OrderStatus.CHECKED_IN.name(), "Checked in",
-                OrderStatus.COMPLETED.name(), "Completed",
-                OrderStatus.CANCELLED.name(), "Cancelled",
-                OrderStatus.CLOSED.name(), "Closed"
+                OrderStatus.PENDING_PAYMENT.name(), "待支付",
+                OrderStatus.PENDING_CHECK_IN.name(), "待入住",
+                OrderStatus.CHECKED_IN.name(), "已入住",
+                OrderStatus.COMPLETED.name(), "已完成",
+                OrderStatus.CANCELLED.name(), "已取消",
+                OrderStatus.CLOSED.name(), "已关闭"
         );
         return texts.getOrDefault(status, status);
     }
@@ -495,41 +495,41 @@ public class FrontdeskOrderQueryServiceImpl implements FrontdeskOrderQueryServic
             return null;
         }
         Map<String, String> texts = Map.of(
-                PaymentStatus.UNPAID.name(), "Unpaid",
-                PaymentStatus.PAID.name(), "Paid",
-                PaymentStatus.FAILED.name(), "Failed",
-                PaymentStatus.REFUNDED.name(), "Refunded"
+                PaymentStatus.UNPAID.name(), "未支付",
+                PaymentStatus.PAID.name(), "已支付",
+                PaymentStatus.FAILED.name(), "支付失败",
+                PaymentStatus.REFUNDED.name(), "已退款"
         );
         return texts.getOrDefault(status, status);
     }
 
     private String roomStatusText(RoomStatus status) {
         return status == null ? null : switch (status) {
-            case AVAILABLE -> "Available";
-            case RESERVED -> "Reserved";
-            case OCCUPIED -> "Occupied";
-            case DIRTY -> "Dirty";
-            case MAINTENANCE -> "Maintenance";
-            case DISABLED -> "Disabled";
+            case AVAILABLE -> "空闲";
+            case RESERVED -> "已预留";
+            case OCCUPIED -> "在住";
+            case DIRTY -> "待清洁";
+            case MAINTENANCE -> "维修";
+            case DISABLED -> "停用";
         };
     }
 
     private String orderStatusFailureMessage(String status) {
         if (OrderStatus.PENDING_PAYMENT.name().equals(status)) {
-            return "Order is still pending payment";
+            return "订单仍处于待支付状态";
         }
         if (OrderStatus.CHECKED_IN.name().equals(status)) {
-            return "Order has already checked in";
+            return "订单已办理入住";
         }
         if (OrderStatus.COMPLETED.name().equals(status)) {
-            return "Order has completed";
+            return "订单已完成";
         }
         if (OrderStatus.CANCELLED.name().equals(status)) {
-            return "Order has been cancelled";
+            return "订单已取消";
         }
         if (OrderStatus.CLOSED.name().equals(status)) {
-            return "Order has been closed";
+            return "订单已关闭";
         }
-        return "Order is not pending check-in";
+        return "订单不是待入住状态";
     }
 }

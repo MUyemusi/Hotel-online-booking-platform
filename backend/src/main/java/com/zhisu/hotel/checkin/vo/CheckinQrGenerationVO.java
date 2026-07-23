@@ -19,6 +19,7 @@ public class CheckinQrGenerationVO {
     private String tokenStatus;
     private LocalDateTime expiresAt;
     private LocalDateTime generatedAt;
+    private String verificationCode;
     private String qrContent;
     private String qrImageDataUrl;
 }

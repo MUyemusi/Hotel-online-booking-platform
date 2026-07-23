@@ -5,6 +5,7 @@ package com.zhisu.hotel.dashboard.service;
 import com.zhisu.hotel.dashboard.vo.DashboardOverviewVO;
 import com.zhisu.hotel.dashboard.vo.DashboardAnalyticsVO;
 import com.zhisu.hotel.dashboard.vo.DashboardTrendPointVO;
+import com.zhisu.hotel.dashboard.vo.DashboardPaymentRecordVO;
 import com.zhisu.hotel.dashboard.vo.InventoryWarningVO;
 import com.zhisu.hotel.dashboard.vo.RoomTypeStatisticVO;
 
@@ -17,6 +18,8 @@ public interface DashboardService {
     List<DashboardTrendPointVO> getTrends(int days);
 
     DashboardAnalyticsVO getAnalytics(int days);
+
+    List<DashboardPaymentRecordVO> getRecentPayments(int days, int limit);
 
     List<RoomTypeStatisticVO> getRoomTypeStatistics();
 

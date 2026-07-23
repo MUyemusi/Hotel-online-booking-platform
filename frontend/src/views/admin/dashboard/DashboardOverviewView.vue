@@ -46,6 +46,23 @@
         </div>
       </el-card>
     </div>
+
+    <el-card shadow="never" class="panel-card">
+      <template #header><b>最近支付流水</b></template>
+      <el-table :data="paymentRecords" stripe empty-text="暂无支付流水">
+        <el-table-column prop="paidAt" label="支付时间" width="170">
+          <template #default="{ row }">{{ row.paidAt?.slice(0, 19) }}</template>
+        </el-table-column>
+        <el-table-column prop="paymentNo" label="支付单号" min-width="180" />
+        <el-table-column prop="orderNo" label="订单号" min-width="160" />
+        <el-table-column prop="paymentMethod" label="方式" width="110">
+          <template #default="{ row }">{{ displayValue('paymentMethod', row.paymentMethod) }}</template>
+        </el-table-column>
+        <el-table-column prop="amount" label="金额(元)" width="120">
+          <template #default="{ row }">￥{{ money(row.amount) }}</template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -56,7 +73,7 @@ import * as echarts from 'echarts/core'
 import { BarChart, GaugeChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { getDashboardAnalytics, getDashboardOverview, getInventoryWarnings } from '@/api/dashboard'
+import { getDashboardAnalytics, getDashboardOverview, getDashboardPaymentRecords, getInventoryWarnings } from '@/api/dashboard'
 import { displayValue } from '@/utils/adminDisplay'
 
 echarts.use([BarChart, GaugeChart, LineChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
@@ -64,6 +81,7 @@ echarts.use([BarChart, GaugeChart, LineChart, PieChart, GridComponent, LegendCom
 const loading = ref(false)
 const periodDays = ref(30)
 const inventoryWarnings = ref([])
+const paymentRecords = ref([])
 const trendRef = ref()
 const occupancyRef = ref()
 const roomTypeRef = ref()
@@ -157,11 +175,19 @@ async function loadAll() {
   loading.value = true
   try {
     const [overviewResult, analyticsResult, warningsResult] = await Promise.all([
-      getDashboardOverview(), getDashboardAnalytics({ days: periodDays.value }), getInventoryWarnings()
+      getDashboardOverview(),
+      getDashboardAnalytics({ days: periodDays.value }),
+      getInventoryWarnings()
     ])
     Object.assign(overview, resultData(overviewResult, '加载今日概览失败'))
     Object.assign(analytics, resultData(analyticsResult, '加载经营分析失败'))
     inventoryWarnings.value = resultData(warningsResult, '加载库存预警失败') || []
+    try {
+      const paymentsResult = await getDashboardPaymentRecords({ days: periodDays.value, limit: 20 })
+      paymentRecords.value = resultData(paymentsResult, '加载支付流水失败') || []
+    } catch {
+      paymentRecords.value = []
+    }
     await nextTick()
     renderCharts()
   } catch (error) {

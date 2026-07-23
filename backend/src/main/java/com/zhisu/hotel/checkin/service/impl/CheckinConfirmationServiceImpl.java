@@ -181,11 +181,19 @@ public class CheckinConfirmationServiceImpl implements CheckinConfirmationServic
         return normalized.stream().sorted().toList();
     }
 
-    private String extractToken(String qrContent) {
-        if (qrContent == null || qrContent.isBlank() || !qrContent.startsWith(CheckinQrServiceImpl.QR_PREFIX)) {
+    private String extractToken(String credential) {
+        if (credential == null || credential.isBlank()) {
             throw new BusinessException(ErrorCode.QR_FORMAT_INVALID, "QR code format is invalid");
         }
-        String token = qrContent.substring(CheckinQrServiceImpl.QR_PREFIX.length());
+        String normalized = credential.trim();
+        String token;
+        if (normalized.startsWith(CheckinQrServiceImpl.QR_PREFIX)) {
+            token = normalized.substring(CheckinQrServiceImpl.QR_PREFIX.length());
+        } else if (normalized.startsWith(CheckinQrServiceImpl.CODE_PREFIX)) {
+            token = normalized.substring(CheckinQrServiceImpl.CODE_PREFIX.length());
+        } else {
+            token = normalized;
+        }
         if (!TOKEN_PATTERN.matcher(token).matches()) {
             throw new BusinessException(ErrorCode.QR_FORMAT_INVALID, "QR code format is invalid");
         }

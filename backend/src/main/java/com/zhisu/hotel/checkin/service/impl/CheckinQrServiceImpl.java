@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 public class CheckinQrServiceImpl implements CheckinQrService {
 
     public static final String QR_PREFIX = "ZHISU_CHECKIN:";
+    public static final String CODE_PREFIX = "ZHISU_CODE:";
     private static final String EXPIRE_CONFIG_KEY = "checkin_qr_expire_minutes";
     private static final int DEFAULT_EXPIRE_MINUTES = 10;
     private static final Pattern TOKEN_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{32,128}$");
@@ -80,6 +81,7 @@ public class CheckinQrServiceImpl implements CheckinQrService {
         checkinQrTokenMapper.insert(token);
 
         String qrContent = QR_PREFIX + plainToken;
+        String verificationCode = CODE_PREFIX + plainToken;
         return CheckinQrGenerationVO.builder()
                 .tokenId(token.getId())
                 .orderId(orderId)
@@ -87,6 +89,7 @@ public class CheckinQrServiceImpl implements CheckinQrService {
                 .tokenStatus(QrTokenStatus.ACTIVE.name())
                 .expiresAt(expiresAt)
                 .generatedAt(now)
+                .verificationCode(verificationCode)
                 .qrContent(qrContent)
                 .qrImageDataUrl(qrImageGenerator.generateDataUrl(qrContent))
                 .build();
@@ -117,13 +120,14 @@ public class CheckinQrServiceImpl implements CheckinQrService {
                 .tokenStatus(token.getTokenStatus().name())
                 .expiresAt(token.getExpireAt())
                 .expired(!now.isBefore(token.getExpireAt()))
+                .verificationCode(CODE_PREFIX + maskedTokenSuffix(token.getTokenHash()))
                 .build();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CheckinQrVerificationVO verify(String qrContent) {
-        String plainToken = extractToken(qrContent);
+    public CheckinQrVerificationVO verify(String credential) {
+        String plainToken = extractToken(credential);
         String tokenHash = tokenHasher.hash(plainToken);
         CheckinQrToken token = checkinQrTokenMapper.selectOne(new LambdaQueryWrapper<CheckinQrToken>()
                 .eq(CheckinQrToken::getTokenHash, tokenHash)
@@ -209,15 +213,30 @@ public class CheckinQrServiceImpl implements CheckinQrService {
         }
     }
 
-    private String extractToken(String qrContent) {
-        if (qrContent == null || qrContent.isBlank() || !qrContent.startsWith(QR_PREFIX)) {
+    private String extractToken(String credential) {
+        if (credential == null || credential.isBlank()) {
             throw new BusinessException(ErrorCode.QR_FORMAT_INVALID, "QR code format is invalid");
         }
-        String token = qrContent.substring(QR_PREFIX.length());
+        String normalized = credential.trim();
+        String token;
+        if (normalized.startsWith(QR_PREFIX)) {
+            token = normalized.substring(QR_PREFIX.length());
+        } else if (normalized.startsWith(CODE_PREFIX)) {
+            token = normalized.substring(CODE_PREFIX.length());
+        } else {
+            token = normalized;
+        }
         if (!TOKEN_PATTERN.matcher(token).matches()) {
             throw new BusinessException(ErrorCode.QR_FORMAT_INVALID, "QR code format is invalid");
         }
         return token;
+    }
+
+    private String maskedTokenSuffix(String tokenHash) {
+        if (tokenHash == null || tokenHash.length() < 12) {
+            return "";
+        }
+        return tokenHash.substring(tokenHash.length() - 12).toUpperCase();
     }
 
     private Integer resolveExpireMinutes() {

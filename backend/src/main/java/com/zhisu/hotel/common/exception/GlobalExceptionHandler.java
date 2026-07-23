@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -101,6 +102,13 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException e) {
         log.warn("Data integrity violation: {}", e.getMessage());
         return ApiResponse.error(ErrorCode.CONFLICT, "Data conflict");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    public ApiResponse<Void> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException e) {
+        return ApiResponse.error("IMAGE_FILE_TOO_LARGE", "图片文件过大，请上传 20MB 以内的图片");
     }
 
     @ExceptionHandler(BadCredentialsException.class)

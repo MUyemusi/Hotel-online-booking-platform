@@ -9,7 +9,7 @@
       </div>
 
       <div class="hero-content">
-        <p class="hero-eyebrow">CURATED SELECTION</p>
+        <p class="hero-eyebrow">精选房型</p>
         <h1 class="hero-title">寻一处静谧，享一段时光</h1>
         <p class="hero-subtitle">每一间客房，皆以温润之姿，待您亲临</p>
 
@@ -63,7 +63,7 @@
     <section class="results-section">
       <div class="section-head">
         <div>
-          <p class="sec-eyebrow">AVAILABLE ROOMS</p>
+          <p class="sec-eyebrow">可订房型</p>
           <h2 v-if="!searchPerformed">全部房型</h2>
           <h2 v-else>可订客房 <span class="count-badge">{{ total }}</span></h2>
         </div>
@@ -108,15 +108,15 @@
             />
             <div v-else class="card-img-fb">
               <div class="fb-pattern"></div>
-              <span>ZHISU</span>
+              <span>智宿</span>
             </div>
-            <div class="card-img-tag" v-if="room.category">{{ room.category }}</div>
+            <div class="card-img-tag" v-if="room.category">{{ categoryLabel(room.category) }}</div>
             <div class="card-img-fade"></div>
           </div>
 
           <div class="card-info">
             <div class="card-top">
-              <h3>{{ room.name }}</h3>
+              <h3>{{ roomName(room) }}</h3>
               <div class="card-price">
                 <span class="p-sym">¥</span>
                 <span class="p-val">{{ room.displayPrice }}</span>
@@ -124,7 +124,7 @@
               </div>
             </div>
 
-            <p class="card-desc" v-if="room.description">{{ room.description }}</p>
+            <p class="card-desc" v-if="room.description">{{ roomDescription(room) }}</p>
 
             <div class="card-meta">
               <span v-if="room.area"><i class="mi">◻</i>{{ room.area }}m²</span>
@@ -133,7 +133,7 @@
             </div>
 
             <div class="card-tags">
-              <span v-if="room.hasWifi" class="tag">Wi‑Fi</span>
+              <span v-if="room.hasWifi" class="tag">无线网络</span>
               <span v-if="room.hasBreakfast" class="tag">含早</span>
               <span v-if="room.hasWindow" class="tag">有窗</span>
               <span v-if="room.hasAc" class="tag">空调</span>
@@ -179,6 +179,42 @@ const initialHadDates = Boolean(route.query.checkInDate || route.query.checkIn |
 const searchPerformed = ref(initialHadDates)
 const rooms = ref([])
 const total = ref(0)
+
+const categoryLabel = (category) => {
+  const map = {
+    SINGLE: '标准大床房',
+    STANDARD: '标准双床房',
+    SUPERIOR: '高级大床房',
+    TWIN: '商务双床房',
+    DELUXE: '豪华大床房',
+    FAMILY: '家庭亲子房',
+    SUITE: '豪华套房'
+  }
+  return map[category] || category
+}
+
+const isEnglishText = (value) => typeof value === 'string' && value.trim() && /^[\x00-\x7F]+$/.test(value.trim())
+
+const roomName = (room) => {
+  if (!room) return ''
+  if (!isEnglishText(room.name)) return room.name
+  return categoryLabel(room.category)
+}
+
+const roomDescription = (room) => {
+  if (!room) return ''
+  if (!isEnglishText(room.description)) return room.description
+  const map = {
+    SINGLE: '温馨舒适的标准大床房，适合情侣或商务出行。',
+    STANDARD: '两张舒适床铺，适合朋友同行或差旅入住。',
+    SUPERIOR: '空间更宽敞，含双人自助早餐。',
+    TWIN: '商务双床配置，适合差旅及朋友同住。',
+    DELUXE: '高品质设施与更舒适的居住体验。',
+    FAMILY: '亲子家庭友好设计，空间宽敞。',
+    SUITE: '一室一厅独立套房，适合高品质入住。'
+  }
+  return map[room.category] || room.description
+}
 
 function dateOffset(days) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10) }
 const initial = normalizeBookingQuery(route.query, { checkInDate: dateOffset(1), checkOutDate: dateOffset(2), roomCount: 1, guests: 1 })

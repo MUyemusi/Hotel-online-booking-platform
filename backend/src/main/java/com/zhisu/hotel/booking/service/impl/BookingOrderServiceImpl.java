@@ -18,6 +18,9 @@ import com.zhisu.hotel.booking.service.BookingOrderService;
 import com.zhisu.hotel.booking.service.BookingDatePolicyService;
 import com.zhisu.hotel.booking.service.StayDateRange;
 import com.zhisu.hotel.booking.vo.*;
+import com.zhisu.hotel.checkin.dto.ConfirmCheckoutRequest;
+import com.zhisu.hotel.checkin.service.CheckoutService;
+import com.zhisu.hotel.checkin.vo.ConfirmCheckoutVO;
 import com.zhisu.hotel.common.enums.CancelType;
 import com.zhisu.hotel.common.enums.OrderStatus;
 import com.zhisu.hotel.common.enums.PaymentStatus;
@@ -63,6 +66,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
     private final RoomTypeMapper roomTypeMapper;
     private final InventoryService inventoryService;
     private final CreditService creditService;
+    private final CheckoutService checkoutService;
     private final PriceService priceService;
     private final PriceQuoteService priceQuoteService;
     private final BookingDatePolicyService bookingDatePolicyService;
@@ -165,6 +169,15 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         if (order == null) throw new BusinessException("ORDER_NOT_FOUND", "订单不存在");
         if (!order.getUserId().equals(userId)) throw new BusinessException("FORBIDDEN", "无权操作该订单");
         return doCancel(order, CancelType.USER_CANCEL.name(), request.getCancelReason(), null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ConfirmCheckoutVO checkoutOrder(Long orderId, ConfirmCheckoutRequest request, Long userId) {
+        BookingOrder order = bookingOrderMapper.selectById(orderId);
+        if (order == null) throw new BusinessException("ORDER_NOT_FOUND", "订单不存在");
+        if (!order.getUserId().equals(userId)) throw new BusinessException("FORBIDDEN", "无权操作该订单");
+        return checkoutService.confirmCheckout(orderId, request);
     }
 
     @Override

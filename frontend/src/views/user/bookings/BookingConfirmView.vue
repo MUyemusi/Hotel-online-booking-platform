@@ -18,7 +18,7 @@
           <h2>订单摘要</h2>
           <div class="summary-room">
             <img v-if="images.length" :src="images[0].imageUrl" class="summary-img" />
-            <div v-else class="summary-img-fb">ZHISU</div>
+            <div v-else class="summary-img-fb">智宿</div>
             <div class="summary-info">
               <h3>{{ roomType.name }}</h3>
               <p class="cat-tag">{{ roomType.category }}</p>

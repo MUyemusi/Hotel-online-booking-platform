@@ -1,6 +1,6 @@
 <template>
   <section class="password-page">
-    <div class="page-head"><span>ACCOUNT SECURITY</span><h1>修改密码</h1><p>验证原密码后更新登录凭据，保护账号安全。</p></div>
+    <div class="page-head"><span>账号安全</span><h1>修改密码</h1><p>验证原密码后更新登录凭据，保护账号安全。</p></div>
     <div class="security-grid">
       <el-card shadow="never" class="password-card">
         <el-alert title="修改成功后当前登录会失效，请使用新密码重新登录。" type="info" :closable="false" show-icon />

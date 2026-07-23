@@ -1,7 +1,7 @@
 <template>
   <section class="account-page">
     <div class="page-head">
-      <div><span class="eyebrow">MY PROFILE</span><h1>个人中心</h1><p>查看账号状态并维护个人资料</p></div>
+      <div><span class="eyebrow">个人档案</span><h1>个人中心</h1><p>查看账号状态并维护个人资料</p></div>
       <div class="avatar">{{ avatarText }}</div>
     </div>
 
@@ -24,7 +24,22 @@
         <div class="meta"><span>账号角色</span><div><el-tag v-for="role in user.roles || []" :key="role" class="role-tag">{{ roleName(role) }}</el-tag></div></div>
         <div class="meta"><span>最近登录</span><strong>{{ formatTime(user.lastLoginAt) }}</strong></div>
         <div class="meta"><span>注册时间</span><strong>{{ formatTime(user.createdAt) }}</strong></div>
-        <router-link to="/account/password" class="security-link">前往密码修改页面 →</router-link>
+        <div class="quick-entry-list">
+          <router-link to="/account/orders" class="quick-entry">
+            <div>
+              <strong>我的订单</strong>
+              <small>随时查看全部订单状态、支付与入住进度</small>
+            </div>
+            <span>→</span>
+          </router-link>
+          <router-link to="/account/password" class="quick-entry alt">
+            <div>
+              <strong>账号安全</strong>
+              <small>修改密码并维护登录安全</small>
+            </div>
+            <span>→</span>
+          </router-link>
+        </div>
       </el-card>
     </div>
   </section>
@@ -77,7 +92,7 @@ h1 { margin: 6px 0; color: #2c2416; font-size: 34px; } .page-head p { margin: 0;
 .account-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 24px; }
 .glass-card { border: 1px solid rgba(255,255,255,.7); border-radius: 22px; background: rgba(255,255,255,.7); }
 .card-title { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #332a20; }
-.safe-label { color: #9b8d7e; font-size: 12px; font-weight: 400; }.status-hero{display:flex;align-items:center;gap:13px;margin-bottom:24px;padding:18px;border-radius:17px;background:linear-gradient(135deg,#f0e8da,#faf7f0)}.status-hero>span{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:#496454;color:#fff;font-weight:700}.status-hero b,.status-hero small{display:block}.status-hero small{margin-top:4px;color:#938676}.security-link{display:block;margin-top:24px;padding:14px;border-radius:12px;background:#496454;color:#fff;text-align:center;text-decoration:none}
+.safe-label { color: #9b8d7e; font-size: 12px; font-weight: 400; }.status-hero{display:flex;align-items:center;gap:13px;margin-bottom:24px;padding:18px;border-radius:17px;background:linear-gradient(135deg,#f0e8da,#faf7f0)}.status-hero>span{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:#496454;color:#fff;font-weight:700}.status-hero b,.status-hero small{display:block}.status-hero small{margin-top:4px;color:#938676}.quick-entry-list{display:flex;flex-direction:column;gap:12px;margin-top:24px}.quick-entry{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;border-radius:16px;background:#496454;color:#fff;text-decoration:none;box-shadow:0 14px 26px rgba(73,100,84,.16)}.quick-entry.alt{background:linear-gradient(135deg,#efe3d1,#f8f3eb);color:#3f342a;box-shadow:none;border:1px solid rgba(164,119,79,.18)}.quick-entry strong,.quick-entry small{display:block}.quick-entry small{margin-top:5px;color:rgba(255,255,255,.78)}.quick-entry.alt small{color:#8f8170}.quick-entry span{font-size:20px;font-weight:700}
 .meta { display: flex; justify-content: space-between; gap: 16px; margin: 14px 0; color: #8f8170; font-size: 13px; }.meta strong { color: #54483a; }.role-tag { margin-left: 6px; }
 @media (max-width: 800px) { .account-page { padding: 108px 16px 40px; } .account-grid { grid-template-columns: 1fr; } }
 </style>

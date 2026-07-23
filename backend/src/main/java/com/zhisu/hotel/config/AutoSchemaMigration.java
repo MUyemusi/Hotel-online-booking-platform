@@ -28,6 +28,11 @@ public class AutoSchemaMigration implements ApplicationRunner {
 
         ensureColumn("booking_order", "stay_type", "VARCHAR(20) DEFAULT 'STANDARD' AFTER check_out_date");
         ensureColumn("booking_order", "total_nights", "INT DEFAULT 1 AFTER stay_type");
+
+        ensureColumn("room", "near_elevator", "TINYINT(1) NOT NULL DEFAULT 0 AFTER maintenance_reason");
+        ensureColumn("room", "head_room", "TINYINT(1) NOT NULL DEFAULT 0 AFTER near_elevator");
+        ensureColumn("room", "tail_room", "TINYINT(1) NOT NULL DEFAULT 0 AFTER head_room");
+        ensureColumn("room", "cad_image_url", "VARCHAR(500) NULL AFTER tail_room");
     }
 
     private void ensureColumn(String table, String column, String definition) {

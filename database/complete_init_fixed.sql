@@ -25,6 +25,7 @@ SOURCE database/migrations/member5_completion.sql;
 SOURCE database/migrations/full_completion.sql;
 SOURCE database/03_indexes_constraints.sql;
 SOURCE database/04_initial_data.sql;
+SOURCE database/migrations/2026_07_23_localization_cn.sql;
 SOURCE database/05_test_data.sql;
 SOURCE database/validate_schema.sql;
 

@@ -8,7 +8,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
           返回
         </button>
-        <span class="back-crumb">客房鉴赏 / {{ room.name || '详情' }}</span>
+        <span class="back-crumb">客房鉴赏 / {{ roomName(room) || '详情' }}</span>
       </div>
     </div>
 
@@ -30,7 +30,7 @@
           />
           <div v-else class="gallery-fb">
             <div class="fb-texture"></div>
-            <span>ZHISU HOTEL</span>
+            <span>智宿酒店</span>
           </div>
         </div>
         <div v-if="images.length > 1" class="gallery-strip">
@@ -51,8 +51,8 @@
           <!-- 头 -->
           <div class="info-head">
             <div>
-              <p class="head-tag" v-if="room.category">{{ room.category }}</p>
-              <h1>{{ room.name }}</h1>
+              <p class="head-tag" v-if="room.category">{{ categoryLabel(room.category) }}</p>
+            <h1>{{ roomName(room) }}</h1>
             </div>
             <div class="head-price">
               <span class="hp-sym">¥</span>
@@ -72,7 +72,7 @@
           <!-- 描述 -->
           <div class="info-block" v-if="room.description">
             <h3>房型介绍</h3>
-            <p>{{ room.description }}</p>
+            <p>{{ roomDescription(room) }}</p>
           </div>
 
           <!-- 设施 -->
@@ -231,6 +231,42 @@ const reviewTotal = ref(0)
 const newReview = ref('')
 const posting = ref(false)
 const loggedIn = computed(() => Boolean(getAccessToken()))
+
+const categoryLabel = (category) => {
+  const map = {
+    SINGLE: '标准大床房',
+    STANDARD: '标准双床房',
+    SUPERIOR: '高级大床房',
+    TWIN: '商务双床房',
+    DELUXE: '豪华大床房',
+    FAMILY: '家庭亲子房',
+    SUITE: '豪华套房'
+  }
+  return map[category] || category
+}
+
+const isEnglishText = (value) => typeof value === 'string' && value.trim() && /^[\x00-\x7F]+$/.test(value.trim())
+
+const roomName = (room) => {
+  if (!room) return ''
+  if (!isEnglishText(room.name)) return room.name
+  return categoryLabel(room.category)
+}
+
+const roomDescription = (room) => {
+  if (!room) return ''
+  if (!isEnglishText(room.description)) return room.description
+  const map = {
+    SINGLE: '温馨舒适的标准大床房，适合情侣或商务出行。',
+    STANDARD: '两张舒适床铺，适合朋友同行或差旅入住。',
+    SUPERIOR: '空间更宽敞，含双人自助早餐。',
+    TWIN: '商务双床配置，适合差旅及朋友同住。',
+    DELUXE: '高品质设施与更舒适的居住体验。',
+    FAMILY: '亲子家庭友好设计，空间宽敞。',
+    SUITE: '一室一厅独立套房，适合高品质入住。'
+  }
+  return map[room.category] || room.description
+}
 
 async function loadReviews() {
   const mock = getMockReviews(Number(route.params.id))

@@ -20,6 +20,6 @@ public class FrontdeskCheckinQrController {
 
     @PostMapping("/verify")
     public ApiResponse<CheckinQrVerificationVO> verify(@Valid @RequestBody CheckinQrVerifyRequest request) {
-        return ApiResponse.success(checkinQrService.verify(request.getQrContent()));
+        return ApiResponse.success(checkinQrService.verify(request.getCredential()));
     }
 }

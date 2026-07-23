@@ -65,3 +65,5 @@ CREATE TABLE IF NOT EXISTS room_type_review (
   INDEX idx_review_room_type (room_type_id, status, created_at),
   INDEX idx_review_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SOURCE database/migrations/2026_07_23_localization_cn.sql;

@@ -98,11 +98,43 @@
 
             <!-- 待入住 -->
             <template v-if="order.orderStatus === 'PENDING_CHECK_IN'">
+              <div class="qr-panel">
+                <div class="qr-head">
+                  <span>入住二维码</span>
+                  <button class="qr-generate" :disabled="qrLoading" @click="generateQr">
+                    {{ qrLoading ? '生成中...' : (qrImageDataUrl ? '刷新二维码' : '生成二维码') }}
+                  </button>
+                </div>
+                <div class="qr-body">
+                  <img v-if="qrImageDataUrl" class="qr-img" :src="qrImageDataUrl" alt="入住二维码" />
+                  <div v-else class="qr-empty">
+                    <span>点击生成二维码</span>
+                    <small>到店后向前台出示，用于办理入住</small>
+                  </div>
+                  <div v-if="verificationCode" class="verify-code-box">
+                    <span class="verify-code-label">唯一核验码</span>
+                    <div class="verify-code-value">{{ verificationCode }}</div>
+                    <small>演示场景下，前台也可直接输入该核验码完成核验</small>
+                  </div>
+                  <p v-if="qrExpiresAt" class="qr-expire">有效期至：{{ qrExpiresAt.slice(0, 19) }}</p>
+                  <p v-else-if="qrHasActiveToken && !qrExpired" class="qr-expire">当前已有有效二维码，可刷新以重新生成</p>
+                  <p v-else-if="qrHasActiveToken && qrExpired" class="qr-expire">二维码已过期，请重新生成</p>
+                </div>
+              </div>
               <button class="sc-btn cancel" @click="showCancel = true">取消订单</button>
             </template>
 
-            <!-- 已入住/已完成/已取消/已关闭 -->
-            <p v-if="['CHECKED_IN','COMPLETED','CANCELLED','CLOSED'].includes(order.orderStatus)" class="sc-done">
+            <!-- 已入住 -->
+            <template v-if="order.orderStatus === 'CHECKED_IN'">
+              <div class="checkout-panel">
+                <strong>当前已入住</strong>
+                <p>如已完成实际离店，可在住客端自助办理退房。确认后订单将完成，房间转为待清洁状态。</p>
+              </div>
+              <button class="sc-btn checkout" @click="showCheckout = true">办理退房</button>
+            </template>
+
+            <!-- 已完成/已取消/已关闭 -->
+            <p v-if="['COMPLETED','CANCELLED','CLOSED'].includes(order.orderStatus)" class="sc-done">
               {{ statusLabel(order.orderStatus) }}
             </p>
           </div>
@@ -122,6 +154,17 @@
       </template>
     </el-dialog>
 
+    <!-- 退房弹窗 -->
+    <el-dialog v-model="showCheckout" title="办理退房" width="440px" :close-on-click-modal="false">
+      <div class="cancel-dialog">
+        <p>确认办理退房后，订单将变为已完成，已入住房间将转为待清洁状态。</p>
+      </div>
+      <template #footer>
+        <el-button @click="showCheckout = false">暂不退房</el-button>
+        <el-button type="primary" :loading="checkingOut" @click="doCheckout">确认退房</el-button>
+      </template>
+    </el-dialog>
+
     <div v-if="!loading && !order" class="nf">
       <h2>订单不存在</h2>
       <router-link to="/orders">返回我的订单</router-link>
@@ -133,14 +176,27 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getOrderDetail, cancelOrder } from '@/api/booking'
+import { getOrderDetail, cancelOrder, checkoutOrder, generateCheckinQr, getCheckinQrStatus } from '@/api/booking'
 
 const route = useRoute()
 const loading = ref(true)
 const order = ref(null)
 const showCancel = ref(false)
+const showCheckout = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
+const checkingOut = ref(false)
+const qrLoading = ref(false)
+const qrImageDataUrl = ref('')
+const qrExpiresAt = ref('')
+const qrHasActiveToken = ref(false)
+const qrExpired = ref(false)
+const verificationCode = ref('')
+
+function createRequestToken(prefix) {
+  if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
 
 const statusMap = {
   PENDING_PAYMENT: '待支付', PENDING_CHECK_IN: '待入住', CHECKED_IN: '已入住',
@@ -167,9 +223,46 @@ onMounted(async () => {
   loading.value = true
   try {
     const res = await getOrderDetail(route.params.id)
-    if (res.code === 'SUCCESS') order.value = res.data
+    if (res.code === 'SUCCESS') {
+      order.value = res.data
+      await loadQrStatus()
+    }
   } catch { /* */ } finally { loading.value = false }
 })
+
+async function loadQrStatus() {
+  if (order.value?.orderStatus !== 'PENDING_CHECK_IN') return
+  try {
+    const res = await getCheckinQrStatus(order.value.id)
+    if (res.code !== 'SUCCESS') return
+    qrHasActiveToken.value = Boolean(res.data?.hasActiveToken)
+    qrExpired.value = Boolean(res.data?.expired)
+    qrExpiresAt.value = res.data?.expiresAt || ''
+    verificationCode.value = res.data?.verificationCode || ''
+  } catch { /* */ }
+}
+
+async function generateQr() {
+  if (!order.value?.id) return
+  qrLoading.value = true
+  try {
+    const res = await generateCheckinQr(order.value.id)
+    if (res.code !== 'SUCCESS') {
+      ElMessage.error(res.message || '生成二维码失败')
+      return
+    }
+    qrImageDataUrl.value = res.data?.qrImageDataUrl || ''
+    qrExpiresAt.value = res.data?.expiresAt || ''
+    qrHasActiveToken.value = true
+    qrExpired.value = false
+    verificationCode.value = res.data?.verificationCode || ''
+    ElMessage.success('二维码已生成')
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || '生成二维码失败')
+  } finally {
+    qrLoading.value = false
+  }
+}
 
 async function doCancel() {
   if (!cancelReason.value.trim()) { ElMessage.warning('请填写取消原因'); return }
@@ -186,6 +279,28 @@ async function doCancel() {
   } catch (e) {
     ElMessage.error(e?.response?.data?.message || '取消失败')
   } finally { cancelling.value = false }
+}
+
+async function doCheckout() {
+  if (!order.value?.id) return
+  checkingOut.value = true
+  try {
+    const res = await checkoutOrder(order.value.id, {
+      requestToken: createRequestToken('USER-CHECKOUT'),
+      remark: '住客端自助退房'
+    })
+    if (res.code === 'SUCCESS') {
+      ElMessage.success('退房办理成功')
+      order.value = { ...order.value, orderStatus: 'COMPLETED' }
+      showCheckout.value = false
+    } else {
+      ElMessage.error(res.message || '退房办理失败')
+    }
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || '退房办理失败')
+  } finally {
+    checkingOut.value = false
+  }
 }
 </script>
 
@@ -257,6 +372,26 @@ async function doCancel() {
 .sc-btn.primary:hover { box-shadow: 0 8px 32px rgba(180,120,60,0.3); }
 .sc-btn.cancel { background: transparent; border: 2px solid #e74c3c; color: #e74c3c; }
 .sc-btn.cancel:hover { background: #fdecea; }
+.sc-btn.checkout { background: linear-gradient(135deg, #496454, #33483b); color: #fff; }
+.sc-btn.checkout:hover { box-shadow: 0 8px 28px rgba(73,100,84,0.24); }
+
+.checkout-panel{margin-top:18px;padding:15px;border-radius:14px;background:rgba(73,100,84,0.08);border:1px solid rgba(73,100,84,0.16)}
+.checkout-panel strong{display:block;color:#33483b;font-size:15px}
+.checkout-panel p{margin:7px 0 0;color:var(--text-secondary);font-size:13px;line-height:1.7}
+
+.qr-panel{margin-top:18px;padding:14px;border-radius:14px;background:rgba(255,255,255,0.55);border:1px solid rgba(0,0,0,0.06)}
+.qr-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--text-secondary);font-weight:650}
+.qr-generate{border:none;background:rgba(39,174,96,0.14);color:#1f8a55;padding:7px 10px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:650}
+.qr-generate:disabled{opacity:0.6;cursor:not-allowed}
+.qr-body{margin-top:10px}
+.qr-img{width:100%;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:#fff}
+.qr-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 10px;border-radius:12px;border:1px dashed rgba(0,0,0,0.15);color:var(--text-muted);background:rgba(255,255,255,0.5)}
+.qr-empty small{font-size:12px;color:var(--text-muted)}
+.verify-code-box{margin-top:12px;padding:12px;border-radius:12px;background:#f7f8fa;border:1px solid rgba(0,0,0,0.06)}
+.verify-code-label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+.verify-code-value{font-size:18px;font-weight:700;letter-spacing:.08em;color:#1f2937;word-break:break-all}
+.verify-code-box small{display:block;margin-top:6px;color:var(--text-muted);font-size:12px}
+.qr-expire{margin:10px 0 0;font-size:12px;color:var(--text-muted)}
 
 .sc-done { text-align: center; font-size: 14px; color: var(--text-muted); padding: 20px 0 0; }
 

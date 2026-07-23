@@ -2,7 +2,7 @@
   <section class="map-section section-shell">
     <div class="section-title">
       <div>
-        <p class="eyebrow dark">LOCATION</p>
+        <p class="eyebrow dark">酒店位置</p>
         <h2>酒店位置</h2>
         <p class="subtitle" v-if="address">{{ address }}</p>
       </div>

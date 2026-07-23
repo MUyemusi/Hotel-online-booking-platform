@@ -2,6 +2,11 @@ package com.zhisu.hotel.room.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zhisu.hotel.booking.entity.BookingOrder;
+import com.zhisu.hotel.booking.entity.OrderGuest;
+import com.zhisu.hotel.booking.mapper.BookingOrderMapper;
+import com.zhisu.hotel.booking.mapper.OrderGuestMapper;
+import com.zhisu.hotel.common.enums.AssignmentStatus;
 import com.zhisu.hotel.common.context.UserContext;
 import com.zhisu.hotel.common.enums.RoomStatus;
 import com.zhisu.hotel.common.exception.BusinessException;
@@ -11,7 +16,9 @@ import com.zhisu.hotel.room.dto.RoomQueryRequest;
 import com.zhisu.hotel.room.dto.RoomStatusChangeRequest;
 import com.zhisu.hotel.room.dto.RoomUpdateRequest;
 import com.zhisu.hotel.room.entity.Room;
+import com.zhisu.hotel.room.entity.RoomAssignment;
 import com.zhisu.hotel.room.entity.RoomStatusLog;
+import com.zhisu.hotel.room.mapper.RoomAssignmentMapper;
 import com.zhisu.hotel.room.mapper.RoomMapper;
 import com.zhisu.hotel.room.mapper.RoomStatusLogMapper;
 import com.zhisu.hotel.room.service.RoomService;
@@ -25,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +47,9 @@ public class RoomServiceImpl implements RoomService {
     private final RoomMapper roomMapper;
     private final RoomStatusLogMapper roomStatusLogMapper;
     private final RoomTypeMapper roomTypeMapper;
+    private final RoomAssignmentMapper roomAssignmentMapper;
+    private final OrderGuestMapper orderGuestMapper;
+    private final BookingOrderMapper bookingOrderMapper;
 
     private static final Set<RoomStatus> ADMIN_EDITABLE_STATUSES = Set.of(
             RoomStatus.AVAILABLE,
@@ -75,6 +86,10 @@ public class RoomServiceImpl implements RoomService {
                 .floor(request.getFloor())
                 .roomTypeId(request.getRoomTypeId())
                 .roomStatus(RoomStatus.AVAILABLE)
+                .nearElevator(Boolean.TRUE.equals(request.getNearElevator()))
+                .headRoom(Boolean.TRUE.equals(request.getHeadRoom()))
+                .tailRoom(Boolean.TRUE.equals(request.getTailRoom()))
+                .cadImageUrl(request.getCadImageUrl())
                 .remark(request.getRemark())
                 .isDeleted(0)
                 .build();
@@ -96,9 +111,25 @@ public class RoomServiceImpl implements RoomService {
         }
 
         room.setRoomTypeId(request.getRoomTypeId());
+        room.setNearElevator(Boolean.TRUE.equals(request.getNearElevator()));
+        room.setHeadRoom(Boolean.TRUE.equals(request.getHeadRoom()));
+        room.setTailRoom(Boolean.TRUE.equals(request.getTailRoom()));
+        room.setCadImageUrl(request.getCadImageUrl());
         room.setRemark(request.getRemark());
-        roomMapper.updateById(room);
-        return room;
+        int updated = roomMapper.updateRoomProfile(
+                room.getId(),
+                room.getRoomTypeId(),
+                room.getNearElevator(),
+                room.getHeadRoom(),
+                room.getTailRoom(),
+                room.getCadImageUrl(),
+                room.getRemark(),
+                LocalDateTime.now()
+        );
+        if (updated == 0) {
+            throw new BusinessException(ErrorCode.ROOM_NOT_FOUND, "Room not found");
+        }
+        return roomMapper.selectById(id);
     }
 
     @Override
@@ -109,6 +140,7 @@ public class RoomServiceImpl implements RoomService {
         }
 
         RoomType roomType = roomTypeMapper.selectById(room.getRoomTypeId());
+        CurrentGuestInfo currentGuestInfo = findCurrentGuestInfo(room);
 
         return RoomDetailVO.builder()
                 .id(room.getId())
@@ -119,6 +151,14 @@ public class RoomServiceImpl implements RoomService {
                 .roomStatus(room.getRoomStatus())
                 .roomStatusText(getRoomStatusText(room.getRoomStatus()))
                 .maintenanceReason(room.getMaintenanceReason())
+                .nearElevator(Boolean.TRUE.equals(room.getNearElevator()))
+                .headRoom(Boolean.TRUE.equals(room.getHeadRoom()))
+                .tailRoom(Boolean.TRUE.equals(room.getTailRoom()))
+                .cadImageUrl(room.getCadImageUrl())
+                .currentOrderId(currentGuestInfo.orderId())
+                .currentOrderNo(currentGuestInfo.orderNo())
+                .currentGuestName(currentGuestInfo.guestName())
+                .currentGuestPhone(currentGuestInfo.guestPhone())
                 .remark(room.getRemark())
                 .createdAt(room.getCreatedAt())
                 .updatedAt(room.getUpdatedAt())
@@ -340,9 +380,52 @@ public class RoomServiceImpl implements RoomService {
                 .roomStatus(room.getRoomStatus())
                 .roomStatusText(getRoomStatusText(room.getRoomStatus()))
                 .maintenanceReason(room.getMaintenanceReason())
+                .nearElevator(Boolean.TRUE.equals(room.getNearElevator()))
+                .headRoom(Boolean.TRUE.equals(room.getHeadRoom()))
+                .tailRoom(Boolean.TRUE.equals(room.getTailRoom()))
+                .cadImageUrl(room.getCadImageUrl())
                 .remark(room.getRemark())
                 .updatedAt(room.getUpdatedAt())
                 .build();
+    }
+
+    private CurrentGuestInfo findCurrentGuestInfo(Room room) {
+        if (room.getRoomStatus() != RoomStatus.OCCUPIED) {
+            return CurrentGuestInfo.empty();
+        }
+        List<RoomAssignment> assignments = roomAssignmentMapper.selectActiveByRoomIds(
+                List.of(room.getId()),
+                Set.of(AssignmentStatus.CHECKED_IN)
+        );
+        if (assignments.isEmpty()) {
+            return CurrentGuestInfo.empty();
+        }
+
+        RoomAssignment assignment = assignments.get(0);
+        BookingOrder order = bookingOrderMapper.selectById(assignment.getOrderId());
+        OrderGuest mainGuest = orderGuestMapper.selectOne(new LambdaQueryWrapper<OrderGuest>()
+                .eq(OrderGuest::getOrderId, assignment.getOrderId())
+                .orderByDesc(OrderGuest::getIsMain)
+                .orderByAsc(OrderGuest::getId)
+                .last("LIMIT 1"));
+
+        String guestName = mainGuest != null ? mainGuest.getGuestName() : null;
+        String guestPhone = mainGuest != null && mainGuest.getGuestPhone() != null
+                ? mainGuest.getGuestPhone()
+                : order != null ? order.getPhone() : null;
+
+        return new CurrentGuestInfo(
+                assignment.getOrderId(),
+                order != null ? order.getOrderNo() : null,
+                guestName,
+                guestPhone
+        );
+    }
+
+    private record CurrentGuestInfo(Long orderId, String orderNo, String guestName, String guestPhone) {
+        private static CurrentGuestInfo empty() {
+            return new CurrentGuestInfo(null, null, null, null);
+        }
     }
 
     private String getRoomStatusText(RoomStatus status) {

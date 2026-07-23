@@ -6,6 +6,8 @@ import com.zhisu.hotel.booking.service.BookingOrderService;
 import com.zhisu.hotel.booking.vo.OrderDetailVO;
 import com.zhisu.hotel.booking.vo.OrderVO;
 import com.zhisu.hotel.auth.security.CurrentUserProvider;
+import com.zhisu.hotel.checkin.dto.ConfirmCheckoutRequest;
+import com.zhisu.hotel.checkin.vo.ConfirmCheckoutVO;
 import com.zhisu.hotel.common.context.UserContext;
 import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.common.response.ApiResponse;
@@ -51,6 +53,14 @@ public class BookingController {
                                                     @Valid @RequestBody CancelOrderRequest request) {
         Long userId = CurrentUserProvider.requireUserId();
         CancellationVO vo = bookingOrderService.cancelOrder(id, request, userId);
+        return ApiResponse.success(vo);
+    }
+
+    @PostMapping("/{id}/check-out")
+    public ApiResponse<ConfirmCheckoutVO> checkoutOrder(@PathVariable Long id,
+                                                        @Valid @RequestBody ConfirmCheckoutRequest request) {
+        Long userId = CurrentUserProvider.requireUserId();
+        ConfirmCheckoutVO vo = bookingOrderService.checkoutOrder(id, request, userId);
         return ApiResponse.success(vo);
     }
 

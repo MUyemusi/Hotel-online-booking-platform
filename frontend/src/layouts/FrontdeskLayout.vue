@@ -1,16 +1,17 @@
 <template>
   <div class="desk-layout">
     <aside class="desk-sidebar">
-      <router-link to="/frontdesk" class="brand"><strong>智宿</strong><span>FRONT DESK</span></router-link>
+      <router-link to="/frontdesk" class="brand"><strong>智宿</strong><span>酒店前台</span></router-link>
       <div class="identity"><span>{{ initial }}</span><div><strong>{{ displayName }}</strong><small>酒店前台账号</small></div></div>
       <nav>
-        <router-link to="/frontdesk" class="active"><b>工作台</b><small>今日接待与业务入口</small></router-link>
-        <router-link to="/"><b>酒店前台网站</b><small>查看住客端展示</small></router-link>
+        <router-link to="/frontdesk" exact-active-class="active"><b>工作台</b><small>今日接待与业务入口</small></router-link>
+        <router-link to="/frontdesk/room-map" exact-active-class="active"><b>楼层房态地图</b><small>查看实时入住与房态</small></router-link>
+        <router-link to="/" exact-active-class="active"><b>酒店前台网站</b><small>查看住客端展示</small></router-link>
       </nav>
       <button class="logout" @click="signOut">退出前台账号</button>
     </aside>
     <section class="desk-main">
-      <header><div><span>FRONT DESK CONSOLE</span><h1>前台接待工作区</h1></div><div class="role-chip">前台专属页面</div></header>
+      <header><div><span>前台控制台</span><h1>前台接待工作区</h1></div><div class="role-chip">前台专属页面</div></header>
       <main><router-view/></main>
     </section>
   </div>

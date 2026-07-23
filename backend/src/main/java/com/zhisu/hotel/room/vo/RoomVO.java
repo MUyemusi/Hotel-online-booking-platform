@@ -30,6 +30,14 @@ public class RoomVO {
 
     private String maintenanceReason;
 
+    private Boolean nearElevator;
+
+    private Boolean headRoom;
+
+    private Boolean tailRoom;
+
+    private String cadImageUrl;
+
     private String remark;
 
     private LocalDateTime updatedAt;

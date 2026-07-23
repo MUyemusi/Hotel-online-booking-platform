@@ -7,6 +7,7 @@ import com.zhisu.hotel.dashboard.service.DashboardService;
 import com.zhisu.hotel.dashboard.vo.DashboardOverviewVO;
 import com.zhisu.hotel.dashboard.vo.DashboardAnalyticsVO;
 import com.zhisu.hotel.dashboard.vo.DashboardTrendPointVO;
+import com.zhisu.hotel.dashboard.vo.DashboardPaymentRecordVO;
 import com.zhisu.hotel.dashboard.vo.InventoryWarningVO;
 import com.zhisu.hotel.dashboard.vo.RoomTypeStatisticVO;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,13 @@ public class AdminDashboardController {
     @GetMapping("/analytics")
     public ApiResponse<DashboardAnalyticsVO> getAnalytics(@RequestParam(defaultValue = "30") int days) {
         return ApiResponse.success(dashboardService.getAnalytics(days));
+    }
+
+    @GetMapping("/payment-records")
+    public ApiResponse<List<DashboardPaymentRecordVO>> getPaymentRecords(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ApiResponse.success(dashboardService.getRecentPayments(days, limit));
     }
 
     @GetMapping("/room-type-statistics")

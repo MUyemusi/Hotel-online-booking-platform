@@ -34,6 +34,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/health", "/api/public/**", "/api/room-types/**", "/uploads/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/rooms/cleaning/pending").hasAnyRole("FRONT_DESK", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/rooms/*/cleaning/complete").hasAnyRole("FRONT_DESK", "ADMIN")
                         .requestMatchers("/api/admin/**", "/api/payments/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/frontdesk/**").hasAnyRole("FRONT_DESK", "ADMIN")
                         .requestMatchers("/api/orders/**", "/api/payments/**").hasRole("USER")

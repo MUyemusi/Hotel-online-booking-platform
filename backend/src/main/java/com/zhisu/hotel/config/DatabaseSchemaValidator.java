@@ -22,6 +22,12 @@ public class DatabaseSchemaValidator implements ApplicationRunner {
         Map<String, List<String>> required = new LinkedHashMap<>();
         required.put("sys_user", List.of("id", "username", "password_hash", "status", "consecutive_cancel_count"));
         required.put("booking_order", List.of("id", "user_id", "order_status", "payment_status", "payment_timeout"));
+        required.put("order_guest", List.of("id", "order_id", "guest_name", "id_number"));
+        required.put("order_daily_price", List.of("id", "order_id", "price_date", "daily_price"));
+        required.put("room", List.of("id", "room_no", "floor", "room_type_id", "room_status", "is_deleted", "version"));
+        required.put("room_status_log", List.of("id", "room_id", "before_status", "after_status", "operator_id", "created_at"));
+        required.put("room_assignment", List.of("id", "order_id", "room_id", "assignment_status", "request_token", "version", "is_deleted"));
+        required.put("checkin_qr_token", List.of("id", "order_id", "token_hash", "token_status", "expire_at", "version"));
         required.put("payment_record", List.of("id", "user_id", "payment_status", "idempotency_key"));
         required.put("cancellation_record", List.of("id", "order_id", "cancel_type", "cancel_time"));
         required.put("scheduled_task_log", List.of("id", "task_name", "executed_at"));
@@ -38,12 +44,13 @@ public class DatabaseSchemaValidator implements ApplicationRunner {
                 return;
             }
             columns.stream().filter(column -> !columnExists(table, column))
-                    .forEach(column -> missing.append(" column:").append(table).append('.').append(column));
+                    .forEach(column -> missing.append(" column:").append(table).append(".").append(column));
         });
         if (!missing.isEmpty()) {
             throw new IllegalStateException("Database schema is incomplete." + missing
                     + ". Run database/complete_init_fixed.sql or database/migrations/full_completion.sql.");
         }
+        System.out.println("Database schema validation passed successfully.");
     }
 
     private boolean tableExists(String table) {

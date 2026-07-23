@@ -1,5 +1,6 @@
 package com.zhisu.hotel.checkin.controller;
 
+import com.zhisu.hotel.auth.security.CurrentUserProvider;
 import com.zhisu.hotel.checkin.service.CheckinQrService;
 import com.zhisu.hotel.checkin.vo.CheckinQrGenerationVO;
 import com.zhisu.hotel.checkin.vo.CheckinQrStatusVO;
@@ -20,11 +21,11 @@ public class CheckinQrController {
 
     @PostMapping("/{orderId}/checkin-qr")
     public ApiResponse<CheckinQrGenerationVO> generate(@PathVariable Long orderId) {
-        return ApiResponse.success(checkinQrService.generateForOrder(orderId, null));
+        return ApiResponse.success(checkinQrService.generateForOrder(orderId, CurrentUserProvider.requireUserId()));
     }
 
     @GetMapping("/{orderId}/checkin-qr/status")
     public ApiResponse<CheckinQrStatusVO> status(@PathVariable Long orderId) {
-        return ApiResponse.success(checkinQrService.getActiveStatus(orderId, null));
+        return ApiResponse.success(checkinQrService.getActiveStatus(orderId, CurrentUserProvider.requireUserId()));
     }
 }

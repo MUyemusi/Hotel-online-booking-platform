@@ -20,6 +20,7 @@ const routes = [
         redirect: '/account/profile',
         children: [
           { path: 'profile', name: 'UserProfile', component: () => import('@/views/user/account/ProfileView.vue') },
+          { path: 'orders', name: 'AccountOrders', meta: { roles: ['USER'] }, component: () => import('@/views/user/bookings/MyOrdersView.vue') },
           { path: 'password', name: 'UserPassword', component: () => import('@/views/user/account/PasswordView.vue') },
           { path: 'credit', name: 'UserCredit', component: () => import('@/views/user/account/CreditView.vue') }
         ]
@@ -33,7 +34,8 @@ const routes = [
     component: () => import('@/layouts/FrontdeskLayout.vue'),
     meta: { roles: ['FRONT_DESK', 'ADMIN'] },
     children: [
-      { path: '', name: 'FrontdeskHome', component: () => import('@/views/frontdesk/FrontdeskHomeView.vue') }
+      { path: '', name: 'FrontdeskHome', component: () => import('@/views/frontdesk/FrontdeskWorkbench.vue') },
+      { path: 'room-map', name: 'FrontdeskRoomMap', component: () => import('@/views/admin/RoomMapView.vue') }
     ]
   },
   {
@@ -44,6 +46,7 @@ const routes = [
     children: [
       { path: 'dashboard/overview', name: 'AdminDashboardOverview', component: () => import('@/views/admin/dashboard/DashboardOverviewView.vue') },
       { path: 'workspace', name: 'AdminWorkspace', component: () => import('@/views/admin/AdminWorkspaceView.vue') },
+      { path: 'room-map', name: 'AdminRoomMap', component: () => import('@/views/admin/RoomMapView.vue') },
       { path: 'content/hotel-info', name: 'AdminHotelInfo', component: () => import('@/views/admin/content/HotelInfoView.vue') },
       { path: 'content/banners', name: 'AdminBanners', component: () => import('@/views/admin/content/BannerManageView.vue') },
       { path: 'content/announcements', name: 'AdminAnnouncements', component: () => import('@/views/admin/content/AnnouncementManageView.vue') },

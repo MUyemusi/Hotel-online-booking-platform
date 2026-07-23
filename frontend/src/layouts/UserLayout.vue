@@ -11,23 +11,27 @@
         <nav class="nav-links">
           <router-link to="/" class="nav-item" active-class="nav-active">
             <span>首页</span>
-            <small>Home</small>
+            <small>首页</small>
           </router-link>
           <router-link to="/rooms" class="nav-item" active-class="nav-active">
             <span>客房鉴赏</span>
-            <small>Rooms</small>
+            <small>客房</small>
           </router-link>
           <router-link v-if="isGuest" to="/account/profile" class="nav-item" active-class="nav-active">
             <span>个人中心</span>
-            <small>Account</small>
+            <small>账户</small>
+          </router-link>
+          <router-link v-if="isGuest" to="/account/orders" class="nav-item" active-class="nav-active">
+            <span>我的订单</span>
+            <small>订单</small>
           </router-link>
           <router-link v-if="isGuest" to="/account/credit" class="nav-item" active-class="nav-active">
             <span>信用中心</span>
-            <small>Credit</small>
+            <small>信用</small>
           </router-link>
           <router-link v-if="workspaceRoute" :to="workspaceRoute" class="nav-item workspace-entry">
             <span>{{ workspaceLabel }}</span>
-            <small>Workspace</small>
+            <small>工作台</small>
           </router-link>
         </nav>
 
@@ -38,7 +42,7 @@
           </template>
           <el-dropdown v-else trigger="click" @command="handleCommand">
             <button class="user-button"><span class="user-dot">{{ userInitial }}</span><span class="user-copy"><b>{{ userName }}</b><small>{{ roleLabel }}</small></span></button>
-            <template #dropdown><el-dropdown-menu><el-dropdown-item command="account">个人中心</el-dropdown-item><el-dropdown-item command="password">修改密码</el-dropdown-item><el-dropdown-item v-if="isGuest" command="credit">信用中心</el-dropdown-item><el-dropdown-item v-if="isAdmin" command="admin">进入管理员后台</el-dropdown-item><el-dropdown-item v-if="isFrontdesk" command="frontdesk">进入前台工作台</el-dropdown-item><el-dropdown-item divided command="logout">退出登录</el-dropdown-item></el-dropdown-menu></template>
+            <template #dropdown><el-dropdown-menu><el-dropdown-item command="account">个人中心</el-dropdown-item><el-dropdown-item v-if="isGuest" command="orders">我的订单</el-dropdown-item><el-dropdown-item command="password">修改密码</el-dropdown-item><el-dropdown-item v-if="isGuest" command="credit">信用中心</el-dropdown-item><el-dropdown-item v-if="isAdmin" command="admin">进入管理员后台</el-dropdown-item><el-dropdown-item v-if="isFrontdesk" command="frontdesk">进入前台工作台</el-dropdown-item><el-dropdown-item divided command="logout">退出登录</el-dropdown-item></el-dropdown-menu></template>
           </el-dropdown>
         </div>
       </div>
@@ -62,7 +66,7 @@
       <div class="footer-inner">
         <div class="footer-brand">
           <span class="brand-zh">智宿酒店</span>
-          <span class="brand-en">ZHISU HOTEL</span>
+          <span class="brand-en">智慧旅居服务系统</span>
         </div>
         <div class="footer-info">
           <p>© 2026 智宿酒店在线预订与运营管理系统</p>
@@ -98,6 +102,7 @@ const immersiveHeader = computed(() => route.path === '/' || route.path === '/ro
 
 async function handleCommand(command) {
   if (command === 'account') return router.push('/account/profile')
+  if (command === 'orders') return router.push('/account/orders')
   if (command === 'password') return router.push('/account/password')
   if (command === 'credit') return router.push('/account/credit')
   if (command === 'admin') return router.push('/admin')

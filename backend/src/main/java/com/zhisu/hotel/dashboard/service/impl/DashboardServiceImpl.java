@@ -104,7 +104,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .roomTypeStatistics(periodRoomTypeStatistics(currentStart, currentEnd))
                 .paymentMethods(categoryStatistics(
                         "SELECT COALESCE(payment_method,'UNKNOWN') code, COUNT(*) item_count, COALESCE(SUM(amount),0) amount "
-                                + "FROM payment_record WHERE payment_status='PAID' AND paid_at>=? AND paid_at<? GROUP BY payment_method ORDER BY amount DESC",
+                                + "FROM payment_record WHERE payment_status IN ('PAID','SUCCESS') AND paid_at>=? AND paid_at<? GROUP BY payment_method ORDER BY amount DESC",
                         currentStart, currentEnd, true))
                 .orderStatuses(categoryStatistics(
                         "SELECT COALESCE(order_status,'UNKNOWN') code, COUNT(*) item_count, 0 amount "
@@ -113,10 +113,37 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
+    @Override
+    public List<DashboardPaymentRecordVO> getRecentPayments(int days, int limit) {
+        int normalizedDays = Math.max(1, Math.min(days, 365));
+        int normalizedLimit = Math.max(1, Math.min(limit, 200));
+        if (!tableExists("payment_record")) return List.of();
+        LocalDate today = LocalDate.now(HOTEL_ZONE);
+        LocalDateTime start = today.minusDays(normalizedDays - 1L).atStartOfDay();
+        LocalDateTime end = today.plusDays(1).atStartOfDay();
+        String sql = "SELECT pr.id payment_id, pr.payment_no, pr.order_id, bo.order_no, pr.payment_method, pr.amount, "
+                + "COALESCE(pr.paid_at, pr.created_at) paid_at "
+                + "FROM payment_record pr "
+                + "LEFT JOIN booking_order bo ON bo.id = pr.order_id "
+                + "WHERE pr.payment_status IN ('PAID','SUCCESS') "
+                + "AND COALESCE(pr.paid_at, pr.created_at) >=? AND COALESCE(pr.paid_at, pr.created_at) <? "
+                + "ORDER BY paid_at DESC LIMIT ?";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> DashboardPaymentRecordVO.builder()
+                        .paymentId(rs.getLong("payment_id"))
+                        .paymentNo(rs.getString("payment_no"))
+                        .orderId(rs.getLong("order_id"))
+                        .orderNo(rs.getString("order_no"))
+                        .paymentMethod(rs.getString("payment_method"))
+                        .amount(money(rs.getBigDecimal("amount")))
+                        .paidAt(toLocalDateTime(rs.getTimestamp("paid_at")))
+                        .build(),
+                Timestamp.valueOf(start), Timestamp.valueOf(end), normalizedLimit);
+    }
+
     private BigDecimal paidRevenue(LocalDateTime start, LocalDateTime end) {
         if (!tableExists("payment_record")) return money(BigDecimal.ZERO);
         return queryForDecimal("SELECT COALESCE(SUM(amount),0) FROM payment_record "
-                + "WHERE payment_status='PAID' AND paid_at>=? AND paid_at<?", Timestamp.valueOf(start), Timestamp.valueOf(end));
+                + "WHERE payment_status IN ('PAID','SUCCESS') AND paid_at>=? AND paid_at<?", Timestamp.valueOf(start), Timestamp.valueOf(end));
     }
 
     private List<RoomTypeStatisticVO> periodRoomTypeStatistics(LocalDateTime start, LocalDateTime end) {
@@ -125,7 +152,7 @@ public class DashboardServiceImpl implements DashboardService {
                         + "COUNT(DISTINCT pr.order_id) booking_count, COALESCE(SUM(pr.amount),0) revenue "
                         + "FROM payment_record pr JOIN booking_order bo ON bo.id=pr.order_id "
                         + "LEFT JOIN room_type rt ON rt.id=bo.room_type_id "
-                        + "WHERE pr.payment_status='PAID' AND pr.paid_at>=? AND pr.paid_at<? "
+                        + "WHERE pr.payment_status IN ('PAID','SUCCESS') AND pr.paid_at>=? AND pr.paid_at<? "
                         + "GROUP BY bo.room_type_id,rt.name,bo.room_type_name ORDER BY revenue DESC,booking_count DESC",
                 this::mapRoomTypeStatistic, Timestamp.valueOf(start), Timestamp.valueOf(end));
     }
@@ -190,6 +217,10 @@ public class DashboardServiceImpl implements DashboardService {
 
     private RoomTypeStatisticVO mapRoomTypeStatistic(ResultSet rs, int rowNum) throws SQLException {
         return RoomTypeStatisticVO.builder().roomTypeId(rs.getLong("room_type_id")).roomTypeName(rs.getString("room_type_name")).bookingCount(rs.getLong("booking_count")).revenue(money(rs.getBigDecimal("revenue"))).build();
+    }
+
+    private LocalDateTime toLocalDateTime(Timestamp timestamp) {
+        return timestamp == null ? null : timestamp.toLocalDateTime();
     }
     protected int systemInteger(String key, int fallback) {
         if (!tableExists("system_config")) return fallback;

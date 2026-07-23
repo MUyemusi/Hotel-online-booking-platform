@@ -18,4 +18,5 @@ public class CheckinQrStatusVO {
     private String tokenStatus;
     private LocalDateTime expiresAt;
     private Boolean expired;
+    private String verificationCode;
 }

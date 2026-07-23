@@ -2,9 +2,9 @@
   <div class="orders-page">
     <div class="back-strip">
       <div class="back-inner">
-        <button class="back-btn" @click="$router.push('/')">
+        <button class="back-btn" @click="$router.push(ordersBackPath)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
-          首页
+          {{ ordersBackLabel }}
         </button>
         <span class="back-crumb">我的订单</span>
       </div>
@@ -46,6 +46,7 @@
             <span>{{ o.createdAt?.slice(0, 10) }} 创建</span>
             <span v-if="o.paymentTimeout && o.orderStatus === 'PENDING_PAYMENT'" class="timeout-tip">请在 {{ o.paymentTimeout?.slice(11,16) }} 前支付</span>
             <button v-if="o.orderStatus === 'PENDING_PAYMENT'" class="go-pay" @click.stop="$router.push(`/orders/${o.id}/pay`)">去支付</button>
+            <button v-if="o.orderStatus === 'CHECKED_IN'" class="go-checkout" :disabled="checkingOutId === o.id" @click.stop="checkout(o)">办理退房</button>
           </div>
         </div>
       </div>
@@ -61,15 +62,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getMyOrders } from '@/api/booking'
+import { computed, ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { checkoutOrder, getMyOrders } from '@/api/booking'
 
+const route = useRoute()
 const loading = ref(true)
 const orders = ref([])
 const page = ref(1)
 const size = ref(10)
 const total = ref(0)
 const currentStatus = ref('')
+const checkingOutId = ref(null)
+const inAccountCenter = computed(() => route.path.startsWith('/account'))
+const ordersBackPath = computed(() => inAccountCenter.value ? '/account/profile' : '/')
+const ordersBackLabel = computed(() => inAccountCenter.value ? '个人中心' : '首页')
 
 const statuses = [
   { key: '', label: '全部' },
@@ -95,6 +103,32 @@ function statusClass(s) {
 }
 
 function switchStatus(s) { currentStatus.value = s; page.value = 1; load() }
+
+function createRequestToken(prefix) {
+  if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+async function checkout(order) {
+  const confirmed = await ElMessageBox.confirm('确认办理退房后，订单将变为已完成，房间将转为待清洁状态。', '办理退房', { type: 'warning' })
+    .then(() => true)
+    .catch(() => false)
+  if (!confirmed) return
+  checkingOutId.value = order.id
+  try {
+    const res = await checkoutOrder(order.id, {
+      requestToken: createRequestToken('USER-CHECKOUT'),
+      remark: '住客端自助退房'
+    })
+    if (res.code !== 'SUCCESS') throw new Error(res.message || '退房办理失败')
+    ElMessage.success('退房办理成功')
+    await load()
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '退房办理失败')
+  } finally {
+    checkingOutId.value = null
+  }
+}
 
 async function load() {
   loading.value = true
@@ -160,6 +194,13 @@ onMounted(load)
   font-size: 13px; font-weight: 650; cursor: pointer; transition: all 0.3s;
 }
 .go-pay:hover { box-shadow: 0 4px 16px rgba(180,120,60,0.3); }
+.go-checkout {
+  margin-left: auto; padding: 8px 20px; border: none; border-radius: 50px;
+  background: linear-gradient(135deg, #496454, #33483b); color: #fff;
+  font-size: 13px; font-weight: 650; cursor: pointer; transition: all 0.3s;
+}
+.go-checkout:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(73,100,84,0.26); }
+.go-checkout:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .empty { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
 .empty-icon { font-size: 48px; margin: 0 0 12px; }

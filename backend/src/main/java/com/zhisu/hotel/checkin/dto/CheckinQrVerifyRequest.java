@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class CheckinQrVerifyRequest {
 
-    @NotBlank(message = "QR content is required")
-    private String qrContent;
+    @NotBlank(message = "Verification credential is required")
+    private String credential;
 }

@@ -3,14 +3,14 @@
     <div class="login-visual">
       <img src="/images/eco/zhisu-login-hero.png" alt="智宿海滨酒店迎宾庭院" fetchpriority="high" />
       <div class="visual-overlay"></div>
-      <div class="visual-badge">ZHISU · SECURE ACCESS</div>
-      <div class="visual-copy"><p>IDENTITY & ACCESS</p><h1>每一次安心入住，<br />都从安全登录开始。</h1><span>统一身份认证 · 角色权限控制 · 账号安全保护</span></div>
+      <div class="visual-badge">智宿 · 安全登录</div>
+      <div class="visual-copy"><p>身份认证与访问控制</p><h1>每一次安心入住，<br />都从安全登录开始。</h1><span>统一身份认证 · 角色权限控制 · 账号安全保护</span></div>
     </div>
 
     <div class="login-glass">
       <div class="login-head">
         <span class="lg-brand">智宿</span>
-        <p class="lg-sub">ACCOUNT & ACCESS CENTER</p>
+        <p class="lg-sub">账号与权限中心</p>
       </div>
 
       <h2>欢迎回来</h2>

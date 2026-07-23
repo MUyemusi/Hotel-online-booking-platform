@@ -1,6 +1,6 @@
 <template>
   <section class="credit-page">
-    <div class="page-head"><span class="eyebrow">CREDIT CENTER</span><h1>信用中心</h1><p>良好的履约记录，让每次入住更从容</p></div>
+    <div class="page-head"><span class="eyebrow">信用中心</span><h1>信用中心</h1><p>良好的履约记录，让每次入住更从容</p></div>
     <el-alert
       v-if="errorText"
       class="credit-alert"
