@@ -10,34 +10,10 @@ const routes = [
       { path: '', name: 'Home', component: () => import('@/modules/home/Home.vue') },
       { path: 'rooms', name: 'RoomSearch', component: () => import('@/views/user/roomtypes/RoomTypeListView.vue') },
       { path: 'rooms/:id', name: 'RoomDetail', component: () => import('@/views/user/roomtypes/RoomTypeDetailView.vue') },
-      { path: 'booking/confirm', name: 'BookingConfirm', component: () => import('@/views/user/BookingConfirmView.vue'), meta: { roles: ['USER'] } },
-      { path: 'orders', name: 'MyOrders', component: () => import('@/views/user/OrderListView.vue'), meta: { roles: ['USER'] } },
-      { path: 'orders/:id', name: 'OrderDetail', component: () => import('@/views/user/OrderDetailView.vue'), meta: { roles: ['USER'] } },
-      { path: 'orders/:id/pay', name: 'OrderPayment', component: () => import('@/views/user/PaymentView.vue'), meta: { roles: ['USER'] } },
-      {
-        path: 'booking/confirm',
-        name: 'BookingConfirm',
-        meta: { requiresAuth: true },
-        component: () => import('@/views/user/bookings/BookingConfirmView.vue')
-      },
-      {
-        path: 'payment/:orderId',
-        name: 'Payment',
-        meta: { requiresAuth: true },
-        component: () => import('@/views/user/bookings/PaymentView.vue')
-      },
-      {
-        path: 'orders',
-        name: 'MyOrders',
-        meta: { requiresAuth: true },
-        component: () => import('@/views/user/bookings/MyOrdersView.vue')
-      },
-      {
-        path: 'orders/:orderId',
-        name: 'OrderDetail',
-        meta: { requiresAuth: true },
-        component: () => import('@/views/user/bookings/OrderDetailView.vue')
-      },
+      { path: 'booking/confirm', name: 'BookingConfirm', meta: { roles: ['USER'] }, component: () => import('@/views/user/bookings/BookingConfirmView.vue') },
+      { path: 'orders', name: 'MyOrders', meta: { roles: ['USER'] }, component: () => import('@/views/user/bookings/MyOrdersView.vue') },
+      { path: 'orders/:id', name: 'OrderDetail', meta: { roles: ['USER'] }, component: () => import('@/views/user/bookings/OrderDetailView.vue') },
+      { path: 'orders/:id/pay', name: 'OrderPayment', meta: { roles: ['USER'] }, component: () => import('@/views/user/bookings/PaymentView.vue') },
       {
         path: 'account',
         meta: { requiresAuth: true },

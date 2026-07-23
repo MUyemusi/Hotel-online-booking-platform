@@ -84,6 +84,32 @@
               </div>
             </div>
           </div>
+
+          <!-- 住客评价 -->
+          <div class="info-block">
+            <h3>住客评价 ({{ reviewTotal }})</h3>
+            <div v-if="reviews.length" class="review-list">
+              <div v-for="r in reviews" :key="r.id" class="review-card">
+                <div class="review-hd">
+                  <span class="review-avatar">{{ r.avatar || '👤' }}</span>
+                  <div class="review-meta">
+                    <span class="review-nick">{{ r.nickname }}</span>
+                    <span class="review-date">{{ r.createdAt?.slice(0, 10) }}</span>
+                  </div>
+                </div>
+                <p class="review-text">{{ r.content }}</p>
+              </div>
+            </div>
+            <p v-else class="review-empty">暂无评价，成为第一位评价的客人吧</p>
+
+            <div v-if="loggedIn" class="review-form">
+              <el-input v-model="newReview" type="textarea" :rows="3" placeholder="分享您的入住体验..." maxlength="500" show-word-limit />
+              <button class="review-submit" :disabled="!newReview.trim() || posting" @click="postReview">{{ posting ? '发布中...' : '发布评价' }}</button>
+            </div>
+            <div v-else class="review-login-hint">
+              <router-link :to="`/login?redirect=/rooms/${room.id}`">登录</router-link> 后即可发表评价
+            </div>
+          </div>
         </div>
 
         <!-- 侧边毛玻璃预订卡 -->
@@ -142,6 +168,8 @@ import { ElMessage } from 'element-plus'
 import { getRoomTypeDetail, getRoomTypeImages, getRoomTypeFacilities } from '@/api/roomtype'
 import { searchRoomTypes } from '@/api/roomTypes'
 import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
+import { getReviews, createReview } from '@/api/review'
+import { getAccessToken } from '@/utils/request'
 
 const route = useRoute()
 const router = useRouter()
@@ -182,6 +210,38 @@ async function loadQuote(showError = false) {
     return null
   }
 }
+// ---- 评论 ----
+const reviews = ref([])
+const reviewTotal = ref(0)
+const newReview = ref('')
+const posting = ref(false)
+const loggedIn = computed(() => Boolean(getAccessToken()))
+
+async function loadReviews() {
+  try {
+    const res = await getReviews(route.params.id)
+    if (res.code === 'SUCCESS') { reviews.value = res.data.records || []; reviewTotal.value = res.data.total || 0 }
+  } catch { /* ignore */ }
+}
+
+async function postReview() {
+  if (!newReview.value.trim()) return
+  posting.value = true
+  try {
+    const res = await createReview({ roomTypeId: room.value.id, content: newReview.value.trim() })
+    if (res.code === 'SUCCESS') {
+      ElMessage.success('评价发布成功')
+      reviews.value.unshift(res.data)
+      reviewTotal.value++
+      newReview.value = ''
+    } else {
+      ElMessage.error(res.message || '发布失败')
+    }
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || '发布失败')
+  } finally { posting.value = false }
+}
+
 async function load() {
   loading.value = true
   try {
@@ -190,7 +250,7 @@ async function load() {
     if (rr.code === 'SUCCESS') room.value = rr.data
     if (ir.code === 'SUCCESS') images.value = ir.data || []
     if (fr.code === 'SUCCESS') facilities.value = fr.data || []
-    await loadQuote()
+    await Promise.all([loadQuote(), loadReviews()])
   } catch (e) { ElMessage.error('加载失败') } finally { loading.value = false }
 }
 async function doBook() {
@@ -308,6 +368,34 @@ onMounted(load)
 .nf { text-align: center; padding: 160px 20px; color: var(--text-secondary); }
 .nf h2 { color: var(--text-primary); }
 .nf a { color: var(--accent); text-decoration: none; margin-top: 14px; display: inline-block; font-weight: 600; }
+
+/* Reviews */
+.review-list { display: flex; flex-direction: column; gap: 14px; }
+.review-card {
+  padding: 16px 20px; border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.5); backdrop-filter: blur(4px);
+  border: 1px solid rgba(0,0,0,0.04); box-shadow: var(--shadow-sm);
+}
+.review-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.review-avatar {
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); font-size: 18px; flex-shrink: 0;
+}
+.review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1; }
+.review-nick { font-weight: 650; font-size: 13px; color: var(--text-primary); }
+.review-date { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+.review-text { font-size: 14px; line-height: 1.75; color: var(--text-secondary); margin: 0; }
+.review-empty { font-size: 14px; color: var(--text-muted); text-align: center; padding: 24px 0; }
+.review-form { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.review-submit {
+  align-self: flex-end; padding: 10px 28px; border: none; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #c8945c, #b07840);
+  color: #fff; font-size: 13px; font-weight: 650; cursor: pointer; transition: all 0.3s;
+}
+.review-submit:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(180,120,60,0.3); transform: translateY(-1px); }
+.review-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.review-login-hint { margin-top: 18px; text-align: center; font-size: 13px; color: var(--text-muted); }
+.review-login-hint a { color: var(--accent); text-decoration: none; font-weight: 600; }
 
 @media (max-width: 1024px) { .detail-body { grid-template-columns: 1fr; } .detail-side { position: static; } }
 @media (max-width: 768px) {
