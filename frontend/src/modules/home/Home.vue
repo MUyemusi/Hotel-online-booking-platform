@@ -26,7 +26,7 @@
     <section id="booking" class="booking-wrap">
       <div class="booking-card">
         <div class="booking-intro"><span>RESERVATION</span><strong>{{ hotelName }}</strong><el-checkbox v-if="earlyMorningAvailable" v-model="earlyMode">凌晨入住（当日中午退房）</el-checkbox></div>
-        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkInDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast"><template #default="{ cell }"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker></div>
+        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkInDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast"><template #default="cell"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker></div>
         <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOutDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
         <div class="booking-field"><small>入住人数</small><el-select v-model="booking.guests"><el-option v-for="n in 6" :key="n" :label="`${n} 位宾客`" :value="n" /></el-select></div>
         <button class="booking-btn" @click="searchRooms">查询客房 <span>→</span></button>

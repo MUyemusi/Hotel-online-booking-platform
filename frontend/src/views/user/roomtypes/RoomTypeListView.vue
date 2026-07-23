@@ -25,7 +25,7 @@
                 :disabled-date="disablePastDates"
                 format="MM/DD"
                 value-format="YYYY-MM-DD"
-              ><template #default="{ cell }"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker>
+              ><template #default="cell"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker>
             </div>
             <span class="search-sep">→</span>
             <div class="search-field">

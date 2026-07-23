@@ -99,7 +99,7 @@
               <el-checkbox v-if="earlyMorningAvailable" v-model="earlyMode">凌晨入住（当日中午退房）</el-checkbox>
               <div class="bf">
                 <label>入住日期</label>
-                <el-date-picker v-model="bk.checkIn" type="date" placeholder="选择" :disabled-date="noPast" format="MM/DD" value-format="YYYY-MM-DD"><template #default="{ cell }"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker>
+                <el-date-picker v-model="bk.checkIn" type="date" placeholder="选择" :disabled-date="noPast" format="MM/DD" value-format="YYYY-MM-DD"><template #default="cell"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker>
               </div>
               <div class="bf">
                 <label>离店日期</label>
