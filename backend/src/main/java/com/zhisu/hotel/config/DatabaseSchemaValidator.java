@@ -29,6 +29,7 @@ public class DatabaseSchemaValidator implements ApplicationRunner {
         required.put("price_rule", List.of("start_date", "end_date", "room_type_id", "priority"));
         required.put("daily_price", List.of("room_type_id", "business_date", "final_price", "manual_override"));
         required.put("auth_refresh_token", List.of("user_id", "token_hash", "expires_at", "revoked_at"));
+        required.put("room_type_review", List.of("room_type_id", "nickname", "content", "status"));
 
         StringBuilder missing = new StringBuilder();
         required.forEach((table, columns) -> {
