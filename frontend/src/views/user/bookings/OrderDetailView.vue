@@ -92,7 +92,7 @@
                 <span>支付剩余</span>
                 <span class="sc-tnum">{{ fmtRemaining }}</span>
               </div>
-              <button class="sc-btn primary" @click="$router.push(`/payment/${order.id}`)">去支付</button>
+              <button class="sc-btn primary" @click="$router.push(`/orders/${order.id}/pay`)">去支付</button>
               <button class="sc-btn cancel" @click="showCancel = true">取消订单</button>
             </template>
 
@@ -166,7 +166,7 @@ const fmtRemaining = computed(() => {
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await getOrderDetail(route.params.orderId)
+    const res = await getOrderDetail(route.params.id)
     if (res.code === 'SUCCESS') order.value = res.data
   } catch { /* */ } finally { loading.value = false }
 })
@@ -175,7 +175,7 @@ async function doCancel() {
   if (!cancelReason.value.trim()) { ElMessage.warning('请填写取消原因'); return }
   cancelling.value = true
   try {
-    const res = await cancelOrder(route.params.orderId, { cancelReason: cancelReason.value.trim() })
+    const res = await cancelOrder(route.params.id, { cancelReason: cancelReason.value.trim() })
     if (res.code === 'SUCCESS') {
       ElMessage.success('订单已取消')
       order.value = { ...order.value, orderStatus: 'CANCELLED', cancellation: res.data }

@@ -45,7 +45,7 @@
           <div class="oc-foot">
             <span>{{ o.createdAt?.slice(0, 10) }} 创建</span>
             <span v-if="o.paymentTimeout && o.orderStatus === 'PENDING_PAYMENT'" class="timeout-tip">请在 {{ o.paymentTimeout?.slice(11,16) }} 前支付</span>
-            <button v-if="o.orderStatus === 'PENDING_PAYMENT'" class="go-pay" @click.stop="$router.push(`/payment/${o.id}`)">去支付</button>
+            <button v-if="o.orderStatus === 'PENDING_PAYMENT'" class="go-pay" @click.stop="$router.push(`/orders/${o.id}/pay`)">去支付</button>
           </div>
         </div>
       </div>
