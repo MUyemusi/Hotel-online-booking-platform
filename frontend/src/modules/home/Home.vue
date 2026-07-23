@@ -122,6 +122,11 @@ const banners = ref([])
 const bannerIndex = ref(0)
 const hotelName = ref('智宿海滨生态酒店')
 const hotelIntroduction = ref('浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。')
+const hotelAddress = ref('海南省三亚市吉阳区亚龙湾国家旅游度假区万悦路1号')
+const hotelPhone = ref('400-800-2026')
+const hotelTraffic = ref('距亚龙湾站约10分钟车程，距三亚凤凰国际机场约30分钟车程，可乘出租车或网约车前往。')
+const hotelLatitude = ref(18.2296)
+const hotelLongitude = ref(109.6253)
 const healthy = ref(false)
 const healthFailed = ref(false)
 const booking = reactive({ checkInDate: '', checkOutDate: '', roomCount: 1, guests: 2, stayType: 'STANDARD' })
@@ -191,11 +196,6 @@ onMounted(async () => {
     if (r.code === 'SUCCESS' && r.data) {
       hotelName.value = r.data.hotelName || hotelName.value
       hotelIntroduction.value = r.data.introduction || hotelIntroduction.value
-      hotelAddress.value = r.data.address || ''
-      hotelPhone.value = r.data.contactPhone || ''
-      hotelTraffic.value = r.data.trafficInfo || ''
-      hotelLatitude.value = r.data.latitude || null
-      hotelLongitude.value = r.data.longitude || null
     }
   } catch { /* keep current visual fallback */ }
   try {
