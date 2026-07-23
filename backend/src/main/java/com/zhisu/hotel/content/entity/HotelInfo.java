@@ -40,6 +40,10 @@ public class HotelInfo {
 
     private String faqContent;
 
+    private Double latitude;
+
+    private Double longitude;
+
     private String status;
 
     private LocalDateTime createdAt;
