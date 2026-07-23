@@ -58,6 +58,19 @@
       <img src="/images/eco/zhisu-seaside-dining.png" alt="智宿临海餐厅" loading="lazy" />
     </section>
 
+    <MapSection
+      :latitude="hotelLatitude"
+      :longitude="hotelLongitude"
+      :address="hotelAddress"
+      :contact-phone="hotelPhone"
+      :traffic-info="hotelTraffic"
+    />
+
+    <NearbyRecommendation
+        :latitude="hotelLatitude"
+        :longitude="hotelLongitude"
+    />
+
     <section v-if="announcements.length" class="announcement-section section-shell">
       <div class="section-title compact"><div><p class="eyebrow dark">NEWS & STORIES</p><h2>酒店讯息</h2></div></div>
       <div class="announcement-list">
@@ -99,6 +112,8 @@ import { getPublicBanners } from '@/api/content/banner'
 import { getPublicHotelInfo } from '@/api/content/hotelInfo'
 import { toBookingQuery } from '@/utils/bookingQuery'
 import { hotelToday, isEarlyMorningAvailable, nextDate } from '@/utils/bookingStay'
+import MapSection from '@/components/MapSection.vue'
+import NearbyRecommendation from '@/components/NearbyRecommendation.vue'
 
 const router = useRouter()
 const announcements = ref([])
