@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.checkin.service.impl;
 
 import com.zhisu.hotel.booking.entity.BookingOrder;
@@ -226,11 +227,13 @@ public class CheckinConfirmationServiceImpl implements CheckinConfirmationServic
         if (order.getCheckInDate() == null || order.getCheckOutDate() == null) {
             throw new BusinessException(ErrorCode.CHECKIN_REQUEST_INVALID, "Order check-in or check-out date is missing");
         }
+        boolean earlyMorning = "EARLY_MORNING".equals(order.getStayType());
         if (today.isBefore(order.getCheckInDate())) {
-            throw new BusinessException(ErrorCode.CHECKIN_TOO_EARLY, "Check-in date has not arrived");
+            throw new BusinessException(ErrorCode.CHECKIN_TOO_EARLY, "入住日期尚未到达");
         }
-        if (!today.isBefore(order.getCheckOutDate())) {
-            throw new BusinessException(ErrorCode.CHECKIN_EXPIRED, "Order has passed its valid check-in period");
+        if ((earlyMorning && today.isAfter(order.getCheckInDate()))
+                || (!earlyMorning && !today.isBefore(order.getCheckOutDate()))) {
+            throw new BusinessException(ErrorCode.CHECKIN_EXPIRED, "订单已超过有效入住日期");
         }
     }
 

@@ -22,15 +22,17 @@ public class JdbcUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        String identifier = username == null ? "" : username.trim();
         AuthUserRecord user = jdbcTemplate.query(
-                "SELECT id, username, password_hash, status FROM sys_user WHERE username = ? LIMIT 1",
+                "SELECT id, username, password_hash, status FROM sys_user WHERE username = ? OR phone = ? " +
+                        "ORDER BY CASE WHEN username = ? THEN 0 ELSE 1 END LIMIT 1",
                 rs -> rs.next() ? new AuthUserRecord(
                         rs.getLong("id"),
                         rs.getString("username"),
                         rs.getString("password_hash"),
                         rs.getString("status")
                 ) : null,
-                username
+                identifier, identifier, identifier
         );
 
         if (user == null) {

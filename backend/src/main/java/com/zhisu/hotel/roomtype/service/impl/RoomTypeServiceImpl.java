@@ -47,11 +47,20 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     @Override
     @Transactional
     public void deleteRoomType(Long id) {
-        // 逻辑删除，MyBatis-Plus @TableLogic 自动处理
         RoomType roomType = roomTypeMapper.selectById(id);
         if (roomType == null) {
             throw new BusinessException("房型不存在");
         }
+
+        // 校验是否有活跃订单：已锁定或已预订库存 > 0 表示存在未完成订单
+        LambdaQueryWrapper<DailyInventory> invWrapper = new LambdaQueryWrapper<>();
+        invWrapper.eq(DailyInventory::getRoomTypeId, id)
+                .and(w -> w.gt(DailyInventory::getLockedRooms, 0).or().gt(DailyInventory::getBookedRooms, 0));
+        Long activeCount = dailyInventoryMapper.selectCount(invWrapper);
+        if (activeCount != null && activeCount > 0) {
+            throw new BusinessException("该房型存在未完成订单（已锁定或已预订库存），无法删除。请先处理相关订单后再操作。");
+        }
+
         roomTypeMapper.deleteById(id);
     }
 

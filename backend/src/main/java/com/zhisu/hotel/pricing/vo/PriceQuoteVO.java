@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.pricing.vo;
 
 import lombok.Builder;
@@ -18,6 +19,8 @@ public class PriceQuoteVO {
     private LocalDate checkInDate;
 
     private LocalDate checkOutDate;
+
+    private String stayType;
 
     private Integer stayNights;
 

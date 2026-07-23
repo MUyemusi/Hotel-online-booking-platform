@@ -38,6 +38,24 @@ export function resumeInventory(id) {
   })
 }
 
+/** 按日期范围批量修改库存 */
+export function batchUpdateInventory(data) {
+  return request({
+    url: '/api/admin/inventory/batch',
+    method: 'put',
+    data
+  })
+}
+
+/** 自动生成库存 */
+export function generateInventory(params) {
+  return request({
+    url: '/api/admin/inventory/generate',
+    method: 'post',
+    params
+  })
+}
+
 /** 库存变更日志 */
 export function getInventoryLogs(params) {
   return request({

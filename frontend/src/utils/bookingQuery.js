@@ -1,3 +1,4 @@
+
 function firstValue(value) {
   return Array.isArray(value) ? value[0] : value
 }
@@ -13,7 +14,8 @@ export function normalizeBookingQuery(query = {}, defaults = {}) {
     checkInDate: String(firstValue(query.checkInDate ?? query.checkIn ?? defaults.checkInDate ?? '') || ''),
     checkOutDate: String(firstValue(query.checkOutDate ?? query.checkOut ?? defaults.checkOutDate ?? '') || ''),
     roomCount: positiveInt(query.roomCount ?? query.rooms, positiveInt(defaults.roomCount, 1)),
-    guests: positiveInt(query.guests, positiveInt(defaults.guests, 1))
+    guests: positiveInt(query.guests, positiveInt(defaults.guests, 1)),
+    stayType: String(firstValue(query.stayType ?? defaults.stayType ?? 'STANDARD')).toUpperCase() === 'EARLY_MORNING' ? 'EARLY_MORNING' : 'STANDARD'
   }
 }
 
@@ -23,7 +25,8 @@ export function toBookingQuery(state, roomTypeId) {
     checkInDate: normalized.checkInDate || undefined,
     checkOutDate: normalized.checkOutDate || undefined,
     roomCount: normalized.roomCount,
-    guests: normalized.guests
+    guests: normalized.guests,
+    stayType: normalized.stayType
   }
   if (normalized.roomTypeId) query.roomTypeId = normalized.roomTypeId
   return query

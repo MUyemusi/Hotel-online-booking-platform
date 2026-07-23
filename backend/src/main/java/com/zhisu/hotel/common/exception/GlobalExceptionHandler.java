@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.common.exception;
 
 import com.zhisu.hotel.common.response.ApiResponse;
@@ -28,7 +29,8 @@ public class GlobalExceptionHandler {
         HttpStatus status = switch (e.getCode()) {
             case "BAD_CREDENTIALS", "REFRESH_TOKEN_INVALID", "UNAUTHORIZED" -> HttpStatus.UNAUTHORIZED;
             case "FORBIDDEN" -> HttpStatus.FORBIDDEN;
-            case "INVALID_STAY_DATES", "INVALID_REQUEST" -> HttpStatus.BAD_REQUEST;
+            case "INVALID_STAY_DATES", "INVALID_REQUEST", "STAY_TYPE_INVALID",
+                    "EARLY_MORNING_WINDOW_CLOSED", "EARLY_MORNING_DATE_INVALID" -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.OK;
         };
         return ResponseEntity.status(status).body(ApiResponse.error(e.getCode(), e.getMessage()));

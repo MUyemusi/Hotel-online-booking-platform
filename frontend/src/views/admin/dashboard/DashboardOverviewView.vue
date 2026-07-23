@@ -1,112 +1,48 @@
 <template>
   <div class="dashboard-view">
     <div class="page-header">
-      <div>
-        <h1>运营数据看板</h1>
-        <p>汇总展示今日经营概况、近7日趋势、房型销售和库存预警。</p>
-      </div>
+      <div><h1>酒店经营数据看板</h1><p>从支付流水、订单、房型和库存维度观察酒店经营情况。</p></div>
       <div class="header-actions">
+        <el-radio-group v-model="periodDays" @change="loadAll">
+          <el-radio-button :value="7">近7天</el-radio-button>
+          <el-radio-button :value="30">近30天</el-radio-button>
+          <el-radio-button :value="90">近90天</el-radio-button>
+        </el-radio-group>
         <el-button :loading="loading" @click="loadAll">重新加载</el-button>
       </div>
     </div>
 
     <div class="stats-grid">
       <el-card v-for="card in overviewCards" :key="card.key" shadow="hover" class="stat-card">
-        <div class="stat-label">{{ card.label }}</div>
-        <div class="stat-value">{{ card.value }}</div>
+        <span>{{ card.label }}</span><strong :class="card.className">{{ card.value }}</strong><small>{{ card.hint }}</small>
       </el-card>
+    </div>
+
+    <div class="chart-grid">
+      <el-card shadow="never" class="panel-card wide"><template #header><b>营收与订单趋势</b></template><div ref="trendRef" class="chart"></div></el-card>
+      <el-card shadow="never" class="panel-card"><template #header><b>当前入住率</b></template><div ref="occupancyRef" class="chart"></div></el-card>
+      <el-card shadow="never" class="panel-card"><template #header><b>房型营收排行</b></template><div ref="roomTypeRef" class="chart"></div></el-card>
+      <el-card shadow="never" class="panel-card"><template #header><b>支付方式占比</b></template><div ref="paymentRef" class="chart"></div></el-card>
+      <el-card shadow="never" class="panel-card"><template #header><b>订单状态分布</b></template><div ref="statusRef" class="chart"></div></el-card>
     </div>
 
     <div class="content-grid">
-      <el-card shadow="never" class="panel-card trend-card">
-        <template #header>
-          <div class="panel-header">
-            <span>近7日订单趋势</span>
-            <span class="panel-subtitle">无订单数据时显示为 0</span>
-          </div>
-        </template>
-        <div class="trend-list">
-          <div v-for="item in trends" :key="item.date" class="trend-row">
-            <div class="trend-date">{{ item.date }}</div>
-            <div class="trend-bars">
-              <div class="bar-group">
-                <div class="bar-label">订单</div>
-                <div class="bar-track">
-                  <div class="bar-fill orders" :style="{ width: getOrderBarWidth(item.orderCount) }"></div>
-                </div>
-                <div class="bar-value">{{ item.orderCount }}</div>
-              </div>
-              <div class="bar-group">
-                <div class="bar-label">营收</div>
-                <div class="bar-track">
-                  <div class="bar-fill revenue" :style="{ width: getRevenueBarWidth(item.revenue) }"></div>
-                </div>
-                <div class="bar-value">￥{{ formatMoney(item.revenue) }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-card>
-
-      <el-card shadow="never" class="panel-card inventory-card">
-        <template #header>
-          <div class="panel-header">
-            <span>库存预警</span>
-            <span class="panel-subtitle">当前窗口内可售库存较低的房型日期</span>
-          </div>
-        </template>
+      <el-card shadow="never" class="panel-card">
+        <template #header><div class="panel-header"><b>未来7天库存预警</b><span>阈值由系统参数控制</span></div></template>
         <el-table :data="inventoryWarnings" stripe empty-text="暂无库存预警">
           <el-table-column prop="roomTypeName" label="房型" min-width="140" />
-          <el-table-column prop="inventoryDate" label="日期" min-width="120" />
-          <el-table-column label="可售/总房量" min-width="120">
-            <template #default="scope">
-              {{ scope.row.availableRooms }} / {{ scope.row.totalRooms }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="100" />
+          <el-table-column prop="inventoryDate" label="日期" width="120" />
+          <el-table-column label="可售/总房量" width="130"><template #default="{ row }">{{ row.availableRooms }} / {{ row.totalRooms }}</template></el-table-column>
+          <el-table-column label="状态" width="90"><template #default="{ row }">{{ displayValue('status', row.status) }}</template></el-table-column>
         </el-table>
       </el-card>
-    </div>
-
-    <div class="content-grid two-columns">
       <el-card shadow="never" class="panel-card">
-        <template #header>
-          <div class="panel-header">
-            <span>房型销售统计</span>
-            <span class="panel-subtitle">按已支付订单汇总房型销量与营业收入</span>
-          </div>
-        </template>
-        <el-table :data="roomTypeStatistics" stripe>
-          <el-table-column prop="roomTypeName" label="房型" min-width="160" />
-          <el-table-column prop="bookingCount" label="预订数量" width="120" />
-          <el-table-column label="营业收入" min-width="120">
-            <template #default="scope">
-              ￥{{ formatMoney(scope.row.revenue) }}
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-card>
-
-      <el-card shadow="never" class="panel-card">
-        <template #header>
-          <div class="panel-header">
-            <span>内容运营统计</span>
-            <span class="panel-subtitle">已发布内容与启用参数</span>
-          </div>
-        </template>
+        <template #header><b>内容运营概况</b></template>
         <div class="content-stats">
-          <div class="content-stat-item">
-            <span>已发布公告</span>
-            <strong>{{ overview.publishedAnnouncementCount }}</strong>
-          </div>
-          <div class="content-stat-item">
-            <span>已上线轮播图</span>
-            <strong>{{ overview.onlineBannerCount }}</strong>
-          </div>
-          <div class="content-stat-item">
-            <span>启用系统参数</span>
-            <strong>{{ overview.enabledSystemConfigCount }}</strong>
-          </div>
+          <div><span>已发布公告</span><strong>{{ overview.publishedAnnouncementCount }}</strong></div>
+          <div><span>已上线轮播图</span><strong>{{ overview.onlineBannerCount }}</strong></div>
+          <div><span>启用系统参数</span><strong>{{ overview.enabledSystemConfigCount }}</strong></div>
+          <div><span>当前待清洁房间</span><strong>{{ overview.dirtyRoomCount }}</strong></div>
         </div>
       </el-card>
     </div>
@@ -114,270 +50,131 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import {
-  getDashboardOverview,
-  getDashboardTrends,
-  getInventoryWarnings,
-  getRoomTypeStatistics
-} from '@/api/dashboard'
+import * as echarts from 'echarts/core'
+import { BarChart, GaugeChart, LineChart, PieChart } from 'echarts/charts'
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import { getDashboardAnalytics, getDashboardOverview, getInventoryWarnings } from '@/api/dashboard'
+import { displayValue } from '@/utils/adminDisplay'
+
+echarts.use([BarChart, GaugeChart, LineChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 
 const loading = ref(false)
-const trends = ref([])
+const periodDays = ref(30)
 const inventoryWarnings = ref([])
-const roomTypeStatistics = ref([])
+const trendRef = ref()
+const occupancyRef = ref()
+const roomTypeRef = ref()
+const paymentRef = ref()
+const statusRef = ref()
+const charts = []
 
 const overview = reactive({
-  todayOrderCount: 0,
-  todayPaidOrderCount: 0,
-  todayRevenue: 0,
-  todayCheckInCount: 0,
-  todayCheckOutCount: 0,
-  todayUserCancellationCount: 0,
-  availableRoomCount: 0,
-  occupiedRoomCount: 0,
-  dirtyRoomCount: 0,
-  occupancyRate: 0,
-  inventoryWarningCount: 0,
-  publishedAnnouncementCount: 0,
-  onlineBannerCount: 0,
-  enabledSystemConfigCount: 0
+  todayOrderCount: 0, todayPaidOrderCount: 0, todayRevenue: 0, todayCheckInCount: 0,
+  todayCheckOutCount: 0, todayUserCancellationCount: 0, availableRoomCount: 0,
+  occupiedRoomCount: 0, dirtyRoomCount: 0, occupancyRate: 0, inventoryWarningCount: 0,
+  publishedAnnouncementCount: 0, onlineBannerCount: 0, enabledSystemConfigCount: 0
+})
+const analytics = reactive({
+  currentPeriodRevenue: 0, previousPeriodRevenue: 0, revenueGrowthRate: 0,
+  trends: [], roomTypeStatistics: [], paymentMethods: [], orderStatuses: []
 })
 
-function extractResult(result, fallbackMessage) {
-  if (result.code !== 'SUCCESS') {
-    throw new Error(result.message || fallbackMessage)
-  }
+const money = value => Number(value || 0).toFixed(2)
+const overviewCards = computed(() => {
+  const growth = Number(analytics.revenueGrowthRate || 0)
+  return [
+    { key: 'periodRevenue', label: '本周期支付营收', value: '￥' + money(analytics.currentPeriodRevenue), hint: '近' + periodDays.value + '天成功支付流水' },
+    { key: 'growth', label: '较上一周期', value: (growth >= 0 ? '+' : '') + growth.toFixed(2) + '%', hint: '相同天数环比', className: growth < 0 ? 'down' : 'up' },
+    { key: 'todayRevenue', label: '今日支付金额', value: '￥' + money(overview.todayRevenue), hint: overview.todayPaidOrderCount + ' 笔支付订单' },
+    { key: 'orders', label: '今日新增订单', value: overview.todayOrderCount, hint: overview.todayUserCancellationCount + ' 笔用户取消' },
+    { key: 'occupancy', label: '当前入住率', value: Number(overview.occupancyRate || 0).toFixed(2) + '%', hint: overview.occupiedRoomCount + ' 间在住' },
+    { key: 'inventory', label: '今日可售房量', value: overview.availableRoomCount, hint: overview.inventoryWarningCount + ' 个房型预警' }
+  ]
+})
+
+function resultData(result, message) {
+  if (result.code !== 'SUCCESS') throw new Error(result.message || message)
   return result.data
 }
-
-const overviewCards = computed(() => [
-  { key: 'todayOrderCount', label: '今日新增订单', value: overview.todayOrderCount },
-  { key: 'todayPaidOrderCount', label: '今日支付订单', value: overview.todayPaidOrderCount },
-  { key: 'todayRevenue', label: '今日支付金额', value: `￥${formatMoney(overview.todayRevenue)}` },
-  { key: 'todayCheckInCount', label: '今日待入住', value: overview.todayCheckInCount },
-  { key: 'todayCheckOutCount', label: '今日已退房', value: overview.todayCheckOutCount },
-  { key: 'todayUserCancellationCount', label: '今日用户取消', value: overview.todayUserCancellationCount },
-  { key: 'availableRoomCount', label: '今日可售房量', value: overview.availableRoomCount },
-  { key: 'occupiedRoomCount', label: '当前在住房间', value: overview.occupiedRoomCount },
-  { key: 'dirtyRoomCount', label: '当前待清洁房间', value: overview.dirtyRoomCount },
-  { key: 'occupancyRate', label: '当前入住率', value: `${Number(overview.occupancyRate || 0).toFixed(2)}%` },
-  { key: 'inventoryWarningCount', label: '库存预警房型', value: overview.inventoryWarningCount }
-])
-
-const maxOrderCount = computed(() => Math.max(...trends.value.map(item => Number(item.orderCount || 0)), 1))
-const maxRevenue = computed(() => Math.max(...trends.value.map(item => Number(item.revenue || 0)), 1))
-
-function getOrderBarWidth(value) {
-  return `${Math.max(8, (Number(value || 0) / maxOrderCount.value) * 100)}%`
+function emptyTitle(hasData) {
+  return hasData ? undefined : { text: '暂无数据', left: 'center', top: 'middle', textStyle: { color: '#94a3b8', fontSize: 14, fontWeight: 400 } }
 }
-
-function getRevenueBarWidth(value) {
-  return `${Math.max(8, (Number(value || 0) / maxRevenue.value) * 100)}%`
+function chartAt(element) {
+  const chart = echarts.getInstanceByDom(element) || echarts.init(element)
+  if (!charts.includes(chart)) charts.push(chart)
+  return chart
 }
+function renderCharts() {
+  const trends = analytics.trends || []
+  chartAt(trendRef.value).setOption({
+    title: emptyTitle(trends.length), color: ['#496454', '#b78652'], tooltip: { trigger: 'axis' },
+    legend: { data: ['订单数', '支付营收'] }, grid: { left: 55, right: 60, bottom: 35, top: 45 },
+    xAxis: { type: 'category', data: trends.map(x => x.date), axisLabel: { hideOverlap: true } },
+    yAxis: [{ type: 'value', name: '订单' }, { type: 'value', name: '营收(元)' }],
+    series: [
+      { name: '订单数', type: 'bar', barMaxWidth: 24, data: trends.map(x => x.orderCount) },
+      { name: '支付营收', type: 'line', yAxisIndex: 1, smooth: true, symbolSize: 7, data: trends.map(x => Number(x.revenue || 0)) }
+    ]
+  }, true)
 
-function formatMoney(value) {
-  return Number(value || 0).toFixed(2)
+  chartAt(occupancyRef.value).setOption({
+    series: [{ type: 'gauge', startAngle: 210, endAngle: -30, min: 0, max: 100,
+      progress: { show: true, width: 16 }, axisLine: { lineStyle: { width: 16 } }, axisTick: { show: false },
+      splitLine: { length: 8 }, axisLabel: { distance: 22 }, pointer: { length: '58%' },
+      detail: { formatter: '{value}%', fontSize: 25, offsetCenter: [0, '65%'] },
+      data: [{ value: Number(overview.occupancyRate || 0).toFixed(2), name: '入住率' }] }]
+  }, true)
+
+  const rooms = analytics.roomTypeStatistics || []
+  chartAt(roomTypeRef.value).setOption({
+    title: emptyTitle(rooms.length), tooltip: { trigger: 'axis' }, grid: { left: 90, right: 30, bottom: 25, top: 15 },
+    xAxis: { type: 'value', axisLabel: { formatter: '￥{value}' } },
+    yAxis: { type: 'category', data: rooms.map(x => x.roomTypeName).reverse() },
+    series: [{ type: 'bar', data: rooms.map(x => Number(x.revenue || 0)).reverse(), itemStyle: { color: '#b78652', borderRadius: [0, 5, 5, 0] } }]
+  }, true)
+
+  const payments = analytics.paymentMethods || []
+  chartAt(paymentRef.value).setOption({
+    title: emptyTitle(payments.length), tooltip: { trigger: 'item', formatter: '{b}<br/>￥{c}（{d}%）' },
+    legend: { bottom: 0 }, series: [{ type: 'pie', radius: ['42%', '68%'], center: ['50%', '44%'],
+      data: payments.map(x => ({ name: x.label, value: Number(x.amount || 0) })),
+      label: { formatter: '{b}\n{d}%' } }]
+  }, true)
+
+  const statuses = analytics.orderStatuses || []
+  chartAt(statusRef.value).setOption({
+    title: emptyTitle(statuses.length), tooltip: { trigger: 'item' }, legend: { bottom: 0 },
+    series: [{ type: 'pie', radius: '68%', center: ['50%', '43%'],
+      data: statuses.map(x => ({ name: x.label, value: x.count })),
+      label: { formatter: '{b}\n{c}单' } }]
+  }, true)
 }
 
 async function loadAll() {
   loading.value = true
   try {
-    const [overviewResult, trendsResult, statsResult, warningsResult] = await Promise.all([
-      getDashboardOverview(),
-      getDashboardTrends({ days: 7 }),
-      getRoomTypeStatistics(),
-      getInventoryWarnings()
+    const [overviewResult, analyticsResult, warningsResult] = await Promise.all([
+      getDashboardOverview(), getDashboardAnalytics({ days: periodDays.value }), getInventoryWarnings()
     ])
-
-    Object.assign(overview, extractResult(overviewResult, '加载概览失败'))
-    trends.value = extractResult(trendsResult, '加载趋势失败') || []
-    roomTypeStatistics.value = extractResult(statsResult, '加载房型统计失败') || []
-    inventoryWarnings.value = extractResult(warningsResult, '加载库存预警失败') || []
+    Object.assign(overview, resultData(overviewResult, '加载今日概览失败'))
+    Object.assign(analytics, resultData(analyticsResult, '加载经营分析失败'))
+    inventoryWarnings.value = resultData(warningsResult, '加载库存预警失败') || []
+    await nextTick()
+    renderCharts()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || '加载运营看板失败')
+    ElMessage.error(error?.response?.data?.message || error?.message || '加载经营看板失败')
   } finally {
     loading.value = false
   }
 }
-
-loadAll()
+function resizeCharts() { charts.forEach(chart => chart.resize()) }
+onMounted(() => { window.addEventListener('resize', resizeCharts); loadAll() })
+onBeforeUnmount(() => { window.removeEventListener('resize', resizeCharts); charts.forEach(chart => chart.dispose()) })
 </script>
 
 <style scoped>
-.dashboard-view {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.page-header h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
-  color: #1f2937;
-}
-
-.page-header p {
-  margin: 0;
-  color: #6b7280;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  border-radius: 20px;
-}
-
-.stat-label {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.stat-value {
-  margin-top: 10px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 20px;
-}
-
-.two-columns {
-  grid-template-columns: 1fr 1fr;
-}
-
-.panel-card {
-  border-radius: 20px;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.panel-subtitle {
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.trend-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.trend-row {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 16px;
-  align-items: center;
-}
-
-.trend-date {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.trend-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.bar-group {
-  display: grid;
-  grid-template-columns: 44px 1fr 90px;
-  gap: 10px;
-  align-items: center;
-}
-
-.bar-label,
-.bar-value {
-  color: #475569;
-  font-size: 13px;
-}
-
-.bar-track {
-  height: 10px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 999px;
-}
-
-.bar-fill.orders {
-  background: linear-gradient(90deg, #0ea5e9, #0284c7);
-}
-
-.bar-fill.revenue {
-  background: linear-gradient(90deg, #f59e0b, #ea580c);
-}
-
-.content-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.content-stat-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f8fafc, #eef2ff);
-}
-
-.content-stat-item strong {
-  font-size: 26px;
-  color: #111827;
-}
-
-@media (max-width: 1200px) {
-  .stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .content-grid,
-  .two-columns {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .trend-row,
-  .bar-group {
-    grid-template-columns: 1fr;
-  }
-}
+.dashboard-view{display:flex;flex-direction:column;gap:20px}.page-header,.header-actions,.panel-header{display:flex;align-items:center;justify-content:space-between;gap:16px}.page-header h1{margin:0 0 8px;font-size:28px;color:#1f2937}.page-header p,.panel-header span{margin:0;color:#6b7280}.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.stat-card{border-radius:20px}.stat-card span,.stat-card small{display:block;color:#64748b}.stat-card strong{display:block;margin:9px 0 5px;font-size:27px;color:#17212b}.stat-card strong.up{color:#16835f}.stat-card strong.down{color:#c2413b}.chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.panel-card{border-radius:20px}.panel-card.wide{grid-column:span 2}.chart{width:100%;height:330px}.wide .chart{height:360px}.content-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.content-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}.content-stats div{display:flex;align-items:center;justify-content:space-between;padding:20px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#eef2ef)}.content-stats strong{font-size:25px;color:#243b31}@media(max-width:1000px){.stats-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.content-grid{grid-template-columns:1fr}.panel-card.wide{grid-column:span 1}}@media(max-width:680px){.page-header,.header-actions{align-items:flex-start;flex-direction:column}.stats-grid{grid-template-columns:1fr}.content-stats{grid-template-columns:1fr}.chart{height:290px}}
 </style>

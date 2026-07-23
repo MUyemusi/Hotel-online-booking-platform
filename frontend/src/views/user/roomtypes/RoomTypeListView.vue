@@ -1,3 +1,4 @@
+
 <template>
   <div class="room-list-page">
     <!-- Hero 区 —— 背景大图 + 毛玻璃搜索 -->
@@ -24,7 +25,7 @@
                 :disabled-date="disablePastDates"
                 format="MM/DD"
                 value-format="YYYY-MM-DD"
-              />
+              ><template #default="cell"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker>
             </div>
             <span class="search-sep">→</span>
             <div class="search-field">
@@ -39,6 +40,10 @@
               />
             </div>
             <span class="search-div"></span>
+            <div class="search-field" v-if="earlyMorningAvailable">
+              <label>住宿方式</label>
+              <el-checkbox v-model="earlyMode">凌晨入住</el-checkbox>
+            </div>
             <div class="search-field">
               <label>人数</label>
               <el-select v-model="searchForm.guests" placeholder="人数">
@@ -160,11 +165,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { searchRoomTypes } from '@/api/roomTypes'
 import { normalizeBookingQuery, toBookingQuery } from '@/utils/bookingQuery'
+import { hotelToday, isEarlyMorningAvailable, nextDate } from '@/utils/bookingStay'
 
 const route = useRoute()
 const router = useRouter()
@@ -176,18 +182,29 @@ const total = ref(0)
 
 function dateOffset(days) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10) }
 const initial = normalizeBookingQuery(route.query, { checkInDate: dateOffset(1), checkOutDate: dateOffset(2), roomCount: 1, guests: 1 })
-const searchForm = reactive({ page: 1, size: 9, checkIn: initial.checkInDate, checkOut: initial.checkOutDate, roomCount: initial.roomCount, guests: initial.guests, keyword: '' })
+const searchForm = reactive({ page: 1, size: 9, checkIn: initial.checkInDate, checkOut: initial.checkOutDate, roomCount: initial.roomCount, guests: initial.guests, stayType: initial.stayType, keyword: '' })
+const earlyMorningAvailable = isEarlyMorningAvailable()
+const earlyMode = computed({
+  get: () => searchForm.stayType === 'EARLY_MORNING',
+  set: enabled => {
+    searchForm.stayType = enabled ? 'EARLY_MORNING' : 'STANDARD'
+    if (enabled) searchForm.checkIn = searchForm.checkOut = hotelToday()
+    else if (searchForm.checkIn) searchForm.checkOut = nextDate(searchForm.checkIn)
+  }
+})
 
 function disablePastDates(time) {
+  if (earlyMode.value) return time.toLocaleDateString('sv-SE') !== hotelToday()
   const t = new Date(); t.setHours(0, 0, 0, 0); return time.getTime() < t.getTime()
 }
 function disablePastCheckOut(time) {
+  if (earlyMode.value) return time.toLocaleDateString('sv-SE') !== hotelToday()
   if (!searchForm.checkIn) return disablePastDates(time)
   const n = new Date(searchForm.checkIn); n.setDate(n.getDate() + 1)
   return time.getTime() < n.getTime()
 }
 function currentQuery(roomTypeId) {
-  return toBookingQuery({ checkInDate: searchForm.checkIn, checkOutDate: searchForm.checkOut, roomCount: searchForm.roomCount, guests: searchForm.guests }, roomTypeId)
+  return toBookingQuery({ checkInDate: searchForm.checkIn, checkOutDate: searchForm.checkOut, roomCount: searchForm.roomCount, guests: searchForm.guests, stayType: searchForm.stayType }, roomTypeId)
 }
 function handleSearch() {
   if (!searchForm.checkIn || !searchForm.checkOut) return ElMessage.warning('请选择完整的入住和离店日期')
@@ -199,7 +216,7 @@ function handleSearch() {
 async function fetchRooms() {
   loading.value = true
   try {
-    const res = await searchRoomTypes({ checkInDate: searchForm.checkIn, checkOutDate: searchForm.checkOut, roomCount: searchForm.roomCount, guests: searchForm.guests })
+    const res = await searchRoomTypes({ checkInDate: searchForm.checkIn, checkOutDate: searchForm.checkOut, roomCount: searchForm.roomCount, guests: searchForm.guests, stayType: searchForm.stayType })
     if (res.code !== 'SUCCESS') throw new Error(res.message || '加载房型失败')
     const all = (res.data || []).map(room => ({
       ...room,
@@ -218,6 +235,10 @@ async function fetchRooms() {
     ElMessage.error(e?.response?.data?.message || e.message || '加载房型失败')
   } finally { loading.value = false }
 }
+function isEarlyCell(cell) { return earlyMorningAvailable && cell?.dayjs?.format?.('YYYY-MM-DD') === hotelToday() }
+watch(() => searchForm.checkIn, value => {
+  if (searchForm.stayType === 'STANDARD' && value && (!searchForm.checkOut || searchForm.checkOut <= value)) searchForm.checkOut = nextDate(value)
+})
 function goDetail(id) { router.push({ path: `/rooms/${id}`, query: currentQuery(id) }) }
 onMounted(fetchRooms)
 </script>

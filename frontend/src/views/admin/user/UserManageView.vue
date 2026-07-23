@@ -1,6 +1,7 @@
+
 <template>
   <section class="admin-page">
-    <div class="page-title"><div><span>USER ADMINISTRATION</span><h1>用户管理</h1><p>查询注册用户，维护账号状态并查看信用限制。</p></div><el-button @click="loadUsers">刷新数据</el-button></div>
+    <div class="page-title"><div><span>用户管理中心</span><h1>用户管理</h1><p>查询注册用户，维护账号状态并查看信用限制。</p></div><el-button @click="loadUsers">刷新数据</el-button></div>
     <div class="stat-row"><div><span>当前页账号</span><b>{{ users.length }}</b></div><div><span>正常账号</span><b>{{ enabledCount }}</b></div><div><span>受限预订</span><b>{{ bannedCount }}</b></div></div>
     <el-card shadow="never" class="panel">
       <el-form :inline="true" :model="query" class="filters" @submit.prevent="search">

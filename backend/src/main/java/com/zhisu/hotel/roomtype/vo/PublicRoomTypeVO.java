@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.roomtype.vo;
 
 import com.zhisu.hotel.pricing.vo.DailyPriceItemVO;
@@ -26,4 +27,5 @@ public class PublicRoomTypeVO {
     private Integer availableRooms;
     private BigDecimal totalAmount;
     private List<DailyPriceItemVO> dailyPrices;
+    private String stayType;
 }

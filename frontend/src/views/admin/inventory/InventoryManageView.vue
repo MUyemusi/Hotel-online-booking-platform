@@ -1,9 +1,16 @@
+
+
 <template>
   <div class="inventory-manage-view">
     <div class="page-header">
       <div>
         <h1>每日库存管理</h1>
-        <p>按房型 + 日期维度管理库存，支持修改、暂停和恢复销售。</p>
+        <p>按房型 + 日期维度管理库存，支持单条/批量修改、自动生成、暂停和恢复销售。</p>
+      </div>
+      <div class="header-actions">
+        <el-button :loading="loading" @click="fetchInventory">刷新</el-button>
+        <el-button type="warning" @click="openBatchEdit" :disabled="!inventoryList.length">批量修改</el-button>
+        <el-button type="success" @click="openGenerate">生成库存</el-button>
       </div>
     </div>
 
@@ -98,7 +105,7 @@
       </div>
     </el-card>
 
-    <!-- 修改弹窗 -->
+    <!-- 单条修改弹窗 -->
     <el-dialog v-model="editVisible" title="修改库存" width="480px" destroy-on-close>
       <el-form :model="editForm" label-position="top">
         <el-form-item label="日期">
@@ -107,13 +114,67 @@
         <el-form-item label="总库存">
           <el-input-number v-model="editForm.totalRooms" :min="1" controls-position="right" style="width:100%" />
         </el-form-item>
-        <el-form-item label="可售库存">
-          <el-input-number v-model="editForm.availableRooms" :min="0" controls-position="right" style="width:100%" />
-        </el-form-item>
+        <el-alert
+          v-if="editForm.occupied > 0"
+          title="当前已锁定 + 已预订 = {{ editForm.occupied }}，总库存不可低于此值"
+          type="warning" :closable="false" show-icon
+          style="margin-top:8px;"
+        />
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取消</el-button>
         <el-button type="primary" :loading="savingEdit" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量修改弹窗 -->
+    <el-dialog v-model="batchVisible" title="批量修改库存" width="520px" destroy-on-close>
+      <el-form :model="batchForm" label-position="top">
+        <el-form-item label="日期范围">
+          <span>{{ filter.dateRange?.[0] || '—' }} ~ {{ filter.dateRange?.[1] || '—' }}</span>
+        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="新总库存">
+              <el-input-number v-model="batchForm.totalRooms" :min="0" controls-position="right" style="width:100%" placeholder="留空则不修改" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="新状态">
+              <el-select v-model="batchForm.status" placeholder="留空则不修改" clearable style="width:100%">
+                <el-option label="正常" value="ACTIVE" />
+                <el-option label="暂停" value="PAUSED" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-alert
+          title="批量修改会自动跳过不满足校验的日期（如总库存低于已占用），并在结果中提示。"
+          type="info" :closable="false" show-icon
+        />
+      </el-form>
+      <template #footer>
+        <el-button @click="batchVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingBatch" @click="saveBatch">应用批量修改</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 生成库存弹窗 -->
+    <el-dialog v-model="genVisible" title="自动生成库存" width="480px" destroy-on-close>
+      <el-form :model="genForm" label-position="top">
+        <el-form-item label="生成天数">
+          <el-input-number v-model="genForm.days" :min="1" :max="90" controls-position="right" style="width:100%" />
+          <span style="color:#9ca3af;font-size:12px;">从今天起自动创建未来 N 天的库存记录（已存在的日期不会重复创建）</span>
+        </el-form-item>
+        <el-form-item label="默认总库存">
+          <el-input-number v-model="genForm.totalRooms" :min="1" :max="9999" controls-position="right" style="width:100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="genVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingGen" @click="saveGen">
+          {{ filter.roomTypeId ? '为当前房型生成' : '为全部房型生成' }}
+        </el-button>
       </template>
     </el-dialog>
 
@@ -129,23 +190,24 @@
         <el-table-column prop="inventoryDate" label="日期" width="120" />
         <el-table-column prop="changeType" label="操作类型" width="140">
           <template #default="scope">
-            <el-tag size="small">{{ scope.row.changeType }}</el-tag>
+            <el-tag size="small">{{ displayValue('inventoryChange', scope.row.changeType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="changeAmount" label="变动量" width="90" />
         <el-table-column prop="beforeValue" label="变动前" width="90" />
         <el-table-column prop="afterValue" label="变动后" width="90" />
-        <el-table-column prop="changeReason" label="原因" min-width="160" />
+        <el-table-column label="原因" min-width="160"><template #default="{ row }">{{ displayValue('inventoryReason', row.changeReason) }}</template></el-table-column>
       </el-table>
     </el-card>
   </div>
 </template>
 
 <script setup>
+import { displayValue } from '@/utils/adminDisplay'
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getAdminRoomTypes } from '@/api/roomtype'
-import { getInventory, updateInventory, pauseInventory, resumeInventory, getInventoryLogs } from '@/api/inventory'
+import { getInventory, updateInventory, batchUpdateInventory, generateInventory, pauseInventory, resumeInventory, getInventoryLogs } from '@/api/inventory'
 
 const loading = ref(false)
 const roomTypes = ref([])
@@ -183,16 +245,16 @@ async function fetchInventory() {
   } catch (e) { ElMessage.error(e.message) } finally { loading.value = false }
 }
 
-// 编辑
+// ===== 单条编辑 =====
 const editVisible = ref(false)
 const savingEdit = ref(false)
-const editForm = reactive({ id: null, inventoryDate: '', totalRooms: 0, availableRooms: 0 })
+const editForm = reactive({ id: null, inventoryDate: '', totalRooms: 0, occupied: 0 })
 
 function openEdit(row) {
   editForm.id = row.id
   editForm.inventoryDate = row.inventoryDate
   editForm.totalRooms = row.totalRooms
-  editForm.availableRooms = row.availableRooms
+  editForm.occupied = (row.lockedRooms || 0) + (row.bookedRooms || 0)
   editVisible.value = true
 }
 
@@ -200,12 +262,75 @@ async function saveEdit() {
   savingEdit.value = true
   try {
     await extractResult(await updateInventory(editForm.id, {
-      totalRooms: editForm.totalRooms, availableRooms: editForm.availableRooms
+      totalRooms: editForm.totalRooms
     }), '修改失败')
     ElMessage.success('库存已更新')
     editVisible.value = false
     fetchInventory()
   } catch (e) { ElMessage.error(e.message) } finally { savingEdit.value = false }
+}
+
+// ===== 批量修改 =====
+const batchVisible = ref(false)
+const savingBatch = ref(false)
+const batchForm = reactive({ totalRooms: null, status: '' })
+
+function openBatchEdit() {
+  if (!inventoryList.value.length) return
+  batchForm.totalRooms = null
+  batchForm.status = ''
+  batchVisible.value = true
+}
+
+async function saveBatch() {
+  if (!filter.roomTypeId || !filter.dateRange) return
+  savingBatch.value = true
+  try {
+    const data = extractResult(await batchUpdateInventory({
+      roomTypeId: filter.roomTypeId,
+      startDate: filter.dateRange[0],
+      endDate: filter.dateRange[1],
+      totalRooms: batchForm.totalRooms || undefined,
+      status: batchForm.status || undefined
+    }), '批量修改失败')
+    const msg = `成功更新 ${data.updated} 条`
+    if (data.skipped > 0) {
+      ElMessage.warning(msg + `，跳过 ${data.skipped} 条（不满足校验）`)
+      console.warn('跳过的日期:', data.skipReasons)
+    } else {
+      ElMessage.success(msg)
+    }
+    batchVisible.value = false
+    fetchInventory()
+  } catch (e) { ElMessage.error(e.message) } finally { savingBatch.value = false }
+}
+
+// ===== 自动生成库存 =====
+const genVisible = ref(false)
+const savingGen = ref(false)
+const genForm = reactive({ days: 15, totalRooms: 10 })
+
+function openGenerate() {
+  genForm.days = 15
+  genForm.totalRooms = 10
+  genVisible.value = true
+}
+
+async function saveGen() {
+  savingGen.value = true
+  try {
+    const params = {
+      days: genForm.days,
+      totalRooms: genForm.totalRooms
+    }
+    if (filter.roomTypeId) {
+      params.roomTypeId = filter.roomTypeId
+    }
+    await extractResult(await generateInventory(params), '生成失败')
+    ElMessage.success('库存生成成功（已有记录会自动跳过）')
+    genVisible.value = false
+    if (inventoryList.value.length) fetchInventory()
+  } catch (e) { ElMessage.error(e.message) } finally { savingGen.value = false }
 }
 
 async function handlePause(id) {
@@ -243,7 +368,7 @@ async function fetchLogs() {
 // 工具
 function formatShortDate(d) {
   if (!d) return ''
-  return d.slice(5) // MM-DD
+  return d.slice(5)
 }
 
 function fillPercent(item) {
@@ -255,8 +380,11 @@ function fillPercent(item) {
 <style scoped>
 .inventory-manage-view { display: flex; flex-direction: column; gap: 20px; }
 
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .page-header h1 { margin: 0 0 8px; font-size: 28px; color: #1f2937; }
 .page-header p { margin: 0; color: #6b7280; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
 .filter-card, .table-card { border-radius: 20px; }
 
 .card-header-row { display: flex; justify-content: space-between; align-items: center; }
@@ -279,6 +407,7 @@ function fillPercent(item) {
 .cal-warn .cal-fill { background: #f59e0b; }
 
 @media (max-width: 768px) {
+  .page-header { flex-direction: column; }
   .calendar-grid { grid-template-columns: repeat(4, 1fr); }
 }
 </style>

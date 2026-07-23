@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.inventory.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -161,9 +162,9 @@ public class InventoryServiceImpl implements InventoryService {
         LocalDate requiredEndDate = latestCheckInDate.plusDays(maxStayNights - 1L);
         List<RoomType> roomTypes = roomTypeMapper.selectList(null);
         for (RoomType roomType : roomTypes) {
-            ensureInventoryExists(roomType.getId(), today, requiredEndDate);
+            ensureInventoryExists(roomType.getId(), today.minusDays(1), requiredEndDate);
         }
-        return roomTypes.size() * (int) (ChronoUnit.DAYS.between(today, requiredEndDate) + 1);
+        return roomTypes.size() * (int) (ChronoUnit.DAYS.between(today.minusDays(1), requiredEndDate) + 1);
     }
 
     @Override

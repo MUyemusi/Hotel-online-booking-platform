@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.pricing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -42,7 +43,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
         validateDateRange(startDate, endDate);
         Page<RoomTypeSummary> roomTypePage = roomTypeService.pageRoomTypes(1, 1000, null, null, null, null, null, null);
         if (roomTypePage.getRecords().isEmpty()) {
-            throw new BusinessException("ROOM_TYPE_EMPTY", "No room types available for daily price generation");
+            throw new BusinessException("ROOM_TYPE_EMPTY", "没有可生成每日价格的房型");
         }
 
         int processedCount = 0;
@@ -57,12 +58,12 @@ public class DailyPriceServiceImpl implements DailyPriceService {
     @Transactional
     public int generateRoomTypePrices(Long roomTypeId, LocalDate startDate, LocalDate endDate) {
         if (roomTypeId == null) {
-            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "Room type id cannot be null");
+            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "房型ID不能为空");
         }
         validateDateRange(startDate, endDate);
         RoomType roomType = roomTypeService.getRoomTypeDetail(roomTypeId);
         if (roomType == null) {
-            throw new BusinessException("ROOM_TYPE_NOT_FOUND", "Room type not found");
+            throw new BusinessException("ROOM_TYPE_NOT_FOUND", "房型不存在");
         }
         validateBasePrice(roomType.getId(), roomType.getBasePrice());
         return generateOneRoomType(roomType.getId(), roomType.getBasePrice(), startDate, endDate);
@@ -71,7 +72,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
     @Override
     public List<DailyPrice> listDailyPrices(Long roomTypeId, LocalDate startDate, LocalDate endDate) {
         if (roomTypeId == null) {
-            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "Room type id cannot be null");
+            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "房型ID不能为空");
         }
         validateDateRange(startDate, endDate);
         return dailyPriceMapper.selectList(
@@ -96,7 +97,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
     @Transactional
     public void ensurePricesExist(Long roomTypeId, LocalDate startDate, LocalDate endDate) {
         if (roomTypeId == null) {
-            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "Room type id cannot be null");
+            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "房型ID不能为空");
         }
         validateDateRange(startDate, endDate);
         long expectedDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
@@ -186,7 +187,7 @@ public class DailyPriceServiceImpl implements DailyPriceService {
 
     private void applyManualOverride(DailyPrice existing, BigDecimal manualPrice, String overrideReason) {
         if (manualPrice == null || manualPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("MANUAL_PRICE_INVALID", "Manual price must be greater than 0");
+            throw new BusinessException("MANUAL_PRICE_INVALID", "人工价格必须大于0");
         }
         existing.setManualPrice(manualPrice.setScale(2, RoundingMode.HALF_UP));
         existing.setManualOverride(1);
@@ -209,25 +210,25 @@ public class DailyPriceServiceImpl implements DailyPriceService {
 
     private DailyPrice getDailyPriceById(Long dailyPriceId) {
         if (dailyPriceId == null) {
-            throw new BusinessException("DAILY_PRICE_ID_EMPTY", "Daily price id is required");
+            throw new BusinessException("DAILY_PRICE_ID_EMPTY", "每日价格ID不能为空");
         }
         DailyPrice existing = dailyPriceMapper.selectById(dailyPriceId);
         if (existing == null) {
-            throw new BusinessException("DAILY_PRICE_NOT_FOUND", "Daily price record not found");
+            throw new BusinessException("DAILY_PRICE_NOT_FOUND", "每日价格记录不存在");
         }
         return existing;
     }
 
     private DailyPrice getDailyPriceByRoomTypeAndDate(Long roomTypeId, LocalDate businessDate, boolean ensureExists) {
         if (roomTypeId == null || businessDate == null) {
-            throw new BusinessException("MANUAL_OVERRIDE_PARAM_INVALID", "Room type id and business date are required");
+            throw new BusinessException("MANUAL_OVERRIDE_PARAM_INVALID", "房型ID和营业日期不能为空");
         }
         if (ensureExists) {
             ensurePricesExist(roomTypeId, businessDate, businessDate);
         }
         DailyPrice existing = findExistingPrice(roomTypeId, businessDate);
         if (existing == null) {
-            throw new BusinessException("DAILY_PRICE_NOT_FOUND", "Daily price record not found");
+            throw new BusinessException("DAILY_PRICE_NOT_FOUND", "每日价格记录不存在");
         }
         return existing;
     }
@@ -271,20 +272,20 @@ public class DailyPriceServiceImpl implements DailyPriceService {
 
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null) {
-            throw new BusinessException("DATE_EMPTY", "Start date and end date cannot be null");
+            throw new BusinessException("DATE_EMPTY", "开始日期和结束日期不能为空");
         }
         if (endDate.isBefore(startDate)) {
-            throw new BusinessException("DATE_RANGE_INVALID", "End date cannot be earlier than start date");
+            throw new BusinessException("DATE_RANGE_INVALID", "结束日期不能早于开始日期");
         }
         long inclusiveDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         if (inclusiveDays > MAX_GENERATE_DAYS) {
-            throw new BusinessException("DATE_RANGE_TOO_LONG", "A single generation can cover at most 450 days");
+            throw new BusinessException("DATE_RANGE_TOO_LONG", "单次最多生成450天的每日价格");
         }
     }
 
     private void validateBasePrice(Long roomTypeId, BigDecimal basePrice) {
         if (basePrice == null || basePrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("BASE_PRICE_INVALID", "Base price is invalid for room type " + roomTypeId);
+            throw new BusinessException("BASE_PRICE_INVALID", "房型基础价格无效：" + roomTypeId);
         }
     }
 }

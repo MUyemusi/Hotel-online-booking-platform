@@ -117,21 +117,22 @@ CREATE TABLE IF NOT EXISTS price_operation_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='price_operation_log';
 
 INSERT INTO system_config (config_key, config_value, config_name, value_type, config_group, description) VALUES
-('MAX_BOOKING_DAYS', '7', 'Maximum booking days', 'INTEGER', 'BOOKING', 'Maximum number of days allowed in a single booking'),
-('INVENTORY_WARNING_VALUE', '2', 'Inventory warning value', 'INTEGER', 'INVENTORY', 'Warn when available inventory is at or below this value'),
-('IMAGE_UPLOAD_MAX_MB', '5', 'Image upload limit MB', 'INTEGER', 'CONTENT', 'Maximum image upload size in MB'),
-('DEFAULT_HOLIDAY_COEFFICIENT', '1.20', 'Default holiday coefficient', 'DECIMAL', 'PRICING', 'Default coefficient for a newly created holiday rule'),
-('PAYMENT_TIMEOUT_MINUTES', '15', 'Payment timeout minutes', 'INTEGER', 'ORDER', 'Minutes before an unpaid order times out'),
-('CANCEL_THRESHOLD', '3', 'Cancel threshold', 'INTEGER', 'CREDIT', 'Consecutive cancellation threshold before a booking ban'),
-('BAN_DAYS', '7', 'Booking ban days', 'INTEGER', 'CREDIT', 'Default booking ban length in days'),
-('CHECKIN_TIME', '14:00', 'Check-in time', 'TIME', 'FRONTDESK', 'Default check-in time'),
-('CHECKOUT_TIME', '12:00', 'Check-out time', 'TIME', 'FRONTDESK', 'Default check-out time'),
-('FRIDAY_PRICE_COEFFICIENT', '1.05', 'Friday price coefficient', 'DECIMAL', 'PRICING', 'Friday room price coefficient'),
-('SATURDAY_PRICE_COEFFICIENT', '1.10', 'Saturday price coefficient', 'DECIMAL', 'PRICING', 'Saturday room price coefficient'),
-('SUNDAY_PRICE_COEFFICIENT', '1.05', 'Sunday price coefficient', 'DECIMAL', 'PRICING', 'Sunday room price coefficient'),
-('MAJOR_HOLIDAY_COEFFICIENT', '1.30', 'Major holiday coefficient', 'DECIMAL', 'PRICING', 'Spring Festival and National Day coefficient'),
-('BOOKING_WINDOW_MONTHS', '12', 'Booking window months', 'INTEGER', 'BOOKING', 'Maximum months ahead for check-in date'),
-('MAX_STAY_NIGHTS', '30', 'Maximum stay nights', 'INTEGER', 'BOOKING', 'Maximum number of nights allowed in one booking')
+('MAX_BOOKING_DAYS', '7', '最长预订天数', 'INTEGER', 'BOOKING', '单笔订单允许预订的最长天数'),
+('INVENTORY_WARNING_VALUE', '2', '库存预警值', 'INTEGER', 'INVENTORY', '可售库存小于等于该值时触发预警'),
+('IMAGE_UPLOAD_MAX_MB', '5', '图片上传大小限制', 'INTEGER', 'CONTENT', '单张图片允许上传的最大MB数'),
+('DEFAULT_HOLIDAY_COEFFICIENT', '1.20', '默认节假日价格系数', 'DECIMAL', 'PRICING', '新增节假日规则时使用的默认系数'),
+('PAYMENT_TIMEOUT_MINUTES', '15', '订单支付超时分钟数', 'INTEGER', 'ORDER', '未支付订单自动关闭前的等待分钟数'),
+('CANCEL_THRESHOLD', '3', '连续取消限制阈值', 'INTEGER', 'CREDIT', '达到连续取消次数后限制预订'),
+('BAN_DAYS', '7', '限制预订天数', 'INTEGER', 'CREDIT', '触发限制后的默认禁订天数'),
+('CHECKIN_TIME', '14:00', '标准入住时间', 'TIME', 'FRONTDESK', '酒店标准入住时间'),
+('CHECKOUT_TIME', '12:00', '标准退房时间', 'TIME', 'FRONTDESK', '酒店标准退房时间'),
+('FRIDAY_PRICE_COEFFICIENT', '1.05', '周五价格系数', 'DECIMAL', 'PRICING', '周五房价计算系数'),
+('SATURDAY_PRICE_COEFFICIENT', '1.10', '周六价格系数', 'DECIMAL', 'PRICING', '周六房价计算系数'),
+('SUNDAY_PRICE_COEFFICIENT', '1.05', '周日价格系数', 'DECIMAL', 'PRICING', '周日房价计算系数'),
+('MAJOR_HOLIDAY_COEFFICIENT', '1.30', '重大节假日价格系数', 'DECIMAL', 'PRICING', '春节和国庆节等重大节假日价格系数'),
+('BOOKING_WINDOW_MONTHS', '12', '可提前预订月数', 'INTEGER', 'BOOKING', '允许提前选择入住日期的最大月数'),
+('MAX_STAY_NIGHTS', '30', '最长连续入住晚数', 'INTEGER', 'BOOKING', '单笔订单允许的最长入住晚数'),
+('EARLY_MORNING_END_TIME', '06:00', '凌晨入住截止时间', 'TIME', 'BOOKING', '凌晨入住模式的每日截止时间')
 ON DUPLICATE KEY UPDATE
 config_value = VALUES(config_value),
 config_name = VALUES(config_name),
@@ -140,18 +141,18 @@ config_group = VALUES(config_group),
 description = VALUES(description);
 
 INSERT INTO holiday_calendar (business_date, holiday_name, holiday_code, day_type, coefficient, holiday_year, source_status, status, remark) VALUES
-('2026-09-20', 'National Day makeup workday', 'NATIONAL_DAY', 'MAKEUP_WORKDAY', 1.00, 2026, 'OFFICIAL', 'ENABLED', 'Sunday workday by official holiday arrangement'),
-('2026-09-25', 'Mid-Autumn Festival holiday', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 1'),
-('2026-09-26', 'Mid-Autumn Festival holiday', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 2'),
-('2026-09-27', 'Mid-Autumn Festival holiday', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 3'),
-('2026-10-01', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 1'),
-('2026-10-02', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 2'),
-('2026-10-03', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 3'),
-('2026-10-04', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 4'),
-('2026-10-05', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 5'),
-('2026-10-06', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 6'),
-('2026-10-07', 'National Day holiday', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', 'Holiday day 7'),
-('2026-10-10', 'National Day makeup workday', 'NATIONAL_DAY', 'MAKEUP_WORKDAY', 1.00, 2026, 'OFFICIAL', 'ENABLED', 'Saturday workday by official holiday arrangement')
+('2026-09-20', '国庆节调休工作日', 'NATIONAL_DAY', 'MAKEUP_WORKDAY', 1.00, 2026, 'OFFICIAL', 'ENABLED', '官方放假安排中的周日调休工作日'),
+('2026-09-25', '中秋节假期', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', '假期第1天'),
+('2026-09-26', '中秋节假期', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', '假期第2天'),
+('2026-09-27', '中秋节假期', 'MID_AUTUMN', 'HOLIDAY', 1.20, 2026, 'OFFICIAL', 'ENABLED', '假期第3天'),
+('2026-10-01', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第1天'),
+('2026-10-02', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第2天'),
+('2026-10-03', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第3天'),
+('2026-10-04', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第4天'),
+('2026-10-05', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第5天'),
+('2026-10-06', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第6天'),
+('2026-10-07', '国庆节假期', 'NATIONAL_DAY', 'HOLIDAY', 1.30, 2026, 'OFFICIAL', 'ENABLED', '假期第7天'),
+('2026-10-10', '国庆节调休工作日', 'NATIONAL_DAY', 'MAKEUP_WORKDAY', 1.00, 2026, 'OFFICIAL', 'ENABLED', '官方放假安排中的周六调休工作日')
 ON DUPLICATE KEY UPDATE
 holiday_name = VALUES(holiday_name),
 holiday_code = VALUES(holiday_code),

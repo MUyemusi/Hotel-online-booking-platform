@@ -1,6 +1,10 @@
+
 package com.zhisu.hotel.pricing.service.impl;
 
 import com.zhisu.hotel.booking.service.BookingDatePolicyService;
+import com.zhisu.hotel.booking.service.StayDateRange;
+import com.zhisu.hotel.common.enums.StayType;
+import com.zhisu.hotel.inventory.service.InventoryService;
 import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.pricing.entity.DailyPrice;
 import com.zhisu.hotel.pricing.service.DailyPriceService;
@@ -27,36 +31,39 @@ public class PriceQuoteServiceImpl implements PriceQuoteService {
     private final DailyPriceService dailyPriceService;
     private final RoomTypeService roomTypeService;
     private final RoomTypeQueryService roomTypeQueryService;
+    private final InventoryService inventoryService;
 
     @Override
-    public PriceQuoteVO quotePrice(Long roomTypeId, LocalDate checkInDate, LocalDate checkOutDate, Integer roomCount) {
+    public PriceQuoteVO quotePrice(Long roomTypeId, LocalDate checkInDate, LocalDate checkOutDate, Integer roomCount, String stayType) {
         if (roomTypeId == null) {
-            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "Room type id cannot be null");
+            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "房型ID不能为空");
         }
         if (roomCount == null || roomCount <= 0) {
-            throw new BusinessException("ROOM_COUNT_INVALID", "Room count must be greater than 0");
+            throw new BusinessException("ROOM_COUNT_INVALID", "房间数必须大于0");
         }
 
-        bookingDatePolicyService.validateBookingDates(checkInDate, checkOutDate);
+        StayDateRange stay = bookingDatePolicyService.resolveStay(checkInDate, checkOutDate, stayType);
 
         RoomType roomType = roomTypeService.getRoomTypeDetail(roomTypeId);
         if (roomType == null) {
-            throw new BusinessException("ROOM_TYPE_NOT_FOUND", "Room type not found");
+            throw new BusinessException("ROOM_TYPE_NOT_FOUND", "房型不存在");
         }
         if (!roomTypeQueryService.isRoomTypeAvailable(roomTypeId)) {
-            throw new BusinessException("ROOM_TYPE_OFFLINE", "Room type is not available for sale");
+            throw new BusinessException("ROOM_TYPE_OFFLINE", "房型已下架或不可售");
         }
-        if (!roomTypeQueryService.hasAvailableInventory(roomTypeId, checkInDate, checkOutDate, roomCount)) {
-            throw new BusinessException("ROOM_INVENTORY_INSUFFICIENT", "Insufficient inventory for selected stay dates");
+        if (stay.stayType() == StayType.EARLY_MORNING
+                && inventoryService.getAvailableInventory(roomTypeId, stay.inventoryStartDate(), stay.lastInventoryDate()).isEmpty()) {
+            throw new BusinessException("ROOM_INVENTORY_INSUFFICIENT", "前一晚没有可用库存，无法预订凌晨入住");
+        }
+        if (!inventoryService.checkInventory(roomTypeId, stay.inventoryStartDate(), stay.inventoryEndExclusive(), roomCount)) {
+            throw new BusinessException("ROOM_INVENTORY_INSUFFICIENT", "所选住宿日期库存不足");
         }
 
-        LocalDate lastStayDate = checkOutDate.minusDays(1);
-        dailyPriceService.ensurePricesExist(roomTypeId, checkInDate, lastStayDate);
-
-        List<DailyPrice> dailyPrices = dailyPriceService.listDailyPrices(roomTypeId, checkInDate, lastStayDate);
-        int expectedNights = Math.toIntExact(ChronoUnit.DAYS.between(checkInDate, checkOutDate));
+        dailyPriceService.ensurePricesExist(roomTypeId, stay.inventoryStartDate(), stay.lastInventoryDate());
+        List<DailyPrice> dailyPrices = dailyPriceService.listDailyPrices(roomTypeId, stay.inventoryStartDate(), stay.lastInventoryDate());
+        int expectedNights = stay.stayNights();
         if (dailyPrices.size() != expectedNights) {
-            throw new BusinessException("DAILY_PRICE_INCOMPLETE", "Daily price data is incomplete for selected stay dates");
+            throw new BusinessException("DAILY_PRICE_INCOMPLETE", "所选住宿日期的每日价格数据不完整");
         }
 
         List<DailyPriceItemVO> items = dailyPrices.stream()
@@ -91,6 +98,7 @@ public class PriceQuoteServiceImpl implements PriceQuoteService {
                 .roomTypeName(roomType.getName())
                 .checkInDate(checkInDate)
                 .checkOutDate(checkOutDate)
+                .stayType(stay.stayType().name())
                 .stayNights(expectedNights)
                 .roomCount(roomCount)
                 .oneRoomAmount(oneRoomAmount)

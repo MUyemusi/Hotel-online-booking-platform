@@ -1,7 +1,11 @@
+
 package com.zhisu.hotel.roomtype.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.zhisu.hotel.inventory.service.InventoryService;
+import com.zhisu.hotel.booking.service.BookingDatePolicyService;
+import com.zhisu.hotel.booking.service.StayDateRange;
+import com.zhisu.hotel.common.enums.StayType;
 import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.pricing.service.PriceQuoteService;
 import com.zhisu.hotel.pricing.vo.PriceQuoteVO;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,9 +33,10 @@ public class PublicRoomTypeService {
     private final RoomTypeFacilityMapper facilityMapper;
     private final InventoryService inventoryService;
     private final PriceQuoteService priceQuoteService;
+    private final BookingDatePolicyService bookingDatePolicyService;
 
-    public List<PublicRoomTypeVO> search(LocalDate checkIn, LocalDate checkOut, int roomCount, int guests) {
-        validateSearch(checkIn, checkOut, roomCount, guests);
+    public List<PublicRoomTypeVO> search(LocalDate checkIn, LocalDate checkOut, int roomCount, int guests, String stayType) {
+        StayDateRange stay = validateSearch(checkIn, checkOut, roomCount, guests, stayType);
         List<RoomType> roomTypes = roomTypeMapper.selectList(
                 new LambdaQueryWrapper<RoomType>().eq(RoomType::getStatus, "ONLINE").orderByAsc(RoomType::getBasePrice));
         if (roomTypes.isEmpty()) return List.of();
@@ -47,12 +53,14 @@ public class PublicRoomTypeService {
                 .filter(roomType -> roomType.getMaxGuests() != null
                         && roomType.getMaxGuests() * roomCount >= guests)
                 .map(roomType -> {
-            int available = inventoryService.getMinAvailableCount(roomType.getId(), checkIn, checkOut.minusDays(1));
-            if (available == 0) {
-                inventoryService.ensureInventoryExists(roomType.getId(), checkIn, checkOut.minusDays(1));
-                available = inventoryService.getMinAvailableCount(roomType.getId(), checkIn, checkOut.minusDays(1));
+            List<?> inventoryRows = inventoryService.getAvailableInventory(roomType.getId(), stay.inventoryStartDate(), stay.lastInventoryDate());
+            if (inventoryRows.isEmpty() && stay.stayType() == StayType.EARLY_MORNING) return null;
+            if (inventoryRows.isEmpty()) {
+                inventoryService.ensureInventoryExists(roomType.getId(), stay.inventoryStartDate(), stay.lastInventoryDate());
             }
-            PriceQuoteVO quote = priceQuoteService.quotePrice(roomType.getId(), checkIn, checkOut, roomCount);
+            int available = inventoryService.getMinAvailableCount(roomType.getId(), stay.inventoryStartDate(), stay.lastInventoryDate());
+            if (available < roomCount) return null;
+            PriceQuoteVO quote = priceQuoteService.quotePrice(roomType.getId(), checkIn, checkOut, roomCount, stay.stayType().name());
             String mainImage = images.getOrDefault(roomType.getId(), List.of()).stream()
                     .filter(image -> "MAIN".equals(image.getImageType())).findFirst()
                     .or(() -> images.getOrDefault(roomType.getId(), List.of()).stream().findFirst())
@@ -66,22 +74,15 @@ public class PublicRoomTypeService {
                     .facilities(facilities.getOrDefault(roomType.getId(), List.of()).stream()
                             .map(RoomTypeFacility::getFacilityName).toList())
                     .availableRooms(available).totalAmount(quote.getTotalAmount()).dailyPrices(quote.getDailyPrices())
+                    .stayType(stay.stayType().name())
                     .build();
-        }).filter(item -> item.getAvailableRooms() >= roomCount).toList();
+        }).filter(Objects::nonNull).filter(item -> item.getAvailableRooms() >= roomCount).toList();
     }
 
-    private void validateSearch(LocalDate checkIn, LocalDate checkOut, int roomCount, int guests) {
-        if (checkIn == null || checkOut == null) {
-            throw new BusinessException("INVALID_STAY_DATES", "入住日期和离店日期不能为空");
-        }
-        if (checkIn.isBefore(LocalDate.now())) {
-            throw new BusinessException("INVALID_STAY_DATES", "入住日期不能早于今天");
-        }
-        if (!checkOut.isAfter(checkIn)) {
-            throw new BusinessException("INVALID_STAY_DATES", "离店日期必须晚于入住日期");
-        }
+    private StayDateRange validateSearch(LocalDate checkIn, LocalDate checkOut, int roomCount, int guests, String stayType) {
         if (roomCount < 1 || roomCount > 5 || guests < 1 || guests > 20) {
             throw new BusinessException("INVALID_REQUEST", "房间数或入住人数超出允许范围");
         }
+        return bookingDatePolicyService.resolveStay(checkIn, checkOut, stayType);
     }
 }

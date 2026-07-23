@@ -1,3 +1,4 @@
+
 USE zhisu_hotel;
 SET NAMES utf8mb4;
 SET @db_name = DATABASE();
@@ -31,6 +32,8 @@ SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_sche
 SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=@db_name AND table_name='sys_user' AND column_name='ban_until'),'ALTER TABLE sys_user ADD COLUMN ban_until DATETIME NULL AFTER consecutive_cancel_count','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=@db_name AND table_name='sys_user' AND column_name='last_login_at'),'ALTER TABLE sys_user ADD COLUMN last_login_at DATETIME NULL AFTER ban_until','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql=IF(@has_old_password,'ALTER TABLE sys_user DROP COLUMN password','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=@db_name AND table_name='booking_order' AND column_name='stay_type'),'ALTER TABLE booking_order ADD COLUMN stay_type VARCHAR(30) NOT NULL DEFAULT ''STANDARD'' AFTER check_out_date','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=@db_name AND table_name='payment_record' AND column_name='user_id'),'ALTER TABLE payment_record ADD COLUMN user_id BIGINT NULL AFTER order_id','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql=IF(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=@db_name AND table_name='payment_record' AND column_name='amount_fen'),'ALTER TABLE payment_record ADD COLUMN amount_fen INT NULL AFTER amount','SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

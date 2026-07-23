@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.roomtype.controller;
 
 import com.zhisu.hotel.common.response.ApiResponse;
@@ -26,7 +27,8 @@ public class PublicRoomTypeController {
             @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
             @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
             @RequestParam(defaultValue = "1") @Min(1) @Max(5) int roomCount,
-            @RequestParam(defaultValue = "1") @Min(1) @Max(20) int guests) {
-        return ApiResponse.success(service.search(checkInDate, checkOutDate, roomCount, guests));
+            @RequestParam(defaultValue = "1") @Min(1) @Max(20) int guests,
+            @RequestParam(defaultValue = "STANDARD") String stayType) {
+        return ApiResponse.success(service.search(checkInDate, checkOutDate, roomCount, guests, stayType));
     }
 }
