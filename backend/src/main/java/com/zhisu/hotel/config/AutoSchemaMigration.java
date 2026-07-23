@@ -24,9 +24,10 @@ public class AutoSchemaMigration implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         ensureColumn("hotel_info", "latitude", "DOUBLE DEFAULT NULL COMMENT '纬度'");
         ensureColumn("hotel_info", "longitude", "DOUBLE DEFAULT NULL COMMENT '经度'");
-
-        // 如果有坐标但地址还是旧的，自动更新
         updateDefaultAddress();
+
+        ensureColumn("booking_order", "stay_type", "VARCHAR(20) DEFAULT 'STANDARD' AFTER check_out_date");
+        ensureColumn("booking_order", "total_nights", "INT DEFAULT 1 AFTER stay_type");
     }
 
     private void ensureColumn(String table, String column, String definition) {
