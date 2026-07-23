@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.dashboard.service.impl;
 
 import com.zhisu.hotel.dashboard.service.DashboardService;
@@ -77,6 +78,96 @@ public class DashboardServiceImpl implements DashboardService {
             points.add(DashboardTrendPointVO.builder().date(date).orderCount(orders).revenue(revenue).build());
         }
         return points;
+    }
+
+    @Override
+    public DashboardAnalyticsVO getAnalytics(int days) {
+        int normalizedDays = Math.max(1, Math.min(days, 365));
+        LocalDate today = LocalDate.now(HOTEL_ZONE);
+        LocalDateTime currentStart = today.minusDays(normalizedDays - 1L).atStartOfDay();
+        LocalDateTime currentEnd = today.plusDays(1).atStartOfDay();
+        LocalDateTime previousStart = currentStart.minusDays(normalizedDays);
+        BigDecimal currentRevenue = paidRevenue(currentStart, currentEnd);
+        BigDecimal previousRevenue = paidRevenue(previousStart, currentStart);
+        BigDecimal growth = previousRevenue.compareTo(BigDecimal.ZERO) == 0
+                ? (currentRevenue.compareTo(BigDecimal.ZERO) == 0 ? money(BigDecimal.ZERO) : money(BigDecimal.valueOf(100)))
+                : currentRevenue.subtract(previousRevenue)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(previousRevenue, 2, RoundingMode.HALF_UP);
+
+        return DashboardAnalyticsVO.builder()
+                .periodDays(normalizedDays)
+                .currentPeriodRevenue(currentRevenue)
+                .previousPeriodRevenue(previousRevenue)
+                .revenueGrowthRate(growth)
+                .trends(getTrends(normalizedDays))
+                .roomTypeStatistics(periodRoomTypeStatistics(currentStart, currentEnd))
+                .paymentMethods(categoryStatistics(
+                        "SELECT COALESCE(payment_method,'UNKNOWN') code, COUNT(*) item_count, COALESCE(SUM(amount),0) amount "
+                                + "FROM payment_record WHERE payment_status='PAID' AND paid_at>=? AND paid_at<? GROUP BY payment_method ORDER BY amount DESC",
+                        currentStart, currentEnd, true))
+                .orderStatuses(categoryStatistics(
+                        "SELECT COALESCE(order_status,'UNKNOWN') code, COUNT(*) item_count, 0 amount "
+                                + "FROM booking_order WHERE created_at>=? AND created_at<? GROUP BY order_status ORDER BY item_count DESC",
+                        currentStart, currentEnd, false))
+                .build();
+    }
+
+    private BigDecimal paidRevenue(LocalDateTime start, LocalDateTime end) {
+        if (!tableExists("payment_record")) return money(BigDecimal.ZERO);
+        return queryForDecimal("SELECT COALESCE(SUM(amount),0) FROM payment_record "
+                + "WHERE payment_status='PAID' AND paid_at>=? AND paid_at<?", Timestamp.valueOf(start), Timestamp.valueOf(end));
+    }
+
+    private List<RoomTypeStatisticVO> periodRoomTypeStatistics(LocalDateTime start, LocalDateTime end) {
+        if (!tableExists("payment_record") || !tableExists("booking_order")) return List.of();
+        return jdbcTemplate.query("SELECT bo.room_type_id, COALESCE(rt.name,bo.room_type_name,CONCAT('房型',bo.room_type_id)) room_type_name, "
+                        + "COUNT(DISTINCT pr.order_id) booking_count, COALESCE(SUM(pr.amount),0) revenue "
+                        + "FROM payment_record pr JOIN booking_order bo ON bo.id=pr.order_id "
+                        + "LEFT JOIN room_type rt ON rt.id=bo.room_type_id "
+                        + "WHERE pr.payment_status='PAID' AND pr.paid_at>=? AND pr.paid_at<? "
+                        + "GROUP BY bo.room_type_id,rt.name,bo.room_type_name ORDER BY revenue DESC,booking_count DESC",
+                this::mapRoomTypeStatistic, Timestamp.valueOf(start), Timestamp.valueOf(end));
+    }
+
+    private List<DashboardCategoryStatisticVO> categoryStatistics(
+            String sql, LocalDateTime start, LocalDateTime end, boolean paymentCategory) {
+        String requiredTable = paymentCategory ? "payment_record" : "booking_order";
+        if (!tableExists(requiredTable)) return List.of();
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            String code = rs.getString("code");
+            return DashboardCategoryStatisticVO.builder()
+                    .code(code)
+                    .label(paymentCategory ? paymentMethodLabel(code) : orderStatusLabel(code))
+                    .count(rs.getLong("item_count"))
+                    .amount(money(rs.getBigDecimal("amount")))
+                    .build();
+        }, Timestamp.valueOf(start), Timestamp.valueOf(end));
+    }
+
+    private String paymentMethodLabel(String code) {
+        if (code == null) return "未知方式";
+        return switch (code) {
+            case "MOCK" -> "模拟支付";
+            case "WECHAT" -> "微信支付";
+            case "ALIPAY" -> "支付宝";
+            case "CASH" -> "现金";
+            case "CARD" -> "银行卡";
+            default -> code;
+        };
+    }
+
+    private String orderStatusLabel(String code) {
+        if (code == null) return "未知状态";
+        return switch (code) {
+            case "PENDING_PAYMENT" -> "待支付";
+            case "PENDING_CHECK_IN" -> "待入住";
+            case "CHECKED_IN" -> "已入住";
+            case "COMPLETED" -> "已完成";
+            case "CANCELLED" -> "已取消";
+            case "CLOSED" -> "已关闭";
+            default -> code;
+        };
     }
 
     @Override

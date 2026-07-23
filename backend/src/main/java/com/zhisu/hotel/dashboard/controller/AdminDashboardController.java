@@ -1,8 +1,11 @@
+
+
 package com.zhisu.hotel.dashboard.controller;
 
 import com.zhisu.hotel.common.response.ApiResponse;
 import com.zhisu.hotel.dashboard.service.DashboardService;
 import com.zhisu.hotel.dashboard.vo.DashboardOverviewVO;
+import com.zhisu.hotel.dashboard.vo.DashboardAnalyticsVO;
 import com.zhisu.hotel.dashboard.vo.DashboardTrendPointVO;
 import com.zhisu.hotel.dashboard.vo.InventoryWarningVO;
 import com.zhisu.hotel.dashboard.vo.RoomTypeStatisticVO;
@@ -29,6 +32,11 @@ public class AdminDashboardController {
     @GetMapping("/trends")
     public ApiResponse<List<DashboardTrendPointVO>> getTrends(@RequestParam(defaultValue = "7") int days) {
         return ApiResponse.success(dashboardService.getTrends(days));
+    }
+
+    @GetMapping("/analytics")
+    public ApiResponse<DashboardAnalyticsVO> getAnalytics(@RequestParam(defaultValue = "30") int days) {
+        return ApiResponse.success(dashboardService.getAnalytics(days));
     }
 
     @GetMapping("/room-type-statistics")

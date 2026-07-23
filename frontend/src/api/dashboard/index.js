@@ -1,3 +1,4 @@
+
 import request from '@/utils/request'
 
 export function getDashboardOverview() {
@@ -13,6 +14,10 @@ export function getDashboardTrends(params) {
     method: 'get',
     params
   })
+}
+
+export function getDashboardAnalytics(params) {
+  return request({ url: '/api/admin/dashboard/analytics', method: 'get', params })
 }
 
 export function getRoomTypeStatistics() {

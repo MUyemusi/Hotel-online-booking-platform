@@ -1,6 +1,7 @@
+
 <template>
   <section class="staff-page">
-    <div class="page-title"><div><span>STAFF ACCESS CONTROL</span><h1>员工账号和角色管理</h1><p>从现有账号中识别员工与管理员，并维护其角色和启停状态。</p></div><el-button @click="load">刷新数据</el-button></div>
+    <div class="page-title"><div><span>员工权限管理</span><h1>员工账号和角色管理</h1><p>从现有账号中识别员工与管理员，并维护其角色和启停状态。</p></div><el-button @click="load">刷新数据</el-button></div>
     <el-alert title="当前后端没有单独的新建员工接口，本页只管理数据库中已存在的账号，不会自动编造前台账号。" type="info" :closable="false" show-icon />
     <el-card shadow="never" class="panel">
       <div class="toolbar"><el-input v-model.trim="keyword" clearable placeholder="搜索用户名、昵称或手机号" style="max-width:330px"/><span>共 {{ staff.length }} 个员工/管理员账号</span></div>

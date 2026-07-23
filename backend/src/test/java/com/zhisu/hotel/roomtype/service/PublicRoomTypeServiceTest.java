@@ -1,5 +1,9 @@
+
 package com.zhisu.hotel.roomtype.service;
 
+import com.zhisu.hotel.booking.service.BookingDatePolicyService;
+import com.zhisu.hotel.booking.service.StayDateRange;
+import com.zhisu.hotel.common.enums.StayType;
 import com.zhisu.hotel.common.exception.BusinessException;
 import com.zhisu.hotel.inventory.service.InventoryService;
 import com.zhisu.hotel.pricing.service.PriceQuoteService;
@@ -28,13 +32,16 @@ class PublicRoomTypeServiceTest {
     private final RoomTypeFacilityMapper facilities = mock(RoomTypeFacilityMapper.class);
     private final InventoryService inventory = mock(InventoryService.class);
     private final PriceQuoteService quotes = mock(PriceQuoteService.class);
-    private final PublicRoomTypeService service = new PublicRoomTypeService(roomTypes, images, facilities, inventory, quotes);
+    private final BookingDatePolicyService datePolicy = mock(BookingDatePolicyService.class);
+    private final PublicRoomTypeService service = new PublicRoomTypeService(roomTypes, images, facilities, inventory, quotes, datePolicy);
 
     @Test
     void rejectsInvalidStayRangeBeforeQueryingData() {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
 
-        assertThatThrownBy(() -> service.search(tomorrow, tomorrow, 1, 1))
+        when(datePolicy.resolveStay(tomorrow, tomorrow, "STANDARD"))
+                .thenThrow(new BusinessException("INVALID_STAY_DATES", "日期无效"));
+        assertThatThrownBy(() -> service.search(tomorrow, tomorrow, 1, 1, "STANDARD"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("code").isEqualTo("INVALID_STAY_DATES");
     }
@@ -43,15 +50,17 @@ class PublicRoomTypeServiceTest {
     void filtersByGuestCapacityAndReturnsMainImageAndDynamicQuote() {
         LocalDate checkIn = LocalDate.now().plusDays(1);
         LocalDate checkOut = checkIn.plusDays(1);
+        when(datePolicy.resolveStay(checkIn, checkOut, "STANDARD")).thenReturn(
+                new StayDateRange(StayType.STANDARD, checkIn, checkOut, checkIn, checkOut, 1));
         RoomType single = RoomType.builder().id(1L).name("Single").status("ONLINE").maxGuests(1).basePrice(new BigDecimal("100.00")).build();
         RoomType doubleRoom = RoomType.builder().id(2L).name("Double").status("ONLINE").maxGuests(2).basePrice(new BigDecimal("200.00")).build();
         when(roomTypes.selectList(any())).thenReturn(List.of(single, doubleRoom));
         when(images.selectList(any())).thenReturn(List.of(RoomTypeImage.builder().roomTypeId(2L).imageType("MAIN").imageUrl("/main.jpg").sortOrder(1).build()));
         when(facilities.selectList(any())).thenReturn(List.of());
         when(inventory.getMinAvailableCount(2L, checkIn, checkOut.minusDays(1))).thenReturn(3);
-        when(quotes.quotePrice(2L, checkIn, checkOut, 1)).thenReturn(PriceQuoteVO.builder().totalAmount(new BigDecimal("240.00")).dailyPrices(List.of()).build());
+        when(quotes.quotePrice(2L, checkIn, checkOut, 1, "STANDARD")).thenReturn(PriceQuoteVO.builder().totalAmount(new BigDecimal("240.00")).dailyPrices(List.of()).build());
 
-        var result = service.search(checkIn, checkOut, 1, 2);
+        var result = service.search(checkIn, checkOut, 1, 2, "STANDARD");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(2L);

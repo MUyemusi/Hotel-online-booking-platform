@@ -1,3 +1,5 @@
+
+
 <template>
   <div class="inventory-manage-view">
     <div class="page-header">
@@ -129,19 +131,20 @@
         <el-table-column prop="inventoryDate" label="日期" width="120" />
         <el-table-column prop="changeType" label="操作类型" width="140">
           <template #default="scope">
-            <el-tag size="small">{{ scope.row.changeType }}</el-tag>
+            <el-tag size="small">{{ displayValue('inventoryChange', scope.row.changeType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="changeAmount" label="变动量" width="90" />
         <el-table-column prop="beforeValue" label="变动前" width="90" />
         <el-table-column prop="afterValue" label="变动后" width="90" />
-        <el-table-column prop="changeReason" label="原因" min-width="160" />
+        <el-table-column label="原因" min-width="160"><template #default="{ row }">{{ displayValue('inventoryReason', row.changeReason) }}</template></el-table-column>
       </el-table>
     </el-card>
   </div>
 </template>
 
 <script setup>
+import { displayValue } from '@/utils/adminDisplay'
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getAdminRoomTypes } from '@/api/roomtype'

@@ -1,3 +1,5 @@
+
+
 package com.zhisu.hotel.booking.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -13,6 +15,8 @@ import com.zhisu.hotel.booking.mapper.OrderDailyPriceMapper;
 import com.zhisu.hotel.booking.mapper.OrderGuestMapper;
 import com.zhisu.hotel.booking.service.BookingFrontdeskService;
 import com.zhisu.hotel.booking.service.BookingOrderService;
+import com.zhisu.hotel.booking.service.BookingDatePolicyService;
+import com.zhisu.hotel.booking.service.StayDateRange;
 import com.zhisu.hotel.booking.vo.*;
 import com.zhisu.hotel.common.enums.CancelType;
 import com.zhisu.hotel.common.enums.OrderStatus;
@@ -28,6 +32,8 @@ import com.zhisu.hotel.payment.vo.CancellationVO;
 import com.zhisu.hotel.payment.vo.PaymentVO;
 import com.zhisu.hotel.pricing.entity.DailyPrice;
 import com.zhisu.hotel.pricing.service.PriceService;
+import com.zhisu.hotel.pricing.service.PriceQuoteService;
+import com.zhisu.hotel.pricing.vo.PriceQuoteVO;
 import com.zhisu.hotel.roomtype.entity.RoomType;
 import com.zhisu.hotel.roomtype.mapper.RoomTypeMapper;
 import com.zhisu.hotel.user.service.CreditService;
@@ -58,6 +64,8 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
     private final InventoryService inventoryService;
     private final CreditService creditService;
     private final PriceService priceService;
+    private final PriceQuoteService priceQuoteService;
+    private final BookingDatePolicyService bookingDatePolicyService;
     private final SystemConfigService systemConfigService;
     private final ObjectMapper objectMapper;
 
@@ -72,27 +80,23 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
             log.info("幂等请求，返回已有订单: {}", existing.getOrderNo());
             return buildDetailVO(existing);
         }
-        validateDates(request.getCheckInDate(), request.getCheckOutDate());
+        StayDateRange stay = bookingDatePolicyService.resolveStay(
+                request.getCheckInDate(), request.getCheckOutDate(), request.getStayType());
         if (!creditService.checkBookingPermission(userId)) {
             throw new BusinessException("USER_BANNED", "您当前处于禁订期，无法创建订单");
         }
         if (!inventoryService.checkInventory(request.getRoomTypeId(),
-                request.getCheckInDate(), request.getCheckOutDate(), request.getRoomCount())) {
+                stay.inventoryStartDate(), stay.inventoryEndExclusive(), request.getRoomCount())) {
             throw new BusinessException("INSUFFICIENT_INVENTORY", "所选日期库存不足");
         }
         RoomType roomType = roomTypeMapper.selectById(request.getRoomTypeId());
         if (roomType == null || !"ONLINE".equals(roomType.getStatus())) {
             throw new BusinessException("ROOM_TYPE_NOT_FOUND", "房型不存在或已下架");
         }
-        BigDecimal totalAmount = priceService.calculatePrice(
-                request.getRoomTypeId(), request.getCheckInDate(), request.getCheckOutDate(), request.getRoomCount());
-        if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            long nights = ChronoUnit.DAYS.between(request.getCheckInDate(), request.getCheckOutDate());
-            totalAmount = roomType.getBasePrice()
-                    .multiply(BigDecimal.valueOf(nights))
-                    .multiply(BigDecimal.valueOf(request.getRoomCount()));
-        }
-        int totalNights = (int) ChronoUnit.DAYS.between(request.getCheckInDate(), request.getCheckOutDate());
+        PriceQuoteVO quote = priceQuoteService.quotePrice(request.getRoomTypeId(),
+                request.getCheckInDate(), request.getCheckOutDate(), request.getRoomCount(), stay.stayType().name());
+        BigDecimal totalAmount = quote.getTotalAmount();
+        int totalNights = stay.stayNights();
         LocalDateTime now = LocalDateTime.now();
         String orderNo = generateOrderNo();
         String snapshotJson = serializeToJson(roomType);
@@ -102,7 +106,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
                 .roomTypeName(roomType.getName()).roomTypeSnapshot(snapshotJson)
                 .facilitiesSnapshot("[]").roomCount(request.getRoomCount())
                 .checkInDate(request.getCheckInDate()).checkOutDate(request.getCheckOutDate())
-                .totalNights(totalNights).guestCount(request.getGuestCount())
+                .stayType(stay.stayType().name()).totalNights(totalNights).guestCount(request.getGuestCount())
                 .totalAmount(totalAmount).totalAmountFen(totalAmount.multiply(BigDecimal.valueOf(100)).intValue())
                 .idempotencyKey(request.getIdempotencyKey()).phone(request.getPhone())
                 .orderStatus(OrderStatus.PENDING_PAYMENT.name()).paymentStatus(PaymentStatus.UNPAID.name())
@@ -118,10 +122,10 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         for (OrderGuest guest : guests) {
             orderGuestMapper.insert(guest);
         }
-        saveDailyPriceSnapshot(order.getId(), roomType.getId(), request.getCheckInDate(), request.getCheckOutDate(), roomType.getBasePrice());
+        saveDailyPriceSnapshot(order.getId(), roomType.getId(), stay.inventoryStartDate(), stay.inventoryEndExclusive(), roomType.getBasePrice());
         try {
             inventoryService.lockInventory(order.getId(), request.getRoomTypeId(),
-                    request.getCheckInDate(), request.getCheckOutDate(), request.getRoomCount());
+                    stay.inventoryStartDate(), stay.inventoryEndExclusive(), request.getRoomCount());
         } catch (Exception e) {
             log.error("锁库存失败，订单 {} 回滚", orderNo, e);
             throw new RuntimeException("锁库存失败，请稍后重试", e);
@@ -357,7 +361,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
                 .roomTypeId(order.getRoomTypeId()).roomTypeName(order.getRoomTypeName())
                 .roomTypeSnapshot(order.getRoomTypeSnapshot()).facilitiesSnapshot(order.getFacilitiesSnapshot())
                 .roomCount(order.getRoomCount()).checkInDate(order.getCheckInDate())
-                .checkOutDate(order.getCheckOutDate()).totalNights(order.getTotalNights())
+                .checkOutDate(order.getCheckOutDate()).stayType(normalizeStayType(order.getStayType())).totalNights(order.getTotalNights())
                 .guestCount(order.getGuestCount()).totalAmount(order.getTotalAmount())
                 .phone(order.getPhone()).orderStatus(order.getOrderStatus())
                 .paymentStatus(order.getPaymentStatus()).paymentTimeout(order.getPaymentTimeout())
@@ -372,7 +376,7 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
         return OrderVO.builder().id(order.getId()).orderNo(order.getOrderNo())
                 .roomTypeId(order.getRoomTypeId()).roomTypeName(order.getRoomTypeName())
                 .roomCount(order.getRoomCount()).checkInDate(order.getCheckInDate())
-                .checkOutDate(order.getCheckOutDate()).totalNights(order.getTotalNights())
+                .checkOutDate(order.getCheckOutDate()).stayType(normalizeStayType(order.getStayType())).totalNights(order.getTotalNights())
                 .guestCount(order.getGuestCount()).totalAmount(order.getTotalAmount())
                 .phone(order.getPhone()).orderStatus(order.getOrderStatus())
                 .paymentStatus(order.getPaymentStatus()).paymentTimeout(order.getPaymentTimeout())
@@ -391,6 +395,10 @@ public class BookingOrderServiceImpl implements BookingOrderService, BookingFron
                 .roomCount(order.getRoomCount()).checkInDate(order.getCheckInDate())
                 .checkOutDate(order.getCheckOutDate()).orderStatus(order.getOrderStatus())
                 .paymentStatus(order.getPaymentStatus()).guests(guestVOs).build();
+    }
+
+    private String normalizeStayType(String stayType) {
+        return stayType == null || stayType.isBlank() ? "STANDARD" : stayType;
     }
 
     private void validateDates(LocalDate checkIn, LocalDate checkOut) {

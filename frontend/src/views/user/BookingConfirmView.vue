@@ -1,5 +1,6 @@
+
 <template><section v-loading="loading"><h1>确认预订</h1>
-  <el-card v-if="room"><h2>{{ room.name }}</h2><p>{{ checkInDate }} 至 {{ checkOutDate }}，{{ roomCount }}间</p><h3>应付总额：￥{{ room.totalAmount }}</h3></el-card>
+  <el-card v-if="room"><h2>{{ room.name }}</h2><p v-if="stayType === 'EARLY_MORNING'">{{ checkInDate }} 凌晨入住，当日中午退房，共1晚，{{ roomCount }}间</p><p v-else>{{ checkInDate }} 至 {{ checkOutDate }}，共{{ room?.dailyPrices?.length || 1 }}晚，{{ roomCount }}间</p><h3>应付总额：￥{{ room.totalAmount }}</h3></el-card>
   <el-card class="form-card"><el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
     <el-form-item label="联系电话" prop="phone"><el-input v-model="form.phone" /></el-form-item>
     <el-form-item label="入住人数" prop="guestCount"><el-input-number v-model="form.guestCount" :min="1" :max="room?.maxGuests*roomCount||8" /></el-form-item>
@@ -28,6 +29,7 @@ const roomTypeId = booking.roomTypeId
 const checkInDate = booking.checkInDate
 const checkOutDate = booking.checkOutDate
 const roomCount = booking.roomCount
+const stayType = booking.stayType
 const form = reactive({ phone: '', guestCount: booking.guests, guestName: '', idNumber: '', remark: '' })
 const rules = {
   phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }, { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
@@ -44,7 +46,7 @@ async function load() {
   }
   loading.value = true
   try {
-    const response = await searchRoomTypes({ checkInDate, checkOutDate, roomCount, guests: form.guestCount })
+    const response = await searchRoomTypes({ checkInDate, checkOutDate, roomCount, guests: form.guestCount, stayType })
     if (response.code !== 'SUCCESS') throw new Error(response.message)
     room.value = (response.data || []).find(item => item.id === roomTypeId)
     if (!room.value) throw new Error('房型库存或价格已变化，请重新选择')
@@ -62,7 +64,7 @@ async function submit() {
     if (!latestRoom) throw new Error('房型库存或价格已变化，请重新选择')
     room.value = latestRoom
     const payload = {
-      roomTypeId, checkInDate, checkOutDate, roomCount, guestCount: form.guestCount,
+      roomTypeId, checkInDate, checkOutDate, stayType, roomCount, guestCount: form.guestCount,
       phone: form.phone, idempotencyKey: crypto.randomUUID(), remark: form.remark,
       guests: [{ guestName: form.guestName, guestPhone: form.phone, idType: form.idNumber ? 'ID_CARD' : null, idNumber: form.idNumber || null, isMain: true }]
     }

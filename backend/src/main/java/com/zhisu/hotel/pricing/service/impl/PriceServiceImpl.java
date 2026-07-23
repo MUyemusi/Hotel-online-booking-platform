@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.pricing.service.impl;
 
 import com.zhisu.hotel.booking.service.BookingDatePolicyService;
@@ -27,10 +28,10 @@ public class PriceServiceImpl implements PriceService {
     @Override
     public BigDecimal calculatePrice(Long roomTypeId, LocalDate checkIn, LocalDate checkOut, int count) {
         if (roomTypeId == null) {
-            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "Room type id cannot be null");
+            throw new BusinessException("ROOM_TYPE_ID_EMPTY", "房型ID不能为空");
         }
         if (count <= 0) {
-            throw new BusinessException("ROOM_COUNT_INVALID", "Room count must be greater than 0");
+            throw new BusinessException("ROOM_COUNT_INVALID", "房间数必须大于0");
         }
 
         bookingDatePolicyService.validateBookingDates(checkIn, checkOut);
@@ -41,7 +42,7 @@ public class PriceServiceImpl implements PriceService {
         List<DailyPrice> prices = dailyPriceService.listDailyPrices(roomTypeId, checkIn, lastStayDate);
         long expectedNights = ChronoUnit.DAYS.between(checkIn, checkOut);
         if (prices.size() != expectedNights) {
-            throw new BusinessException("DAILY_PRICE_MISSING", "Daily prices are incomplete for the selected stay dates");
+            throw new BusinessException("DAILY_PRICE_MISSING", "所选住宿日期的每日价格数据不完整");
         }
 
         BigDecimal oneRoomAmount = prices.stream()

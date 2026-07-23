@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.booking.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
@@ -28,6 +29,7 @@ public class BookingOrder {
     private Integer roomCount;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
+    private String stayType;
     private Integer totalNights;
     private Integer guestCount;
     private BigDecimal totalAmount;

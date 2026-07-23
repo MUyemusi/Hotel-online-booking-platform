@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.pricing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -34,7 +35,7 @@ public class BasePriceServiceImpl implements BasePriceService {
     public RoomType updateBasePrice(Long roomTypeId, BasePriceUpdateRequest request) {
         RoomType roomType = roomTypeService.getRoomTypeDetail(roomTypeId);
         if (roomType == null) {
-            throw new BusinessException("Room type not found");
+            throw new BusinessException("ROOM_TYPE_NOT_FOUND", "房型不存在");
         }
 
         BigDecimal oldPrice = roomType.getBasePrice();

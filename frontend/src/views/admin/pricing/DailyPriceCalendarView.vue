@@ -1,64 +1,65 @@
+
 <template>
   <div class="daily-price-calendar-view">
     <div class="page-header">
       <div>
-        <h1>Daily Price Calendar</h1>
-        <p>Query generated daily prices by room type and date range, or generate a full pricing window in one click.</p>
+        <h1>每日价格日历</h1>
+        <p>按房型和日期范围查询每日价格，也可以一键生成完整价格窗口。</p>
       </div>
       <div class="header-actions">
-        <el-button :loading="generating" type="primary" @click="handleGenerate">Generate Prices</el-button>
+        <el-button :loading="generating" type="primary" @click="handleGenerate">生成价格</el-button>
       </div>
     </div>
 
     <el-card shadow="never" class="filter-card">
       <el-form label-position="top" class="filter-form">
         <div class="filter-grid">
-          <el-form-item label="Room Type">
-            <el-select v-model="filters.roomTypeId" placeholder="Select room type" class="full-width">
+          <el-form-item label="房型">
+            <el-select v-model="filters.roomTypeId" placeholder="请选择房型" class="full-width">
               <el-option v-for="roomType in roomTypes" :key="roomType.id" :label="roomType.name" :value="roomType.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Start Date">
+          <el-form-item label="开始日期">
             <el-date-picker v-model="filters.startDate" type="date" value-format="YYYY-MM-DD" class="full-width" />
           </el-form-item>
-          <el-form-item label="End Date">
+          <el-form-item label="结束日期">
             <el-date-picker v-model="filters.endDate" type="date" value-format="YYYY-MM-DD" class="full-width" />
           </el-form-item>
         </div>
         <div class="filter-actions">
-          <el-button type="primary" :loading="loading" @click="loadDailyPrices">Query</el-button>
-          <el-button @click="resetFilters">Reset</el-button>
+          <el-button type="primary" :loading="loading" @click="loadDailyPrices">查询</el-button>
+          <el-button @click="resetFilters">重置</el-button>
         </div>
       </el-form>
     </el-card>
 
     <el-card shadow="never" class="table-card">
       <el-table :data="dailyPrices" v-loading="loading" stripe>
-        <el-table-column prop="businessDate" label="Date" width="120" />
-        <el-table-column label="Weekday" width="120">
+        <el-table-column prop="businessDate" label="日期" width="120" />
+        <el-table-column label="星期" width="120">
           <template #default="scope">{{ getWeekday(scope.row.businessDate) }}</template>
         </el-table-column>
-        <el-table-column label="Base Price" width="130">
+        <el-table-column label="基础价格" width="130">
           <template #default="scope">{{ currency(scope.row.basePrice) }}</template>
         </el-table-column>
-        <el-table-column prop="dateCoefficient" label="Coef." width="90" />
-        <el-table-column label="Final Price" width="130">
+        <el-table-column prop="dateCoefficient" label="系数" width="90" />
+        <el-table-column label="最终价格" width="130">
           <template #default="scope">
             <span class="price-text">{{ currency(scope.row.finalPrice) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Source" width="170">
+        <el-table-column label="价格来源" width="170">
           <template #default="scope">
             <el-tag :type="resolveSourceTagType(scope.row)">
-              {{ scope.row.priceSource }}
+              {{ displayValue('priceSource', scope.row.priceSource) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="priceDescription" label="Description" min-width="220" show-overflow-tooltip />
-        <el-table-column label="Status" width="120">
+        <el-table-column prop="priceDescription" label="说明" min-width="220" show-overflow-tooltip />
+        <el-table-column label="数据状态" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.sourceStatus === 'OFFICIAL' ? 'success' : scope.row.sourceStatus === 'PROVISIONAL' ? 'warning' : 'info'">
-              {{ scope.row.sourceStatus }}
+              {{ displayValue('sourceStatus', scope.row.sourceStatus) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -72,6 +73,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getBasePrices } from '@/api/pricing/basePrice'
 import { generateDailyPrices, getDailyPrices } from '@/api/pricing/dailyPrice'
+import { currencyCny, displayValue, weekdayName } from '@/utils/adminDisplay'
 
 const loading = ref(false)
 const generating = ref(false)
@@ -80,9 +82,11 @@ const dailyPrices = ref([])
 
 const defaultFilters = () => ({
   roomTypeId: null,
-  startDate: '2026-07-17',
-  endDate: '2027-07-18'
+  startDate: dateOffset(0),
+  endDate: dateOffset(365)
 })
+
+function dateOffset(days) { const date = new Date(); date.setDate(date.getDate() + days); return date.toISOString().slice(0, 10) }
 
 const filters = reactive(defaultFilters())
 
@@ -96,19 +100,19 @@ function extractResult(result, fallbackMessage) {
 async function loadRoomTypes() {
   try {
     const result = await getBasePrices({ page: 1, size: 100 })
-    const data = extractResult(result, 'Failed to load room types')
+    const data = extractResult(result, '加载房型失败')
     roomTypes.value = data.records || []
     if (!filters.roomTypeId && roomTypes.value.length > 0) {
       filters.roomTypeId = roomTypes.value[0].id
     }
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to load room types')
+    ElMessage.error(error?.response?.data?.message || error?.message || '加载房型失败')
   }
 }
 
 async function loadDailyPrices() {
   if (!filters.roomTypeId || !filters.startDate || !filters.endDate) {
-    ElMessage.warning('Please select room type and date range first')
+    ElMessage.warning('请先选择房型和日期范围')
     return
   }
   loading.value = true
@@ -118,9 +122,9 @@ async function loadDailyPrices() {
       startDate: filters.startDate,
       endDate: filters.endDate
     })
-    dailyPrices.value = extractResult(result, 'Failed to load daily prices')
+    dailyPrices.value = extractResult(result, '加载每日价格失败')
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to load daily prices')
+    ElMessage.error(error?.response?.data?.message || error?.message || '加载每日价格失败')
   } finally {
     loading.value = false
   }
@@ -133,11 +137,11 @@ async function handleGenerate() {
       startDate: filters.startDate,
       endDate: filters.endDate
     })
-    const count = extractResult(result, 'Failed to generate daily prices')
-    ElMessage.success(`Generated ${count} daily price records`)
+    const count = extractResult(result, '生成每日价格失败')
+    ElMessage.success(`已生成 ${count} 条每日价格记录`)
     await loadDailyPrices()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'Failed to generate daily prices')
+    ElMessage.error(error?.response?.data?.message || error?.message || '生成每日价格失败')
   } finally {
     generating.value = false
   }
@@ -153,7 +157,7 @@ function resetFilters() {
 
 function getWeekday(dateString) {
   const date = new Date(dateString)
-  return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()]
+  return weekdayName(dateString)
 }
 
 function formatPrice(value) {
@@ -161,7 +165,7 @@ function formatPrice(value) {
 }
 
 function currency(value) {
-  return `CNY ${formatPrice(value)}`
+  return currencyCny(value)
 }
 
 function resolveSourceTagType(row) {

@@ -1,3 +1,4 @@
+
 package com.zhisu.hotel.pricing.controller;
 
 import com.zhisu.hotel.common.response.ApiResponse;
@@ -24,9 +25,10 @@ public class PublicPriceController {
             @RequestParam Long roomTypeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
-            @RequestParam(defaultValue = "1") Integer roomCount) {
+            @RequestParam(defaultValue = "1") Integer roomCount,
+            @RequestParam(defaultValue = "STANDARD") String stayType) {
         return ApiResponse.success(
-                priceQuoteService.quotePrice(roomTypeId, checkInDate, checkOutDate, roomCount)
+                priceQuoteService.quotePrice(roomTypeId, checkInDate, checkOutDate, roomCount, stayType)
         );
     }
 }

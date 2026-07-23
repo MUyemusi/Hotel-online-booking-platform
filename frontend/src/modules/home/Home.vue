@@ -1,3 +1,4 @@
+
 <template>
   <div class="home-page">
     <section class="hero">
@@ -24,8 +25,8 @@
 
     <section id="booking" class="booking-wrap">
       <div class="booking-card">
-        <div class="booking-intro"><span>RESERVATION</span><strong>{{ hotelName }}</strong></div>
-        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkInDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast" /></div>
+        <div class="booking-intro"><span>RESERVATION</span><strong>{{ hotelName }}</strong><el-checkbox v-if="earlyMorningAvailable" v-model="earlyMode">凌晨入住（当日中午退房）</el-checkbox></div>
+        <div class="booking-field"><small>入住日期</small><el-date-picker v-model="booking.checkInDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disablePast"><template #default="{ cell }"><span>{{ cell.text }}</span><sup v-if="isEarlyCell(cell)">凌</sup></template></el-date-picker></div>
         <div class="booking-field"><small>离店日期</small><el-date-picker v-model="booking.checkOutDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" :disabled-date="disableCheckOut" /></div>
         <div class="booking-field"><small>入住人数</small><el-select v-model="booking.guests"><el-option v-for="n in 6" :key="n" :label="`${n} 位宾客`" :value="n" /></el-select></div>
         <button class="booking-btn" @click="searchRooms">查询客房 <span>→</span></button>
@@ -69,7 +70,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { checkHealth } from '@/api/health'
@@ -77,6 +78,7 @@ import { getPublicAnnouncements } from '@/api/content/announcement'
 import { getPublicBanners } from '@/api/content/banner'
 import { getPublicHotelInfo } from '@/api/content/hotelInfo'
 import { toBookingQuery } from '@/utils/bookingQuery'
+import { hotelToday, isEarlyMorningAvailable, nextDate } from '@/utils/bookingStay'
 
 const router = useRouter()
 const announcements = ref([])
@@ -86,15 +88,35 @@ const hotelName = ref('智宿海滨生态酒店')
 const hotelIntroduction = ref('浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。')
 const healthy = ref(false)
 const healthFailed = ref(false)
-const booking = reactive({ checkInDate: '', checkOutDate: '', roomCount: 1, guests: 2 })
+const booking = reactive({ checkInDate: '', checkOutDate: '', roomCount: 1, guests: 2, stayType: 'STANDARD' })
+const earlyMorningAvailable = isEarlyMorningAvailable()
+const earlyMode = computed({
+  get: () => booking.stayType === 'EARLY_MORNING',
+  set: enabled => {
+    booking.stayType = enabled ? 'EARLY_MORNING' : 'STANDARD'
+    if (enabled) booking.checkInDate = booking.checkOutDate = hotelToday()
+    else if (booking.checkInDate) booking.checkOutDate = nextDate(booking.checkInDate)
+  }
+})
 let bannerTimer
 const heroImage = computed(() => banners.value[bannerIndex.value]?.imageUrl || '/images/eco/zhisu-coastal-hero.png')
-function disablePast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
-function disableCheckOut(t) { if (!booking.checkInDate) return disablePast(t); const d = new Date(booking.checkInDate); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime() }
+function disablePast(t) {
+  if (earlyMode.value) return t.toLocaleDateString('sv-SE') !== hotelToday()
+  const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime()
+}
+function disableCheckOut(t) {
+  if (earlyMode.value) return t.toLocaleDateString('sv-SE') !== hotelToday()
+  if (!booking.checkInDate) return disablePast(t)
+  const d = new Date(booking.checkInDate); d.setDate(d.getDate() + 1); return t.getTime() < d.getTime()
+}
+function isEarlyCell(cell) { return earlyMorningAvailable && cell?.dayjs?.format?.('YYYY-MM-DD') === hotelToday() }
 function searchRooms() {
   if ((booking.checkInDate && !booking.checkOutDate) || (!booking.checkInDate && booking.checkOutDate)) return ElMessage.warning('请选择完整的入住和离店日期')
   router.push({ path: '/rooms', query: toBookingQuery(booking) })
 }
+watch(() => booking.checkInDate, value => {
+  if (booking.stayType === 'STANDARD' && value && (!booking.checkOutDate || booking.checkOutDate <= value)) booking.checkOutDate = nextDate(value)
+})
 function formatDate(v) { return v ? v.slice(0, 10).replaceAll('-', '.') : '' }
 function startBannerRotation() {
   if (banners.value.length < 2) return
