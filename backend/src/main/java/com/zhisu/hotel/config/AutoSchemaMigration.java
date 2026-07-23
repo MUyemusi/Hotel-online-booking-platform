@@ -40,16 +40,17 @@ public class AutoSchemaMigration implements ApplicationRunner {
 
     private void updateDefaultAddress() {
         try {
+            // 检查是否有酒店记录且地址或坐标为空/为旧值
             Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM hotel_info WHERE id = 1 AND latitude IS NOT NULL AND (address IS NULL OR address = '' OR address LIKE '%示范路%')",
+                    "SELECT COUNT(*) FROM hotel_info WHERE id = 1 AND (latitude IS NULL OR longitude IS NULL OR address IS NULL OR address = '' OR address LIKE '%示范路%')",
                     Integer.class);
             if (count != null && count > 0) {
                 jdbcTemplate.update(
-                        "UPDATE hotel_info SET address = '海南省三亚市亚龙湾国家旅游度假区', latitude = COALESCE(latitude, 18.2296), longitude = COALESCE(longitude, 109.6253) WHERE id = 1");
+                        "UPDATE hotel_info SET address = COALESCE(NULLIF(address,''), '海南省三亚市亚龙湾国家旅游度假区'), latitude = COALESCE(latitude, 18.2296), longitude = COALESCE(longitude, 109.6253) WHERE id = 1");
                 log.info("Auto-migration: updated hotel_info default address and coordinates");
             }
         } catch (Exception e) {
-            // hotel_info 表可能还不存在，忽略
+            log.warn("Auto-migration: hotel_info update skipped — {}", e.getMessage());
         }
     }
 
