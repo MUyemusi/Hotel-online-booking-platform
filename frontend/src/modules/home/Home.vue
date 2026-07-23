@@ -191,6 +191,11 @@ onMounted(async () => {
     if (r.code === 'SUCCESS' && r.data) {
       hotelName.value = r.data.hotelName || hotelName.value
       hotelIntroduction.value = r.data.introduction || hotelIntroduction.value
+      hotelAddress.value = r.data.address || ''
+      hotelPhone.value = r.data.contactPhone || ''
+      hotelTraffic.value = r.data.trafficInfo || ''
+      hotelLatitude.value = r.data.latitude || null
+      hotelLongitude.value = r.data.longitude || null
     }
   } catch { /* keep current visual fallback */ }
   try {
