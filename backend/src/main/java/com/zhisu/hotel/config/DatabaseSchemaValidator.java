@@ -3,7 +3,6 @@ package com.zhisu.hotel.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -14,7 +13,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Integer.MIN_VALUE + 1) // 在 AutoSchemaMigration 之后运行
 public class DatabaseSchemaValidator implements ApplicationRunner {
     private final JdbcTemplate jdbcTemplate;
 

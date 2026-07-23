@@ -11,6 +11,16 @@
           <template #title>运营看板</template>
           <el-menu-item index="/admin/dashboard/overview">数据总览</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="user-admin">
+          <template #title>用户与权限</template>
+          <el-menu-item index="/admin/users">用户管理</el-menu-item>
+          <el-menu-item index="/admin/staff-roles">员工角色管理</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="room-admin">
+          <template #title>房型与库存</template>
+          <el-menu-item index="/admin/room-types">房型管理</el-menu-item>
+          <el-menu-item index="/admin/inventory">每日库存</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="hotel-ops">
           <template #title>酒店运营</template>
           <el-menu-item index="/admin/content/hotel-info">酒店信息管理</el-menu-item>
@@ -27,6 +37,7 @@
         <el-sub-menu index="system-admin">
           <template #title>系统管理</template>
           <el-menu-item index="/admin/system-config">系统参数管理</el-menu-item>
+          <el-menu-item index="/admin/operation-logs">操作日志</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </aside>

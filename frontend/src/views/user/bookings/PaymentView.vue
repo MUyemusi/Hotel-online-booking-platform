@@ -86,7 +86,7 @@ const route = useRoute(); const router = useRouter()
 const loading = ref(true)
 const paying = ref(false)
 const order = ref(null)
-const selectedMethod = ref('WEIXIN')
+const selectedMethod = ref('WECHAT')
 let timer = null
 
 const remaining = ref(0)
@@ -97,7 +97,7 @@ const fmtTime = computed(() => {
 })
 
 const methods = [
-  { key: 'WEIXIN', label: '微信支付', icon: '💬' },
+  { key: 'WECHAT', label: '微信支付', icon: '💬' },
   { key: 'ALIPAY', label: '支付宝', icon: '🔵' },
   { key: 'BANK_CARD', label: '银行卡', icon: '💳' }
 ]
@@ -105,7 +105,7 @@ const methods = [
 onMounted(async () => {
   loading.value = true
   try {
-    const id = route.params.orderId
+    const id = route.params.id
     const res = await getOrderDetail(id)
     if (res.code === 'SUCCESS') {
       order.value = res.data
@@ -127,7 +127,7 @@ function startCountdown() {
 async function doPay() {
   paying.value = true
   try {
-    const res = await pay({ orderId: Number(route.params.orderId), paymentMethod: selectedMethod.value })
+    const res = await pay({ orderId: Number(route.params.id), paymentMethod: selectedMethod.value, idempotencyKey: crypto.randomUUID() })
     if (res.code === 'SUCCESS') {
       ElMessage.success('支付成功！')
       order.value = { ...order.value, ...res.data, paymentStatus: 'PAID' }

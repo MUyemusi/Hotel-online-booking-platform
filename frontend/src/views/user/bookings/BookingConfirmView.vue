@@ -111,6 +111,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getRoomTypeDetail, getRoomTypeImages } from '@/api/roomtype'
 import { createOrder } from '@/api/booking'
+import { normalizeBookingQuery } from '@/utils/bookingQuery'
 
 const route = useRoute(); const router = useRouter()
 const loading = ref(true)
@@ -118,10 +119,11 @@ const submitting = ref(false)
 const roomType = ref(null)
 const images = ref([])
 
-const checkIn = ref(route.query.checkIn || '')
-const checkOut = ref(route.query.checkOut || '')
-const rooms = ref(Number(route.query.rooms) || 1)
-const guests = ref(Number(route.query.guests) || 1)
+const booking = normalizeBookingQuery(route.query)
+const checkIn = ref(booking.checkInDate || '')
+const checkOut = ref(booking.checkOutDate || '')
+const rooms = ref(booking.roomCount)
+const guests = ref(booking.guests)
 const phone = ref('')
 const remark = ref('')
 
@@ -136,7 +138,7 @@ const totalPrice = computed(() => roomType.value?.basePrice ? roomType.value.bas
 onMounted(async () => {
   loading.value = true
   try {
-    const id = route.query.roomTypeId
+    const id = booking.roomTypeId
     if (!id || !checkIn.value || !checkOut.value) return
     const [rr, ir] = await Promise.all([getRoomTypeDetail(id), getRoomTypeImages(id)])
     if (rr.code === 'SUCCESS') roomType.value = rr.data
@@ -147,14 +149,13 @@ onMounted(async () => {
 })
 
 async function submitOrder() {
-  // 校验主入住人姓名
   if (!guestList[0].guestName.trim()) { ElMessage.warning('请填写主入住人姓名'); return }
   if (!phone.value || !/^1[3-9]\d{9}$/.test(phone.value)) { ElMessage.warning('请填写正确的联系手机号'); return }
 
   submitting.value = true
   try {
     const res = await createOrder({
-      roomTypeId: Number(route.query.roomTypeId),
+      roomTypeId: booking.roomTypeId,
       checkInDate: checkIn.value,
       checkOutDate: checkOut.value,
       roomCount: rooms.value,
@@ -172,7 +173,7 @@ async function submitOrder() {
     })
     if (res.code === 'SUCCESS') {
       ElMessage.success('订单创建成功！')
-      router.replace({ path: `/payment/${res.data.id}`, query: { orderNo: res.data.orderNo, amount: res.data.totalAmount } })
+      router.replace(`/orders/${res.data.id}/pay`)
     } else {
       ElMessage.error(res.message || '创建订单失败')
     }
