@@ -17,11 +17,11 @@ BEGIN
       AND table_name IN ('sys_user','booking_order','payment_record','cancellation_record','scheduled_task_log',
                          'auth_refresh_token','hotel_info','room_type_image','price_rule','system_config');
 
-    SELECT 13 - COUNT(*) INTO missing_columns
+    SELECT 14 - COUNT(*) INTO missing_columns
     FROM information_schema.columns
     WHERE table_schema = DATABASE()
       AND CONCAT(table_name, '.', column_name) IN (
-          'sys_user.password_hash','booking_order.payment_status','booking_order.stay_type','payment_record.idempotency_key',
+          'sys_user.password_hash','sys_user.last_login_at','booking_order.payment_status','booking_order.stay_type','payment_record.idempotency_key',
           'hotel_info.logo_url','hotel_info.contact_phone','hotel_info.facilities','hotel_info.checkin_notice',
           'hotel_info.cancellation_policy','hotel_info.traffic_info','hotel_info.faq_content',
           'price_rule.priority','auth_refresh_token.token_hash'
