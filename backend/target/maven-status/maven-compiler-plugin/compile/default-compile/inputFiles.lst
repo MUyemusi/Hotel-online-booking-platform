@@ -33,6 +33,7 @@ C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\service\BookingOrderService.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\service\impl\BookingDatePolicyServiceImpl.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\service\impl\BookingOrderServiceImpl.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\service\StayDateRange.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\vo\DailyPriceVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\vo\FrontdeskOrderInfo.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\booking\vo\GuestVO.java
@@ -69,12 +70,14 @@ C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\enums\PaymentStatus.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\enums\QrTokenStatus.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\enums\RoomStatus.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\enums\StayType.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\enums\UserStatus.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\exception\BusinessException.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\exception\ErrorCode.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\exception\GlobalExceptionHandler.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\response\ApiResponse.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\common\response\PageResponse.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\config\AutoSchemaMigration.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\config\ClockConfig.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\config\CorsConfig.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\config\DatabaseSchemaValidator.java
@@ -113,6 +116,8 @@ C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\controller\AdminDashboardController.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\service\DashboardService.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\service\impl\DashboardServiceImpl.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\vo\DashboardAnalyticsVO.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\vo\DashboardCategoryStatisticVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\vo\DashboardOverviewVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\vo\DashboardTrendPointVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\dashboard\vo\InventoryWarningVO.java
@@ -129,6 +134,7 @@ C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\frontdesk\vo\FrontdeskGuestVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\frontdesk\vo\FrontdeskOrderDetailVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\frontdesk\vo\FrontdeskOrderListVO.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\inventory\controller\BatchInventoryRequest.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\inventory\controller\InventoryController.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\inventory\entity\DailyInventory.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\inventory\entity\InventoryLog.java
@@ -186,6 +192,13 @@ C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\pricing\vo\DailyPriceItemVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\pricing\vo\DatePriceRule.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\pricing\vo\PriceQuoteVO.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\controller\ReviewController.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\dto\CreateReviewRequest.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\entity\Review.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\mapper\ReviewMapper.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\service\impl\ReviewServiceImpl.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\service\ReviewService.java
+C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\review\vo\ReviewVO.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\room\controller\RoomCleaningController.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\room\controller\RoomController.java
 C:\Users\Lenovo\IdeaProjects\Hotel-online-booking-platform\backend\src\main\java\com\zhisu\hotel\room\dto\CompleteCleaningRequest.java
