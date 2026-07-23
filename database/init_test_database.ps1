@@ -14,6 +14,7 @@ $files = @(
  "database/02_business_tables.sql",
  "database/modules/member5_pricing_content.sql",
  "database/migrations/member5_completion.sql",
+ "database/migrations/2026_07_23_auth_login_fix.sql",
  "database/migrations/full_completion.sql",
  "database/03_indexes_constraints.sql",
  "database/04_initial_data.sql",
