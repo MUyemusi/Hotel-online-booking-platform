@@ -15,6 +15,30 @@ const routes = [
       { path: 'orders/:id', name: 'OrderDetail', component: () => import('@/views/user/OrderDetailView.vue'), meta: { roles: ['USER'] } },
       { path: 'orders/:id/pay', name: 'OrderPayment', component: () => import('@/views/user/PaymentView.vue'), meta: { roles: ['USER'] } },
       {
+        path: 'booking/confirm',
+        name: 'BookingConfirm',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/BookingConfirmView.vue')
+      },
+      {
+        path: 'payment/:orderId',
+        name: 'Payment',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/PaymentView.vue')
+      },
+      {
+        path: 'orders',
+        name: 'MyOrders',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/MyOrdersView.vue')
+      },
+      {
+        path: 'orders/:orderId',
+        name: 'OrderDetail',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/OrderDetailView.vue')
+      },
+      {
         path: 'account',
         meta: { requiresAuth: true },
         redirect: '/account/profile',

@@ -164,7 +164,7 @@ const totalPrice = computed(() => quote.value?.totalAmount ?? (room.value.basePr
 function noPast(t) { const d = new Date(); d.setHours(0, 0, 0, 0); return t.getTime() < d.getTime() }
 function noPastOut(t) {
   if (!bk.checkIn) return noPast(t)
-  const n = new Date(bk.checkIn); n.setDate(n.getDate() + 1); return t.getTime() < n.getTime()
+  const n = new Date(bk.checkIn + 'T00:00:00'); n.setDate(n.getDate() + 1); return t.getTime() < n.getTime()
 }
 async function loadQuote(showError = false) {
   if (!bk.checkIn || !bk.checkOut || !room.value.id) { quote.value = null; return null }
