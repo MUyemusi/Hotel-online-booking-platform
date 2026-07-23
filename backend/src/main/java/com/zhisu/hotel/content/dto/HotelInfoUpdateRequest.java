@@ -31,4 +31,8 @@ public class HotelInfoUpdateRequest {
     private String trafficInfo;
 
     private String faqContent;
+
+    private Double latitude;
+
+    private Double longitude;
 }

@@ -58,6 +58,14 @@
       <img src="/images/eco/zhisu-seaside-dining.png" alt="智宿临海餐厅" loading="lazy" />
     </section>
 
+    <MapSection
+      :latitude="hotelLatitude"
+      :longitude="hotelLongitude"
+      :address="hotelAddress"
+      :contact-phone="hotelPhone"
+      :traffic-info="hotelTraffic"
+    />
+
     <section v-if="announcements.length" class="announcement-section section-shell">
       <div class="section-title compact"><div><p class="eyebrow dark">NEWS & STORIES</p><h2>酒店讯息</h2></div></div>
       <div class="announcement-list">
@@ -79,6 +87,7 @@ import { getPublicBanners } from '@/api/content/banner'
 import { getPublicHotelInfo } from '@/api/content/hotelInfo'
 import { toBookingQuery } from '@/utils/bookingQuery'
 import { hotelToday, isEarlyMorningAvailable, nextDate } from '@/utils/bookingStay'
+import MapSection from '@/components/MapSection.vue'
 
 const router = useRouter()
 const announcements = ref([])
@@ -86,6 +95,11 @@ const banners = ref([])
 const bannerIndex = ref(0)
 const hotelName = ref('智宿海滨生态酒店')
 const hotelIntroduction = ref('浅色石材保留海岸的温度，木质格栅筛下柔和日光，庭院与海景在室内自然延伸。智宿以克制的设计，让每一处空间都安静、通透而有生命力。')
+const hotelAddress = ref('')
+const hotelPhone = ref('')
+const hotelTraffic = ref('')
+const hotelLatitude = ref(null)
+const hotelLongitude = ref(null)
 const healthy = ref(false)
 const healthFailed = ref(false)
 const booking = reactive({ checkInDate: '', checkOutDate: '', roomCount: 1, guests: 2, stayType: 'STANDARD' })
@@ -130,6 +144,11 @@ onMounted(async () => {
     if (r.code === 'SUCCESS' && r.data) {
       hotelName.value = r.data.hotelName || hotelName.value
       hotelIntroduction.value = r.data.introduction || hotelIntroduction.value
+      hotelAddress.value = r.data.address || ''
+      hotelPhone.value = r.data.contactPhone || ''
+      hotelTraffic.value = r.data.trafficInfo || ''
+      hotelLatitude.value = r.data.latitude || null
+      hotelLongitude.value = r.data.longitude || null
     }
   } catch { /* keep current visual fallback */ }
   try {
