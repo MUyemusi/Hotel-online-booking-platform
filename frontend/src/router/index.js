@@ -10,6 +10,30 @@ const routes = [
       { path: 'rooms', name: 'RoomTypeList', component: () => import('@/views/user/roomtypes/RoomTypeListView.vue') },
       { path: 'rooms/:id', name: 'RoomTypeDetail', component: () => import('@/views/user/roomtypes/RoomTypeDetailView.vue') },
       {
+        path: 'booking/confirm',
+        name: 'BookingConfirm',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/BookingConfirmView.vue')
+      },
+      {
+        path: 'payment/:orderId',
+        name: 'Payment',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/PaymentView.vue')
+      },
+      {
+        path: 'orders',
+        name: 'MyOrders',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/MyOrdersView.vue')
+      },
+      {
+        path: 'orders/:orderId',
+        name: 'OrderDetail',
+        meta: { requiresAuth: true },
+        component: () => import('@/views/user/bookings/OrderDetailView.vue')
+      },
+      {
         path: 'account',
         meta: { requiresAuth: true },
         redirect: '/account/profile',
